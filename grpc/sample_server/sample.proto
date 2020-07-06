@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package sample_server;
+
+service Sample {
+	rpc SampleFunc(SampleRequest) returns (SampleReply) {}
+}
+
+message SampleRequest {
+	int64 id = 1;
+	string msg = 2;
+}
+
+message SampleReply {
+	int64 id = 1;
+	string msg = 2;
+}
