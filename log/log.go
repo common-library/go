@@ -28,9 +28,9 @@ var log_level_string = [...]string{
 }
 
 type contentInfo struct {
-	logLevel int
-	format   string
-	value    []interface{}
+	level  int
+	format string
+	value  []interface{}
 }
 
 func singleton() *fileLog {
@@ -47,7 +47,7 @@ func logging() {
 
 	contentInfo := <-channel
 
-	singleton().logging(contentInfo.logLevel, contentInfo.format, contentInfo.value...)
+	singleton().logging(contentInfo.level, contentInfo.format, contentInfo.value...)
 }
 
 // Initialize is initialize. If there is no outputPath, standard output.
@@ -58,8 +58,11 @@ func logging() {
 //   // filename : ./log/abc_20200630.log
 //  ex 2) log.Initialize(log.DEBUG, "", "")
 //   // standard output
-func Initialize(logLevel int, outputPath string, fileNamePrefix string) error {
-	return singleton().initialize(logLevel, outputPath, fileNamePrefix)
+func Initialize(level int, outputPath string, fileNamePrefix string) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	return singleton().initialize(level, outputPath, fileNamePrefix)
 }
 
 func Finalize() error {
@@ -119,19 +122,17 @@ func Flush() {
 	}
 }
 
-// GetLogLevel get the log level
-func GetLogLevel() int {
-	return singleton().logLevel
+// GetLevel get the log level
+func GetLevel() int {
+	return singleton().getLevel()
 }
 
-// SetLogLevel set the log level
-func SetLogLevel(logLevel int) {
-	singleton().logLevel = logLevel
-}
+// SetLevel set the log level
+func SetLevel(level int) {
+	mutex.Lock()
+	defer mutex.Unlock()
 
-// GetOutputPath get the output path
-func GetOutputPath() string {
-	return singleton().outputPath
+	singleton().setLevel(level)
 }
 
 // GetFileName get the file name

@@ -4,19 +4,20 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
 type fileLog struct {
-	logLevel       int
+	level          int
 	outputPath     string
 	fileNamePrefix string
 
-	logFile *os.File
+	file *os.File
 }
 
-func (fileLog *fileLog) initialize(logLevel int, outputPath string, fileNamePrefix string) error {
-	fileLog.logLevel = logLevel
+func (fileLog *fileLog) initialize(level int, outputPath string, fileNamePrefix string) error {
+	fileLog.level = level
 	fileLog.outputPath = outputPath
 	fileLog.fileNamePrefix = fileNamePrefix
 
@@ -33,7 +34,7 @@ func (fileLog *fileLog) initialize(logLevel int, outputPath string, fileNamePref
 	}
 
 	options := os.O_WRONLY | os.O_APPEND | os.O_CREATE
-	fileLog.logFile, err = os.OpenFile(fileLog.getFileName(), options, os.FileMode(0644))
+	fileLog.file, err = os.OpenFile(fileLog.makeFileName(), options, os.FileMode(0644))
 	if err != nil {
 		return err
 	}
@@ -42,9 +43,9 @@ func (fileLog *fileLog) initialize(logLevel int, outputPath string, fileNamePref
 }
 
 func (fileLog *fileLog) finalize() error {
-	if fileLog.logFile != nil {
-		err := fileLog.logFile.Close()
-		fileLog.logFile = nil
+	if fileLog.file != nil {
+		err := fileLog.file.Close()
+		fileLog.file = nil
 
 		return err
 	}
@@ -52,43 +53,50 @@ func (fileLog *fileLog) finalize() error {
 	return nil
 }
 
-func (fileLog *fileLog) isShow(logLevel int) bool {
-	if logLevel > fileLog.logLevel {
+func (fileLog *fileLog) isShow(level int) bool {
+	if level > fileLog.level {
 		return false
 	}
 
 	return true
 }
 
-func (fileLog *fileLog) makeContent(logLevel int, format string, value ...interface{}) string {
+func (fileLog *fileLog) makeContent(level int, format string, value ...interface{}) string {
 	t := time.Now()
 	content := fmt.Sprintf(format, value...)
 
-	contentFinal := fmt.Sprintf("[%02d:%02d:%02d] [%s] : %s", t.Hour(), t.Minute(), t.Second(), log_level_string[logLevel], content)
+	contentFinal := fmt.Sprintf("[%02d:%02d:%02d] [%s] : %s", t.Hour(), t.Minute(), t.Second(), log_level_string[level], content)
 
 	return contentFinal
 }
 
-func (fileLog *fileLog) logging(logLevel int, format string, value ...interface{}) {
-	if fileLog.isShow(logLevel) == false {
+func (fileLog *fileLog) logging(level int, format string, value ...interface{}) {
+	if fileLog.isShow(level) == false {
 		return
 	}
 
-	content := fileLog.makeContent(logLevel, format, value...)
+	if fileLog.file != nil && strings.Contains(fileLog.file.Name(), time.Now().Format("20060102")) == false {
+		err := fileLog.initialize(fileLog.level, fileLog.outputPath, fileLog.fileNamePrefix)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
+	content := fileLog.makeContent(level, format, value...)
 
 	if len(singleton().outputPath) == 0 {
-		fmt.Printf("~~~ (%s) ~~~\n", content)
 		fmt.Println(content)
 		return
 	}
 
-	_, err := fmt.Fprintln(fileLog.logFile, content)
+	_, err := fmt.Fprintln(fileLog.file, content)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (fileLog *fileLog) getFileName() string {
+func (fileLog *fileLog) makeFileName() string {
 	fileName := ""
 
 	if len(fileLog.outputPath) != 0 {
@@ -102,5 +110,20 @@ func (fileLog *fileLog) getFileName() string {
 	fileName += time.Now().Format("20060102") + ".log"
 
 	return fileName
+}
 
+func (fileLog *fileLog) getLevel() int {
+	return fileLog.level
+}
+
+func (fileLog *fileLog) setLevel(level int) {
+	fileLog.level = level
+}
+
+func (fileLog *fileLog) getFileName() string {
+	if fileLog.file != nil {
+		return fileLog.file.Name()
+	}
+
+	return ""
 }
