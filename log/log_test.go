@@ -3,7 +3,7 @@ package log
 import (
 	"errors"
 	"fmt"
-	"github.com/heaven-chp/common-library-temp/file"
+	"github.com/heaven-chp/common-library-go/file"
 	"os"
 	"strings"
 	"testing"
@@ -18,35 +18,13 @@ func TestSingleton(t *testing.T) {
 	}
 }
 
-func TestGetLogLevel(t *testing.T) {
+func TestGetLevel(t *testing.T) {
 	for i := CRITICAL; i <= DEBUG; i++ {
-		SetLogLevel(i)
-		if GetLogLevel() != i {
-			t.Errorf("invalid GetLogLevel() - (%d)", i)
+		SetLevel(i)
+		if GetLevel() != i {
+			t.Errorf("invalid GetLevel() - (%d)", i)
 		}
 	}
-}
-
-func TestGetOutputPath(t *testing.T) {
-	const outputPath = "./test"
-
-	os.RemoveAll(outputPath)
-
-	err := Initialize(INFO, outputPath, "")
-	if err != nil {
-		t.Errorf("Initialize fail - error : (%s), outputPath : (%s)", err, outputPath)
-	}
-
-	if outputPath != GetOutputPath() {
-		t.Errorf("invalid GetOutputPath() - outputPath : (%#v), GetOutputPath() : (%#v)\n", outputPath, GetOutputPath())
-	}
-
-	err = Finalize()
-	if err != nil {
-		t.Errorf("Finalize fail - error : (%s)", err)
-	}
-
-	os.RemoveAll(outputPath)
 }
 
 func check1(log_level int) error {
