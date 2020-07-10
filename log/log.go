@@ -5,8 +5,10 @@ import (
 	"sync"
 )
 
-var instance *fileLog
 var once sync.Once
+var instance *fileLog
+
+var loggingWaitGroup sync.WaitGroup
 
 var mutex = new(sync.Mutex)
 var channel chan contentInfo = make(chan contentInfo, 1024)
@@ -44,6 +46,9 @@ func singleton() *fileLog {
 func logging() {
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	loggingWaitGroup.Add(1)
+	defer loggingWaitGroup.Done()
 
 	contentInfo := <-channel
 
@@ -120,6 +125,8 @@ func Debug(format string, value ...interface{}) {
 func Flush() {
 	for len(channel) != 0 {
 	}
+
+	loggingWaitGroup.Wait()
 }
 
 // GetLevel get the log level
