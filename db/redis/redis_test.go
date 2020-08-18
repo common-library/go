@@ -51,6 +51,35 @@ func TestPing(t *testing.T) {
 	}
 }
 
+func TestSelect(t *testing.T) {
+	var redis Redis
+
+	err := redis.Select(0)
+	if err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Select(0)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Select(1024)
+	if err.Error() != "ERR invalid DB index" {
+		t.Error(err)
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestGet(t *testing.T) {
 	var redis Redis
 
@@ -93,8 +122,7 @@ func TestSet(t *testing.T) {
 		t.Error(err)
 	}
 
-	var data string
-	data, err = redis.Get("key")
+	data, err := redis.Get("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -215,15 +243,237 @@ func TestDel(t *testing.T) {
 	}
 }
 
-/*
-func TestAccept1(t *testing.T) {
-    var server Server
-    defer server.Finalize()
+func TestFlushDB(t *testing.T) {
+	var redis Redis
 
-    _, err := server.accept()
-    if err.Error() != "Listen first before Accept" {
-        t.Error(err)
-    }
+	err := redis.FlushDB()
+	if err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Set("key", "value")
+	if err != nil {
+		t.Error(err)
+	}
+
+	keyCount, err := redis.DBsize()
+	if err != nil {
+		t.Error(err)
+	}
+	if keyCount == 0 {
+		t.Error("invalid data")
+	}
+
+	err = redis.FlushDB()
+	if err != nil {
+		t.Error(err)
+	}
+
+	keyCount, err = redis.DBsize()
+	if err != nil {
+		t.Error(err)
+	}
+	if keyCount != 0 {
+		t.Error("invalid data")
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
-*/
+func TestFlushAll(t *testing.T) {
+	var redis Redis
+
+	err := redis.FlushAll()
+	if err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Set("key", "value")
+	if err != nil {
+		t.Error(err)
+	}
+
+	result, err := redis.Info("Keyspace")
+	if err != nil {
+		t.Error(err)
+	}
+	if len(result) == 0 {
+		t.Error(err)
+	}
+
+	err = redis.FlushAll()
+	if err != nil {
+		t.Error(err)
+	}
+
+	result, err = redis.Info("Keyspace")
+	if err != nil {
+		t.Error(err)
+	}
+	if result != "# Keyspace\r\n" {
+		t.Errorf("invalid data : %#v", result)
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestInfo(t *testing.T) {
+	var redis Redis
+
+	_, err := redis.Info("ALL")
+	if err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	result, err := redis.Info("ALL")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(result) == 0 {
+		t.Error("invalid data")
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDBsize(t *testing.T) {
+	var redis Redis
+
+	keyCount, err := redis.DBsize()
+	if keyCount != -1 || err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	keyCount1, err := redis.DBsize()
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Set("key", "value")
+	if err != nil {
+		t.Error(err)
+	}
+
+	keyCount2, err := redis.DBsize()
+	if err != nil {
+		t.Error(err)
+	}
+	if keyCount2 != keyCount1+1 {
+		t.Error("invalid data")
+	}
+
+	err = redis.Del("key")
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRename(t *testing.T) {
+	var redis Redis
+
+	err := redis.Rename("key", "key_rename")
+	if err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Set("key", "value")
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Rename("key", "key_rename")
+	if err != nil {
+		t.Error(err)
+	}
+
+	data, err := redis.Get("key_rename")
+	if err != nil {
+		t.Error(err)
+	}
+	if data != "value" {
+		t.Errorf("invalid data - data : (%s)", data)
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRandomKey(t *testing.T) {
+	var redis Redis
+
+	key, err := redis.RandomKey()
+	if err.Error() != "please call Initialize first" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.MSet("key1", "value1", "key2", "value2")
+	if err != nil {
+		t.Error(err)
+	}
+
+	key, err = redis.RandomKey()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if key != "key1" && key != "key2" {
+		t.Error("invalid data")
+	}
+
+	err = redis.FlushDB()
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = redis.Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
