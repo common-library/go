@@ -5,6 +5,7 @@ package redis
 import (
 	"errors"
 	redigo_redis "github.com/gomodule/redigo/redis"
+	"strings"
 	"time"
 )
 
@@ -76,7 +77,7 @@ func (redis *Redis) Finalize() error {
 }
 
 // Ping is send ping
-// ex) redis.Ping()
+//  ex) redis.Ping()
 func (redis *Redis) Ping() error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -85,7 +86,22 @@ func (redis *Redis) Ping() error {
 	connection := redis.pool.Get()
 	defer connection.Close()
 
-	_, err := redigo_redis.String(connection.Do("PING"))
+	_, err := connection.Do("PING")
+
+	return err
+}
+
+// Select is select database
+//  ex) err := redis.Select(0)
+func (redis *Redis) Select(index int) error {
+	if redis.pool == nil {
+		return errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	_, err := connection.Do("SELECT", index)
 
 	return err
 }
@@ -125,7 +141,7 @@ func (redis *Redis) Set(key interface{}, value interface{}) error {
 //  ex) data, err := redis.MGet(key1, key2)
 func (redis *Redis) MGet(keys ...interface{}) ([]string, error) {
 	if redis.pool == nil {
-		return []string{}, errors.New("please call Initialize first")
+		return nil, errors.New("please call Initialize first")
 	}
 
 	connection := redis.pool.Get()
@@ -149,7 +165,7 @@ func (redis *Redis) MSet(args ...interface{}) error {
 	return err
 }
 
-// Del is delete data
+// Del is delete data.
 //  ex) err := redis.Del(key)
 func (redis *Redis) Del(key interface{}) error {
 	if redis.pool == nil {
@@ -162,4 +178,95 @@ func (redis *Redis) Del(key interface{}) error {
 	_, err := connection.Do("DEL", key)
 
 	return err
+}
+
+// FlushDB is delete all data in current database.
+//  ex) err := redis.FlushDB()
+func (redis *Redis) FlushDB() error {
+	if redis.pool == nil {
+		return errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	_, err := connection.Do("FLUSHDB")
+
+	return err
+}
+
+// FlushAll is delete all data in all database.
+//  ex) err := redis.FlushAll()
+func (redis *Redis) FlushAll() error {
+	if redis.pool == nil {
+		return errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	_, err := connection.Do("FLUSHALL")
+
+	return err
+}
+
+// Info is get redis information.
+// kind : All, Server, Clients, Memory, Persistence, Stats, Replication, CPU, Cluster, Keyspace
+//  ex) result, err := redis.Info("ALL")
+func (redis *Redis) Info(info string) (string, error) {
+	if redis.pool == nil {
+		return "", errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	info = strings.ToLower(info)
+
+	if info == "all" {
+		return redigo_redis.String(connection.Do("INFO"))
+	}
+
+	return redigo_redis.String(connection.Do("INFO", info))
+}
+
+// DBsize is key count in current database
+//  ex) keyCount, err := redis.DBsize()
+func (redis *Redis) DBsize() (int, error) {
+	if redis.pool == nil {
+		return -1, errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	return redigo_redis.Int(connection.Do("DBSIZE"))
+}
+
+// Rename is rename key
+//  ex) err := redis.Rename("key", "key_rename")
+func (redis *Redis) Rename(currentKey interface{}, newKey interface{}) error {
+	if redis.pool == nil {
+		return errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	_, err := connection.Do("RENAME", currentKey, newKey)
+
+	return err
+}
+
+// RandomKey is return one key at random
+//  ex) key, err := redis.RandomKey()
+func (redis *Redis) RandomKey() (string, error) {
+	if redis.pool == nil {
+		return "", errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	return redigo_redis.String(connection.Do("RANDOMKEY"))
 }
