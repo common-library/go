@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0-devel
 // 	protoc        v3.12.3
-// source: sample.proto
+// source: src/github.com/heaven-chp/common-library-go/grpc/sample_server/sample.proto
 
 package sample_server
 
@@ -41,7 +41,7 @@ type SampleRequest struct {
 func (x *SampleRequest) Reset() {
 	*x = SampleRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_sample_proto_msgTypes[0]
+		mi := &file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -54,7 +54,7 @@ func (x *SampleRequest) String() string {
 func (*SampleRequest) ProtoMessage() {}
 
 func (x *SampleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sample_proto_msgTypes[0]
+	mi := &file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -67,7 +67,7 @@ func (x *SampleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SampleRequest.ProtoReflect.Descriptor instead.
 func (*SampleRequest) Descriptor() ([]byte, []int) {
-	return file_sample_proto_rawDescGZIP(), []int{0}
+	return file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SampleRequest) GetId() int64 {
@@ -96,7 +96,7 @@ type SampleReply struct {
 func (x *SampleReply) Reset() {
 	*x = SampleReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_sample_proto_msgTypes[1]
+		mi := &file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -109,7 +109,7 @@ func (x *SampleReply) String() string {
 func (*SampleReply) ProtoMessage() {}
 
 func (x *SampleReply) ProtoReflect() protoreflect.Message {
-	mi := &file_sample_proto_msgTypes[1]
+	mi := &file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +122,7 @@ func (x *SampleReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SampleReply.ProtoReflect.Descriptor instead.
 func (*SampleReply) Descriptor() ([]byte, []int) {
-	return file_sample_proto_rawDescGZIP(), []int{1}
+	return file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SampleReply) GetId() int64 {
@@ -139,45 +139,48 @@ func (x *SampleReply) GetMsg() string {
 	return ""
 }
 
-var File_sample_proto protoreflect.FileDescriptor
+var File_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto protoreflect.FileDescriptor
 
-var file_sample_proto_rawDesc = []byte{
-	0x0a, 0x0c, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0d,
-	0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x31, 0x0a,
+var file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDesc = []byte{
+	0x0a, 0x4b, 0x73, 0x72, 0x63, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x68, 0x65, 0x61, 0x76, 0x65, 0x6e, 0x2d, 0x63, 0x68, 0x70, 0x2f, 0x63, 0x6f, 0x6d, 0x6d,
+	0x6f, 0x6e, 0x2d, 0x6c, 0x69, 0x62, 0x72, 0x61, 0x72, 0x79, 0x2d, 0x67, 0x6f, 0x2f, 0x67, 0x72,
+	0x70, 0x63, 0x2f, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x2f, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x31, 0x0a,
 	0x0d, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e,
 	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x12, 0x10,
 	0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6d, 0x73, 0x67,
 	0x22, 0x2f, 0x0a, 0x0b, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12,
 	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x12,
 	0x10, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6d, 0x73,
-	0x67, 0x32, 0x52, 0x0a, 0x06, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x12, 0x48, 0x0a, 0x0a, 0x53,
-	0x61, 0x6d, 0x70, 0x6c, 0x65, 0x46, 0x75, 0x6e, 0x63, 0x12, 0x1c, 0x2e, 0x73, 0x61, 0x6d, 0x70,
-	0x6c, 0x65, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65,
-	0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x52, 0x65,
-	0x70, 0x6c, 0x79, 0x22, 0x00, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x67, 0x32, 0x36, 0x0a, 0x06, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x12, 0x2c, 0x0a, 0x0a, 0x53,
+	0x61, 0x6d, 0x70, 0x6c, 0x65, 0x46, 0x75, 0x6e, 0x63, 0x12, 0x0e, 0x2e, 0x53, 0x61, 0x6d, 0x70,
+	0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0c, 0x2e, 0x53, 0x61, 0x6d, 0x70,
+	0x6c, 0x65, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x22, 0x00, 0x42, 0x11, 0x5a, 0x0f, 0x2e, 0x3b, 0x73,
+	0x61, 0x6d, 0x70, 0x6c, 0x65, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_sample_proto_rawDescOnce sync.Once
-	file_sample_proto_rawDescData = file_sample_proto_rawDesc
+	file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescOnce sync.Once
+	file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescData = file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDesc
 )
 
-func file_sample_proto_rawDescGZIP() []byte {
-	file_sample_proto_rawDescOnce.Do(func() {
-		file_sample_proto_rawDescData = protoimpl.X.CompressGZIP(file_sample_proto_rawDescData)
+func file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescGZIP() []byte {
+	file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescOnce.Do(func() {
+		file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescData = protoimpl.X.CompressGZIP(file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescData)
 	})
-	return file_sample_proto_rawDescData
+	return file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDescData
 }
 
-var file_sample_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_sample_proto_goTypes = []interface{}{
-	(*SampleRequest)(nil), // 0: sample_server.SampleRequest
-	(*SampleReply)(nil),   // 1: sample_server.SampleReply
+var file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_goTypes = []interface{}{
+	(*SampleRequest)(nil), // 0: SampleRequest
+	(*SampleReply)(nil),   // 1: SampleReply
 }
-var file_sample_proto_depIdxs = []int32{
-	0, // 0: sample_server.Sample.SampleFunc:input_type -> sample_server.SampleRequest
-	1, // 1: sample_server.Sample.SampleFunc:output_type -> sample_server.SampleReply
+var file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_depIdxs = []int32{
+	0, // 0: Sample.SampleFunc:input_type -> SampleRequest
+	1, // 1: Sample.SampleFunc:output_type -> SampleReply
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -185,13 +188,13 @@ var file_sample_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_sample_proto_init() }
-func file_sample_proto_init() {
-	if File_sample_proto != nil {
+func init() { file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_init() }
+func file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_init() {
+	if File_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_sample_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SampleRequest); i {
 			case 0:
 				return &v.state
@@ -203,7 +206,7 @@ func file_sample_proto_init() {
 				return nil
 			}
 		}
-		file_sample_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SampleReply); i {
 			case 0:
 				return &v.state
@@ -220,20 +223,20 @@ func file_sample_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_sample_proto_rawDesc,
+			RawDescriptor: file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_sample_proto_goTypes,
-		DependencyIndexes: file_sample_proto_depIdxs,
-		MessageInfos:      file_sample_proto_msgTypes,
+		GoTypes:           file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_goTypes,
+		DependencyIndexes: file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_depIdxs,
+		MessageInfos:      file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_msgTypes,
 	}.Build()
-	File_sample_proto = out.File
-	file_sample_proto_rawDesc = nil
-	file_sample_proto_goTypes = nil
-	file_sample_proto_depIdxs = nil
+	File_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto = out.File
+	file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_rawDesc = nil
+	file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_goTypes = nil
+	file_src_github_com_heaven_chp_common_library_go_grpc_sample_server_sample_proto_depIdxs = nil
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -261,7 +264,7 @@ func NewSampleClient(cc grpc.ClientConnInterface) SampleClient {
 
 func (c *sampleClient) SampleFunc(ctx context.Context, in *SampleRequest, opts ...grpc.CallOption) (*SampleReply, error) {
 	out := new(SampleReply)
-	err := c.cc.Invoke(ctx, "/sample_server.Sample/SampleFunc", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Sample/SampleFunc", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +298,7 @@ func _Sample_SampleFunc_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/sample_server.Sample/SampleFunc",
+		FullMethod: "/Sample/SampleFunc",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SampleServer).SampleFunc(ctx, req.(*SampleRequest))
@@ -304,7 +307,7 @@ func _Sample_SampleFunc_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 var _Sample_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "sample_server.Sample",
+	ServiceName: "Sample",
 	HandlerType: (*SampleServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -313,5 +316,5 @@ var _Sample_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "sample.proto",
+	Metadata: "src/github.com/heaven-chp/common-library-go/grpc/sample_server/sample.proto",
 }
