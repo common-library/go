@@ -137,6 +137,21 @@ func (redis *Redis) Set(key interface{}, value interface{}) error {
 	return err
 }
 
+// Set is set data, but it is delete after specified time.
+//  ex) err := redis.Setex("key", 2, "value")
+func (redis *Redis) Setex(key interface{}, second int, value interface{}) error {
+	if redis.pool == nil {
+		return errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	_, err := connection.Do("SETEX", key, second, value)
+
+	return err
+}
+
 // MGet is multiple get data
 //  ex) data, err := redis.MGet(key1, key2)
 func (redis *Redis) MGet(keys ...interface{}) ([]string, error) {
@@ -210,6 +225,21 @@ func (redis *Redis) FlushAll() error {
 	return err
 }
 
+// Ttl is returns valid time.
+// If there is not exist key, -2 is returned.
+// If the expire time is not set, -1 is returned.
+//  ex) ttl, err := redis.Ttl("key")
+func (redis *Redis) Ttl(key interface{}) (int, error) {
+	if redis.pool == nil {
+		return -2, errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	return redigo_redis.Int(connection.Do("TTL", key))
+}
+
 // Info is get redis information.
 // kind : All, Server, Clients, Memory, Persistence, Stats, Replication, CPU, Cluster, Keyspace
 //  ex) result, err := redis.Info("ALL")
@@ -243,6 +273,21 @@ func (redis *Redis) DBsize() (int, error) {
 	return redigo_redis.Int(connection.Do("DBSIZE"))
 }
 
+// Exists is returns whether the keys exists.
+// return value : exists - 1, not exists - 0
+//  ex_1) existsKey, err := redis.Exists("key")
+//  ex_2) existsKey, err := redis.Exists("key", 1, 2, "3")
+func (redis *Redis) Exists(keys ...interface{}) (int, error) {
+	if redis.pool == nil {
+		return -1, errors.New("please call Initialize first")
+	}
+
+	connection := redis.pool.Get()
+	defer connection.Close()
+
+	return redigo_redis.Int(connection.Do("EXISTS", keys...))
+}
+
 // Rename is rename key
 //  ex) err := redis.Rename("key", "key_rename")
 func (redis *Redis) Rename(currentKey interface{}, newKey interface{}) error {
@@ -258,7 +303,7 @@ func (redis *Redis) Rename(currentKey interface{}, newKey interface{}) error {
 	return err
 }
 
-// RandomKey is return one key at random
+// RandomKey is returns one key at random
 //  ex) key, err := redis.RandomKey()
 func (redis *Redis) RandomKey() (string, error) {
 	if redis.pool == nil {
