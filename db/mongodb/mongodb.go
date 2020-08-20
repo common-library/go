@@ -23,16 +23,28 @@ type Mongodb struct {
 	client *mongo.Client
 }
 
-// Initialize is initialize.
-//  ex) err := mongodb.Initialize("localhost:27017", 10)
-func (mongodb *Mongodb) Initialize(address string, timeout int) error {
-	mongodb.address = address
-	mongodb.timeout = timeout
+// connect is connect
+//  ex) err := mongodb.connect()
+func (mongodb *Mongodb) connect() error {
+	if mongodb.client != nil {
+		if mongodb.client.Ping(mongodb.ctx, readpref.Primary()) == nil {
+			return nil
+		}
+	}
 
-	mongodb.ctx, mongodb.ctxCancelFunc = context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	mongodb.disConnect()
 
-	var err error
-	mongodb.client, err = mongo.Connect(mongodb.ctx, options.Client().ApplyURI("mongodb://"+address))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://" + mongodb.address))
+	if err != nil {
+		return err
+	}
+	mongodb.client = client
+
+	if mongodb.timeout > 0 {
+		mongodb.ctx, mongodb.ctxCancelFunc = context.WithTimeout(context.Background(), time.Duration(mongodb.timeout)*time.Second)
+	}
+
+	err = mongodb.client.Connect(mongodb.ctx)
 	if err != nil {
 		return err
 	}
@@ -45,22 +57,37 @@ func (mongodb *Mongodb) Initialize(address string, timeout int) error {
 	return nil
 }
 
-// Finalize is finalize.
-//  ex) err := mongodb.Finalize()
-func (mongodb *Mongodb) Finalize() error {
-	if mongodb.client != nil {
-		err := mongodb.client.Disconnect(mongodb.ctx)
-		mongodb.client = nil
-		if err != nil {
-			return err
-		}
+// disconnect is disconnect
+//  ex) err := mongodb.disconnect()
+func (mongodb *Mongodb) disConnect() error {
+	if mongodb.client == nil {
+		return nil
 	}
+
+	err := mongodb.client.Disconnect(mongodb.ctx)
 
 	if mongodb.ctxCancelFunc != nil {
 		mongodb.ctxCancelFunc()
 	}
 
-	return nil
+	mongodb.client = nil
+
+	return err
+}
+
+// Initialize is initialize.
+//  ex) err := mongodb.Initialize("localhost:27017", 10)
+func (mongodb *Mongodb) Initialize(address string, timeout int) error {
+	mongodb.address = address
+	mongodb.timeout = timeout
+
+	return mongodb.connect()
+}
+
+// Finalize is finalize.
+//  ex) err := mongodb.Finalize()
+func (mongodb *Mongodb) Finalize() error {
+	return mongodb.disConnect()
 }
 
 // "FindOne" is returns one result value corresponding to the filter argument as an "dataForm" argument type interface.
@@ -72,10 +99,15 @@ func (mongodb *Mongodb) FindOne(databaseName string, collectionName string, filt
 		return nil, errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return nil, err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
 	document := reflect.New(reflect.TypeOf(dataForm))
-	err := collection.FindOne(mongodb.ctx, filter).Decode(document.Interface())
+	err = collection.FindOne(mongodb.ctx, filter).Decode(document.Interface())
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +122,11 @@ func (mongodb *Mongodb) FindOne(databaseName string, collectionName string, filt
 func (mongodb *Mongodb) Find(databaseName string, collectionName string, filter interface{}, dataForm interface{}) (interface{}, error) {
 	if mongodb.client == nil {
 		return nil, errors.New("please call Initialize first")
+	}
+
+	err := mongodb.connect()
+	if err != nil {
+		return nil, err
 	}
 
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
@@ -122,9 +159,14 @@ func (mongodb *Mongodb) InsertOne(databaseName string, collectionName string, do
 		return errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
-	_, err := collection.InsertOne(mongodb.ctx, document)
+	_, err = collection.InsertOne(mongodb.ctx, document)
 	return err
 }
 
@@ -138,9 +180,14 @@ func (mongodb *Mongodb) InsertMany(databaseName string, collectionName string, d
 		return errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
-	_, err := collection.InsertMany(mongodb.ctx, documents)
+	_, err = collection.InsertMany(mongodb.ctx, documents)
 	return err
 }
 
@@ -151,9 +198,14 @@ func (mongodb *Mongodb) UpdateOne(databaseName string, collectionName string, fi
 		return errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
-	_, err := collection.UpdateOne(mongodb.ctx, filter, update)
+	_, err = collection.UpdateOne(mongodb.ctx, filter, update)
 	return err
 }
 
@@ -164,9 +216,14 @@ func (mongodb *Mongodb) UpdateMany(databaseName string, collectionName string, f
 		return errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
-	_, err := collection.UpdateMany(mongodb.ctx, filter, update)
+	_, err = collection.UpdateMany(mongodb.ctx, filter, update)
 	return err
 }
 
@@ -177,9 +234,14 @@ func (mongodb *Mongodb) DeleteOne(databaseName string, collectionName string, fi
 		return errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
-	_, err := collection.DeleteOne(mongodb.ctx, filter)
+	_, err = collection.DeleteOne(mongodb.ctx, filter)
 	return err
 }
 
@@ -190,8 +252,13 @@ func (mongodb *Mongodb) DeleteMany(databaseName string, collectionName string, f
 		return errors.New("please call Initialize first")
 	}
 
+	err := mongodb.connect()
+	if err != nil {
+		return err
+	}
+
 	collection := mongodb.client.Database(databaseName).Collection(collectionName)
 
-	_, err := collection.DeleteMany(mongodb.ctx, filter)
+	_, err = collection.DeleteMany(mongodb.ctx, filter)
 	return err
 }
