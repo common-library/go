@@ -137,19 +137,16 @@ func (mongodb *Mongodb) Find(databaseName string, collectionName string, filter 
 	}
 
 	dataType := reflect.TypeOf(dataForm)
-	results := reflect.MakeSlice(reflect.SliceOf(dataType), 0, 1024)
-	document := reflect.New(dataType)
+	tempSlice := reflect.MakeSlice(reflect.SliceOf(dataType), 0, 1024)
+	results := reflect.New(tempSlice.Type())
+	results.Elem().Set(tempSlice)
 
-	for cursor.Next(mongodb.ctx) {
-		err := cursor.Decode(document.Interface())
-		if err != nil {
-			return nil, err
-		}
-
-		results = reflect.Append(results, document.Elem())
+	err = cursor.All(mongodb.ctx, results.Interface())
+	if err != nil {
+		return nil, err
 	}
 
-	return results.Interface(), nil
+	return results.Elem().Interface(), nil
 }
 
 // InsertOne is insert a one document.
