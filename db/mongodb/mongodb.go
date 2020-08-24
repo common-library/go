@@ -146,6 +146,8 @@ func (mongodb *Mongodb) Find(databaseName string, collectionName string, filter 
 		return nil, err
 	}
 
+	cursor.Close(mongodb.ctx)
+
 	return results.Elem().Interface(), nil
 }
 
