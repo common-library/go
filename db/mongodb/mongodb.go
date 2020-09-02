@@ -49,12 +49,7 @@ func (mongodb *Mongodb) connect() error {
 		return err
 	}
 
-	err = mongodb.client.Ping(mongodb.ctx, readpref.Primary())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return mongodb.client.Ping(mongodb.ctx, readpref.Primary())
 }
 
 // disconnect is disconnect
