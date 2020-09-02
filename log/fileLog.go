@@ -61,13 +61,13 @@ func (fileLog *fileLog) isShow(level int) bool {
 	return true
 }
 
-func (fileLog *fileLog) makeContent(level int, format string, value ...interface{}) string {
+func (fileLog *fileLog) makeContents(level int, format string, value ...interface{}) string {
 	t := time.Now()
-	content := fmt.Sprintf(format, value...)
+	contents := fmt.Sprintf(format, value...)
 
-	contentFinal := fmt.Sprintf("[%02d:%02d:%02d] [%s] : %s", t.Hour(), t.Minute(), t.Second(), log_level_string[level], content)
+	contentsFinal := fmt.Sprintf("[%02d:%02d:%02d] [%s] : %s", t.Hour(), t.Minute(), t.Second(), logLevelInfo[level], contents)
 
-	return contentFinal
+	return contentsFinal
 }
 
 func (fileLog *fileLog) logging(level int, format string, value ...interface{}) {
@@ -83,14 +83,14 @@ func (fileLog *fileLog) logging(level int, format string, value ...interface{}) 
 		}
 	}
 
-	content := fileLog.makeContent(level, format, value...)
+	contents := fileLog.makeContents(level, format, value...)
 
 	if len(singleton().outputPath) == 0 {
-		fmt.Println(content)
+		fmt.Println(contents)
 		return
 	}
 
-	_, err := fmt.Fprintln(fileLog.file, content)
+	_, err := fmt.Fprintln(fileLog.file, contents)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,25 +7,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
-
-func TestSingleton(t *testing.T) {
-	loggerManager1 := singleton()
-	loggerManager2 := singleton()
-
-	if loggerManager1 != loggerManager2 {
-		t.Errorf("invalid Singleton()")
-	}
-}
-
-func TestGetLevel(t *testing.T) {
-	for i := CRITICAL; i <= DEBUG; i++ {
-		SetLevel(i)
-		if GetLevel() != i {
-			t.Errorf("invalid GetLevel() - (%d)", i)
-		}
-	}
-}
 
 func check1(log_level int) error {
 	const outputPath = "./test"
@@ -91,13 +74,13 @@ func resultCheck(log_level int) error {
 
 	fileName := GetFileName()
 
-	content, err := file.GetContent(fileName)
+	data, err := file.Read(fileName)
 
 	if err != nil {
 		return err
 	}
 
-	for index, value := range content {
+	for index, value := range data {
 		if strings.Contains(value, results[index]) {
 			continue
 		}
@@ -106,6 +89,33 @@ func resultCheck(log_level int) error {
 	}
 
 	return nil
+}
+
+func TestSingleton(t *testing.T) {
+	loggerManager1 := singleton()
+	loggerManager2 := singleton()
+
+	if loggerManager1 != loggerManager2 {
+		t.Errorf("invalid Singleton()")
+	}
+}
+
+func TestInitialize(t *testing.T) {
+	err := Initialize(DEBUG, "", "")
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+}
+func TestFinalize(t *testing.T) {
+	err := Finalize()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestCritical(t *testing.T) {
@@ -176,4 +186,60 @@ func TestDebug(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestFlush(t *testing.T) {
+	Flush()
+}
+
+func TestToIntLevel(t *testing.T) {
+	level, err := ToIntLevel("DEBUG")
+	if err != nil {
+		t.Error(err)
+	}
+	if level != DEBUG {
+		t.Error("ToIntLevel fail")
+	}
+
+	invalidLevel := "ABC"
+	level, err = ToIntLevel(invalidLevel)
+	if level != -1 || err.Error() != "invalid level - level : ("+invalidLevel+")" {
+		t.Error("ToIntLevel fail")
+	}
+}
+
+func TestGetSetLevel(t *testing.T) {
+	for i := CRITICAL; i <= DEBUG; i++ {
+		SetLevel(i)
+		if GetLevel() != i {
+			t.Errorf("invalid GetLevel() - (%d)", i)
+		}
+	}
+}
+
+func TestGetFileName(t *testing.T) {
+	const outputPath = "./test"
+	const fileNamePrefix = "test"
+
+	if GetFileName() != "" {
+		t.Errorf("invalid file name - fileName : (%s)", GetFileName())
+	}
+
+	err := Initialize(DEBUG, outputPath, fileNamePrefix)
+	if err != nil {
+		t.Error(err)
+	}
+
+	fileName := GetFileName()
+	compare := outputPath + "/" + fileNamePrefix + "_" + time.Now().Format("20060102") + ".log"
+	if fileName != compare {
+		t.Errorf("invalid file name - fileName : (%s), compare : (%s", fileName, compare)
+	}
+
+	err = Finalize()
+	if err != nil {
+		t.Error(err)
+	}
+
+	os.RemoveAll(outputPath)
 }
