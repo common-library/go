@@ -51,7 +51,7 @@ func TestAccept2(t *testing.T) {
 
 	var client Client
 	defer client.Close()
-	err = client.Dial(networkServerTest, addressServerTest)
+	err = client.Connect(networkServerTest, addressServerTest)
 	if err != nil {
 		t.Error(err)
 	}
@@ -80,13 +80,13 @@ func TestFinalize(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	jobFunc := func(client Client) {
-		const writeContent string = "greeting\n"
+		const writeData string = "greeting"
 
-		client.Write(writeContent)
+		client.Write(writeData)
 
-		readContent, _ := client.Read(1024)
+		readData, _ := client.Read(1024)
 
-		client.Write(readContent)
+		client.Write(readData)
 	}
 
 	var server Server
@@ -100,35 +100,38 @@ func TestRun(t *testing.T) {
 
 	var client Client
 	defer client.Close()
-	err = client.Dial(networkServerTest, addressServerTest)
+	err = client.Connect(networkServerTest, addressServerTest)
 	if err != nil {
 		t.Error(err)
 	}
 
-	readContent, err := client.Read(1024)
+	readData, err := client.Read(1024)
 	if err != nil {
 		t.Error(err)
 	}
 
-	var writeContent string = "greeting\n"
+	var writeData string = "greeting"
 
-	if readContent != writeContent {
-		t.Errorf("read error - writeContent : (%s), readContent : (%s)", writeContent, readContent)
+	if readData != writeData {
+		t.Errorf("read error - writeData : (%s), readData : (%s)", writeData, readData)
 	}
 
-	writeContent = "12345\n"
-	err = client.Write(writeContent)
+	writeData = "12345"
+	writeLen, err := client.Write(writeData)
+	if err != nil {
+		t.Error(err)
+	}
+	if writeLen != len(writeData) {
+		t.Errorf("writeLen !=len(writeData) - writeLen : (%d), len(writeData) : (%d)", writeLen, len(writeData))
+	}
+
+	readData, err = client.Read(1024)
 	if err != nil {
 		t.Error(err)
 	}
 
-	readContent, err = client.Read(1024)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if readContent != writeContent {
-		t.Errorf("read error - writeContent : (%s), readContent : (%s)", writeContent, readContent)
+	if readData != writeData {
+		t.Errorf("read error - writeData : (%s), readData : (%s)", writeData, readData)
 	}
 
 	err = server.Finalize()
