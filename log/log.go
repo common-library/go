@@ -2,6 +2,8 @@
 package log
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -11,7 +13,7 @@ var instance *fileLog
 var loggingWaitGroup sync.WaitGroup
 
 var mutex = new(sync.Mutex)
-var channel chan contentInfo = make(chan contentInfo, 1024)
+var channel chan logInfo = make(chan logInfo, 1024)
 
 const (
 	CRITICAL = 0 + iota
@@ -21,15 +23,15 @@ const (
 	DEBUG
 )
 
-var log_level_string = [...]string{
-	"CRITICAL",
-	"ERROR",
-	"WARNING",
-	"INFO",
-	"DEBUG",
+var logLevelInfo = map[int]string{
+	CRITICAL: "CRITICAL",
+	ERROR:    "ERROR",
+	WARNING:  "WARNING",
+	INFO:     "INFO",
+	DEBUG:    "DEBUG",
 }
 
-type contentInfo struct {
+type logInfo struct {
 	level  int
 	format string
 	value  []interface{}
@@ -50,9 +52,9 @@ func logging() {
 	loggingWaitGroup.Add(1)
 	defer loggingWaitGroup.Done()
 
-	contentInfo := <-channel
+	logInfo := <-channel
 
-	singleton().logging(contentInfo.level, contentInfo.format, contentInfo.value...)
+	singleton().logging(logInfo.level, logInfo.format, logInfo.value...)
 }
 
 // Initialize is initialize. If there is no outputPath, standard output.
@@ -80,7 +82,7 @@ func Finalize() error {
 //  ex) log.Critical("(%d) (%s)", 1, "a")
 //  output) [07:37:49] [CRITICAL] : (1) (a)
 func Critical(format string, value ...interface{}) {
-	channel <- contentInfo{CRITICAL, format, value}
+	channel <- logInfo{CRITICAL, format, value}
 
 	go logging()
 }
@@ -89,7 +91,7 @@ func Critical(format string, value ...interface{}) {
 //  ex) log.Error("(%d) (%s)", 2, "b")
 //  output) [07:37:49] [ERROR] : (2) (b)
 func Error(format string, value ...interface{}) {
-	channel <- contentInfo{ERROR, format, value}
+	channel <- logInfo{ERROR, format, value}
 
 	go logging()
 }
@@ -98,7 +100,7 @@ func Error(format string, value ...interface{}) {
 //  ex) log.Warning("(%d) (%s)", 3, "c")
 //  output) [07:37:49] [WARNING] : (3) (c)
 func Warning(format string, value ...interface{}) {
-	channel <- contentInfo{WARNING, format, value}
+	channel <- logInfo{WARNING, format, value}
 
 	go logging()
 }
@@ -107,7 +109,7 @@ func Warning(format string, value ...interface{}) {
 //  ex) log.Info("(%d) (%s)", 4, "d")
 //  output) [07:37:49] [INFO] : (4) (d)
 func Info(format string, value ...interface{}) {
-	channel <- contentInfo{INFO, format, value}
+	channel <- logInfo{INFO, format, value}
 
 	go logging()
 }
@@ -116,12 +118,13 @@ func Info(format string, value ...interface{}) {
 //  ex) log.Debug("(%d) (%s)", 5, "e")
 //  output) [07:37:49] [DEBUG] : (5) (e)
 func Debug(format string, value ...interface{}) {
-	channel <- contentInfo{DEBUG, format, value}
+	channel <- logInfo{DEBUG, format, value}
 
 	go logging()
 }
 
 // Flush waits until all logs have been logging.
+//  ex) Flush()
 func Flush() {
 	for len(channel) != 0 {
 	}
@@ -129,12 +132,26 @@ func Flush() {
 	loggingWaitGroup.Wait()
 }
 
+// ToIntLevel is change the log level of string type to integer type
+//  ex) level, err := ToIntLevel("DEBUG")
+func ToIntLevel(level string) (int, error) {
+	for key, value := range logLevelInfo {
+		if value == level {
+			return key, nil
+		}
+	}
+
+	return -1, errors.New(fmt.Sprintf("invalid level - level : (%s)", level))
+}
+
 // GetLevel get the log level
+//  ex) level := GetLevel()
 func GetLevel() int {
 	return singleton().getLevel()
 }
 
 // SetLevel set the log level
+//  ex) SetLevel(log.DEBUG
 func SetLevel(level int) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -143,6 +160,7 @@ func SetLevel(level int) {
 }
 
 // GetFileName get the file name
+//  ex) fileName := GetFileName()
 func GetFileName() string {
 	return singleton().getFileName()
 }
