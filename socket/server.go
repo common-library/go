@@ -22,21 +22,16 @@ type Server struct {
 
 // Initialize is initialize.
 //  ex) server.Initialize("tcp", "127.0.0.1:11111", 1024, func(client Client) {})
-func (server *Server) Initialize(network string, address string, channelSize int, jobFunc func(client Client)) error {
+func (server *Server) Initialize(network string, address string, clientPoolSize int, jobFunc func(client Client)) error {
 	server.Finalize()
 
 	server.isRun = true
 	server.network = network
 	server.address = address
-	server.channel = make(chan Client, channelSize)
+	server.channel = make(chan Client, clientPoolSize)
 	server.jobFunc = jobFunc
 
-	err := server.listen()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return server.listen()
 }
 
 // Finalize is finalize.
@@ -45,7 +40,7 @@ func (server *Server) Finalize() error {
 	server.isRun = false
 
 	var client Client
-	client.Dial(server.network, server.address)
+	client.Connect(server.network, server.address)
 	client.Close()
 
 	server.jobWaitGroup.Add(1)
@@ -87,7 +82,7 @@ func (server *Server) Run() error {
 		server.channel <- client
 
 		server.jobWaitGroup.Add(1)
-		go server.job(&server.jobWaitGroup)
+		go server.job()
 	}
 
 	return nil
@@ -113,18 +108,18 @@ func (server *Server) accept() (Client, error) {
 		return Client{}, errors.New("please call Initialize first")
 	}
 
-	conn, err := server.listener.Accept()
-	if nil != err {
+	connnetion, err := server.listener.Accept()
+	if err != nil {
 		return Client{}, err
 	}
 
-	client := Client{address: server.address, connnetion: conn}
+	client := Client{connnetion}
 
 	return client, nil
 }
 
-func (server *Server) job(wg *sync.WaitGroup) {
-	defer (*wg).Done()
+func (server *Server) job() {
+	defer server.jobWaitGroup.Done()
 
 	var client Client = <-server.channel
 
