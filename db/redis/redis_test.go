@@ -8,7 +8,12 @@ import (
 func TestInitialize(t *testing.T) {
 	var redis Redis
 
-	err := redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err := redis.Initialize("", "127.0.0.1:6378", 3, 240)
+	if err.Error() != "dial tcp 127.0.0.1:6378: connect: connection refused" {
+		t.Error(err)
+	}
+
+	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
@@ -440,6 +445,11 @@ func TestTtl(t *testing.T) {
 		t.Errorf("invalid data - ttl : (%d)", ttl)
 	}
 
+	err = redis.Del("keyex")
+	if err != nil {
+		t.Error(err)
+	}
+
 	err = redis.Finalize()
 	if err != nil {
 		t.Error(err)
@@ -605,6 +615,11 @@ func TestRename(t *testing.T) {
 	}
 	if data != "value" {
 		t.Errorf("invalid data - data : (%s)", data)
+	}
+
+	err = redis.Del("key_rename")
+	if err != nil {
+		t.Error(err)
 	}
 
 	err = redis.Finalize()
