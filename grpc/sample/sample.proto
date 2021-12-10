@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = ".;sample";
+
+message Request {
+	int64 data1 = 1;
+	string data2 = 2;
+}
+
+message Reply {
+	int64 data1 = 1;
+	string data2 = 2;
+}
+
+service Sample {
+    rpc Func(Request) returns (Reply) {}
+}
