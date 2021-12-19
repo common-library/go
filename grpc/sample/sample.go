@@ -1,4 +1,4 @@
-// Package sample provides sample grpc interface
+// Package sample provides sample grpc interface.
 package sample
 
 import (
@@ -10,13 +10,15 @@ import (
 type Server struct {
 }
 
-// RegisterServer is function to register in grpc server
+// RegisterServer is function to register in grpc server.
+//
 // auto call.
 func (server *Server) RegisterServer(grpcServer *grpc.Server) {
 	RegisterSampleServer(grpcServer, server)
 }
 
 // Func is implementation of the function defined in protobuf IDL.
+//
 // auto call.
 func (server *Server) Func(context context.Context, request *Request) (*Reply, error) {
 	return &Reply{Data1: request.Data1, Data2: request.Data2}, nil

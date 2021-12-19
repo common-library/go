@@ -1,4 +1,5 @@
 // Package redis provides redis interface.
+//
 // used "github.com/gomodule/redigo/redis".
 package redis
 
@@ -23,7 +24,8 @@ type Redis struct {
 }
 
 // Initialize is initialize.
-//  ex) redis.Initialize("", "127.0.0.1:6379", 3, 240)
+//
+// ex) redis.Initialize("", "127.0.0.1:6379", 3, 240)
 func (redis *Redis) Initialize(password string, address string, maxConnection int, timeout int) error {
 	redis.address = address
 	redis.password = password
@@ -63,7 +65,8 @@ func (redis *Redis) Initialize(password string, address string, maxConnection in
 }
 
 // Finalize is finalize.
-//  ex) redis.Finalize()
+//
+// ex) redis.Finalize()
 func (redis *Redis) Finalize() error {
 	if redis.redisConnection != nil {
 		redis.redisConnection.Close()
@@ -76,8 +79,9 @@ func (redis *Redis) Finalize() error {
 	return nil
 }
 
-// Ping is send ping
-//  ex) redis.Ping()
+// Ping is send ping.
+//
+// ex) redis.Ping()
 func (redis *Redis) Ping() error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -91,8 +95,9 @@ func (redis *Redis) Ping() error {
 	return err
 }
 
-// Select is select database
-//  ex) err := redis.Select(0)
+// Select is select database.
+//
+// ex) err := redis.Select(0)
 func (redis *Redis) Select(index int) error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -106,8 +111,9 @@ func (redis *Redis) Select(index int) error {
 	return err
 }
 
-// Get is get data
-//  ex) data, err := redis.Get(key)
+// Get is get data.
+//
+// ex) data, err := redis.Get(key)
 func (redis *Redis) Get(key interface{}) (string, error) {
 	if redis.pool == nil {
 		return "", errors.New("please call Initialize first")
@@ -118,8 +124,9 @@ func (redis *Redis) Get(key interface{}) (string, error) {
 	return redigo_redis.String(connection.Do("GET", key))
 }
 
-// Set is set data
-//  ex) err := Set(key, value)
+// Set is set data.
+//
+// ex) err := Set(key, value)
 func (redis *Redis) Set(key interface{}, value interface{}) error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -138,7 +145,8 @@ func (redis *Redis) Set(key interface{}, value interface{}) error {
 }
 
 // Set is set data, but it is delete after specified time.
-//  ex) err := redis.Setex("key", 2, "value")
+//
+// ex) err := redis.Setex("key", 2, "value")
 func (redis *Redis) Setex(key interface{}, second int, value interface{}) error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -152,8 +160,9 @@ func (redis *Redis) Setex(key interface{}, second int, value interface{}) error 
 	return err
 }
 
-// MGet is multiple get data
-//  ex) data, err := redis.MGet(key1, key2)
+// MGet is multiple get data.
+//
+// ex) data, err := redis.MGet(key1, key2)
 func (redis *Redis) MGet(keys ...interface{}) ([]string, error) {
 	if redis.pool == nil {
 		return nil, errors.New("please call Initialize first")
@@ -165,8 +174,9 @@ func (redis *Redis) MGet(keys ...interface{}) ([]string, error) {
 	return redigo_redis.Strings(connection.Do("MGET", keys...))
 }
 
-// MSet is multiple set data
-//  ex) err := redis.MSet(key1, value1, key2, value2)
+// MSet is multiple set data.
+//
+// ex) err := redis.MSet(key1, value1, key2, value2)
 func (redis *Redis) MSet(args ...interface{}) error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -181,7 +191,8 @@ func (redis *Redis) MSet(args ...interface{}) error {
 }
 
 // Del is delete data.
-//  ex) err := redis.Del(key)
+//
+// ex) err := redis.Del(key)
 func (redis *Redis) Del(key interface{}) error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -196,7 +207,8 @@ func (redis *Redis) Del(key interface{}) error {
 }
 
 // FlushDB is delete all data in current database.
-//  ex) err := redis.FlushDB()
+//
+// ex) err := redis.FlushDB()
 func (redis *Redis) FlushDB() error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -211,7 +223,8 @@ func (redis *Redis) FlushDB() error {
 }
 
 // FlushAll is delete all data in all database.
-//  ex) err := redis.FlushAll()
+//
+// ex) err := redis.FlushAll()
 func (redis *Redis) FlushAll() error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -226,9 +239,12 @@ func (redis *Redis) FlushAll() error {
 }
 
 // Ttl is returns valid time.
+//
 // If there is not exist key, -2 is returned.
+//
 // If the expire time is not set, -1 is returned.
-//  ex) ttl, err := redis.Ttl("key")
+//
+// ex) ttl, err := redis.Ttl("key")
 func (redis *Redis) Ttl(key interface{}) (int, error) {
 	if redis.pool == nil {
 		return -2, errors.New("please call Initialize first")
@@ -241,8 +257,10 @@ func (redis *Redis) Ttl(key interface{}) (int, error) {
 }
 
 // Info is get redis information.
+//
 // kind : All, Server, Clients, Memory, Persistence, Stats, Replication, CPU, Cluster, Keyspace
-//  ex) result, err := redis.Info("ALL")
+//
+// ex) result, err := redis.Info("ALL")
 func (redis *Redis) Info(info string) (string, error) {
 	if redis.pool == nil {
 		return "", errors.New("please call Initialize first")
@@ -260,8 +278,9 @@ func (redis *Redis) Info(info string) (string, error) {
 	return redigo_redis.String(connection.Do("INFO", info))
 }
 
-// DBsize is key count in current database
-//  ex) keyCount, err := redis.DBsize()
+// DBsize is key count in current database.
+//
+// ex) keyCount, err := redis.DBsize()
 func (redis *Redis) DBsize() (int, error) {
 	if redis.pool == nil {
 		return -1, errors.New("please call Initialize first")
@@ -274,9 +293,12 @@ func (redis *Redis) DBsize() (int, error) {
 }
 
 // Exists is returns whether the keys exists.
+//
 // return value : exists - 1, not exists - 0
-//  ex_1) existsKey, err := redis.Exists("key")
-//  ex_2) existsKey, err := redis.Exists("key", 1, 2, "3")
+//
+// ex 1) existsKey, err := redis.Exists("key")
+//
+// ex 2) existsKey, err := redis.Exists("key", 1, 2, "3")
 func (redis *Redis) Exists(keys ...interface{}) (int, error) {
 	if redis.pool == nil {
 		return -1, errors.New("please call Initialize first")
@@ -288,8 +310,9 @@ func (redis *Redis) Exists(keys ...interface{}) (int, error) {
 	return redigo_redis.Int(connection.Do("EXISTS", keys...))
 }
 
-// Rename is rename key
-//  ex) err := redis.Rename("key", "key_rename")
+// Rename is rename key.
+//
+// ex) err := redis.Rename("key", "key_rename")
 func (redis *Redis) Rename(currentKey interface{}, newKey interface{}) error {
 	if redis.pool == nil {
 		return errors.New("please call Initialize first")
@@ -303,8 +326,9 @@ func (redis *Redis) Rename(currentKey interface{}, newKey interface{}) error {
 	return err
 }
 
-// RandomKey is returns one key at random
-//  ex) key, err := redis.RandomKey()
+// RandomKey is returns one key at random.
+//
+// ex) key, err := redis.RandomKey()
 func (redis *Redis) RandomKey() (string, error) {
 	if redis.pool == nil {
 		return "", errors.New("please call Initialize first")

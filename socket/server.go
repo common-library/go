@@ -1,4 +1,4 @@
-// Package socket provides a socket interface
+// Package socket provides a socket server interface.
 package socket
 
 import (
@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-//Server is object that provides server infomation.
+// Server is object that provides server infomation.
 type Server struct {
 	isRun   bool
 	network string
@@ -21,7 +21,8 @@ type Server struct {
 }
 
 // Initialize is initialize.
-//  ex) server.Initialize("tcp", "127.0.0.1:11111", 1024, func(client Client) {})
+//
+// ex) server.Initialize("tcp", "127.0.0.1:11111", 1024, func(client Client) {})
 func (server *Server) Initialize(network string, address string, clientPoolSize int, jobFunc func(client Client)) error {
 	server.Finalize()
 
@@ -35,7 +36,8 @@ func (server *Server) Initialize(network string, address string, clientPoolSize 
 }
 
 // Finalize is finalize.
-//  server.Finalize()
+//
+// server.Finalize()
 func (server *Server) Finalize() error {
 	server.isRun = false
 
@@ -68,9 +70,12 @@ func (server *Server) Finalize() error {
 	return nil
 }
 
-//Run is server run.
+// Run is server run.
+//
 // Note that it waits until Finalize() is called.
+//
 // ex 1) server.Run()
+//
 // ex 2) go server.Run()
 func (server *Server) Run() error {
 	for server.isRun {
