@@ -1,4 +1,4 @@
-// Package file provides a file interface
+// Package file provides a file interface.
 package file
 
 import (
@@ -8,8 +8,9 @@ import (
 	"os"
 )
 
-// Read is get the data of a file
-//  ex) data, err := file.Read(fileName)
+// Read is get the data of a file.
+//
+// ex) data, err := file.Read(fileName)
 func Read(fileName string) ([]string, error) {
 	var lines []string
 
@@ -33,8 +34,9 @@ func Read(fileName string) ([]string, error) {
 	return lines, nil
 }
 
-// Write is write data to file
-//  ex) Write(fileName, data, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0600)
+// Write is write data to file.
+//
+// ex) Write(fileName, data, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0600)
 func Write(fileName string, data []string, flag int, mode uint32) error {
 	file, err := os.OpenFile(fileName, flag, os.FileMode(mode))
 	defer file.Close()

@@ -1,3 +1,4 @@
+// Package socket provides a socket clent interface.
 package socket
 
 import (
@@ -10,7 +11,8 @@ type Client struct {
 }
 
 // Connect is connect to the address.
-//  ex) client.Connect("127.0.0.1:22222")
+//
+// ex) client.Connect("127.0.0.1:22222")
 func (client *Client) Connect(network string, address string) error {
 	connnetion, err := net.Dial(network, address)
 	if err != nil {
@@ -23,7 +25,8 @@ func (client *Client) Connect(network string, address string) error {
 }
 
 // Read is read data from connection.
-//  ex) readData, err := client.Read(1024)
+//
+// ex) readData, err := client.Read(1024)
 func (client *Client) Read(recvSize int) (string, error) {
 	buffer := make([]byte, recvSize)
 
@@ -36,13 +39,15 @@ func (client *Client) Read(recvSize int) (string, error) {
 }
 
 // Write is write data to connection.
-//  ex) serverClient.Write("example")
+//
+// ex) serverClient.Write("example")
 func (client *Client) Write(data string) (int, error) {
 	return client.connnetion.Write([]byte(data))
 }
 
 // Close is close the connection.
-//  ex) client.Close()
+//
+// ex) client.Close()
 func (client *Client) Close() error {
 	if client.connnetion == nil {
 		return nil
