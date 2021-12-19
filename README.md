@@ -9,6 +9,7 @@ go get -u github.com/heaven-chp/common-library-go
  - db interface
    - elasticsearch
    - mongodb
+   - mysql
    - redis
  - file interface
  - grpc interface
