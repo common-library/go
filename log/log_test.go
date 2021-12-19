@@ -4,17 +4,32 @@ import (
 	"errors"
 	"fmt"
 	"github.com/heaven-chp/common-library-go/file"
-	"os"
 	"strings"
 	"testing"
 	"time"
 )
 
 func check1(log_level int) error {
-	const outputPath = "./test"
+	err := Initialize(log_level, "", "")
+	if err != nil {
+		return errors.New(fmt.Sprintf("Initialize fail - error : (%s)", err))
+	}
 
-	os.RemoveAll(outputPath)
+	Critical("(%d) (%s)", 1, "a")
+	Error("(%d) (%s)", 2, "b")
+	Warning("(%d) (%s)", 3, "c")
+	Info("(%d) (%s)", 4, "d")
+	Debug("(%d) (%s)", 5, "e")
 
+	err = Finalize()
+	if err != nil {
+		return errors.New(fmt.Sprintf("Finalize fail - error : (%s)", err))
+	}
+
+	return nil
+}
+
+func check2(outputPath string, log_level int) error {
 	err := Initialize(log_level, outputPath, "test")
 	if err != nil {
 		return errors.New(fmt.Sprintf("Initialize fail - error : (%s)", err))
@@ -30,28 +45,6 @@ func check1(log_level int) error {
 	if err != nil {
 		return err
 	}
-
-	err = Finalize()
-	if err != nil {
-		return errors.New(fmt.Sprintf("Finalize fail - error : (%s)", err))
-	}
-
-	os.RemoveAll(outputPath)
-
-	return nil
-}
-
-func check2(log_level int) error {
-	err := Initialize(log_level, "", "")
-	if err != nil {
-		return errors.New(fmt.Sprintf("Initialize fail - error : (%s)", err))
-	}
-
-	Critical("(%d) (%s)", 1, "a")
-	Error("(%d) (%s)", 2, "b")
-	Warning("(%d) (%s)", 3, "c")
-	Info("(%d) (%s)", 4, "d")
-	Debug("(%d) (%s)", 5, "e")
 
 	err = Finalize()
 	if err != nil {
@@ -126,7 +119,7 @@ func TestCritical(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = check2(log_level)
+	err = check2(t.TempDir(), log_level)
 	if err != nil {
 		t.Error(err)
 	}
@@ -140,7 +133,7 @@ func TestError(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = check2(log_level)
+	err = check2(t.TempDir(), log_level)
 	if err != nil {
 		t.Error(err)
 	}
@@ -154,7 +147,7 @@ func TestWarning(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = check2(log_level)
+	err = check2(t.TempDir(), log_level)
 	if err != nil {
 		t.Error(err)
 	}
@@ -168,7 +161,7 @@ func TestInfo(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = check2(log_level)
+	err = check2(t.TempDir(), log_level)
 	if err != nil {
 		t.Error(err)
 	}
@@ -182,7 +175,7 @@ func TestDebug(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = check2(log_level)
+	err = check2(t.TempDir(), log_level)
 	if err != nil {
 		t.Error(err)
 	}
@@ -218,8 +211,8 @@ func TestGetSetLevel(t *testing.T) {
 }
 
 func TestGetFileName(t *testing.T) {
-	const outputPath = "./test"
-	const fileNamePrefix = "test"
+	outputPath := t.TempDir()
+	fileNamePrefix := "test"
 
 	if GetFileName() != "" {
 		t.Errorf("invalid file name - fileName : (%s)", GetFileName())
@@ -240,6 +233,4 @@ func TestGetFileName(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	os.RemoveAll(outputPath)
 }
