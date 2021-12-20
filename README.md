@@ -1,13 +1,30 @@
 # common-library-go
 
 ## Installation
-```
+```bash
 go get -u github.com/heaven-chp/common-library-go
 ```
 
-## Coverage
+## Features
+ - db interface
+   - elasticsearch
+   - mongodb
+   - mysql
+   - redis
+ - file interface
+ - grpc interface
+ - json interface
+ - log interface
+ - socket interface
+
+## Test
+```bash
+go test -cover github.com/heaven-chp/common-library-go/...
 ```
-go test -cover -coverprofile=coverage.out ./src/github.com/heaven-chp/common-library-go/...
+
+## Coverage
+```bash
+go test -cover -coverprofile=coverage.out github.com/heaven-chp/common-library-go/...
 go tool cover -html=./coverage.out -o ./coverage.html
 ```
 

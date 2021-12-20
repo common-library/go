@@ -58,12 +58,19 @@ func logging() {
 }
 
 // Initialize is initialize. If there is no outputPath, standard output.
+//
 // log level priority : CRITICAL < ERROR < WARNING < INFO < DEBUG
-//  ex 1) log.Initialize(log.DEBUG, "./log", "")
+//
+// ex 1)
+//   log.Initialize(log.DEBUG, "./log", "")
 //   // filename : ./log/20200630.log
-//  ex 2) log.Initialize(log.DEBUG, "./log", "abc")
-//   // filename : ./log/abc_20200630.log
-//  ex 2) log.Initialize(log.DEBUG, "", "")
+//
+// ex 2)
+//    log.Initialize(log.DEBUG, "./log", "abc")
+//    // filename : ./log/abc_20200630.log
+//
+// ex 3)
+//   log.Initialize(log.DEBUG, "", "")
 //   // standard output
 func Initialize(level int, outputPath string, fileNamePrefix string) error {
 	mutex.Lock()
@@ -79,8 +86,10 @@ func Finalize() error {
 }
 
 // Critical is critical logging.
-//  ex) log.Critical("(%d) (%s)", 1, "a")
-//  output) [07:37:49] [CRITICAL] : (1) (a)
+//
+// ex) log.Critical("(%d) (%s)", 1, "a")
+//
+// output) [07:37:49] [CRITICAL] : (1) (a)
 func Critical(format string, value ...interface{}) {
 	channel <- logInfo{CRITICAL, format, value}
 
@@ -88,8 +97,10 @@ func Critical(format string, value ...interface{}) {
 }
 
 // Error is error logging.
-//  ex) log.Error("(%d) (%s)", 2, "b")
-//  output) [07:37:49] [ERROR] : (2) (b)
+//
+// ex) log.Error("(%d) (%s)", 2, "b")
+//
+// output) [07:37:49] [ERROR] : (2) (b)
 func Error(format string, value ...interface{}) {
 	channel <- logInfo{ERROR, format, value}
 
@@ -97,8 +108,10 @@ func Error(format string, value ...interface{}) {
 }
 
 // Warning is warning logging.
-//  ex) log.Warning("(%d) (%s)", 3, "c")
-//  output) [07:37:49] [WARNING] : (3) (c)
+//
+// ex) log.Warning("(%d) (%s)", 3, "c")
+//
+// output) [07:37:49] [WARNING] : (3) (c)
 func Warning(format string, value ...interface{}) {
 	channel <- logInfo{WARNING, format, value}
 
@@ -106,8 +119,10 @@ func Warning(format string, value ...interface{}) {
 }
 
 // Info is info logging.
-//  ex) log.Info("(%d) (%s)", 4, "d")
-//  output) [07:37:49] [INFO] : (4) (d)
+//
+// ex) log.Info("(%d) (%s)", 4, "d")
+//
+// output) [07:37:49] [INFO] : (4) (d)
 func Info(format string, value ...interface{}) {
 	channel <- logInfo{INFO, format, value}
 
@@ -115,8 +130,10 @@ func Info(format string, value ...interface{}) {
 }
 
 // Debug is debug logging.
-//  ex) log.Debug("(%d) (%s)", 5, "e")
-//  output) [07:37:49] [DEBUG] : (5) (e)
+//
+// ex) log.Debug("(%d) (%s)", 5, "e")
+//
+// output) [07:37:49] [DEBUG] : (5) (e)
 func Debug(format string, value ...interface{}) {
 	channel <- logInfo{DEBUG, format, value}
 
@@ -124,7 +141,8 @@ func Debug(format string, value ...interface{}) {
 }
 
 // Flush waits until all logs have been logging.
-//  ex) Flush()
+//
+// ex) Flush()
 func Flush() {
 	for len(channel) != 0 {
 	}
@@ -133,7 +151,8 @@ func Flush() {
 }
 
 // ToIntLevel is change the log level of string type to integer type
-//  ex) level, err := ToIntLevel("DEBUG")
+//
+// ex) level, err := ToIntLevel("DEBUG")
 func ToIntLevel(level string) (int, error) {
 	for key, value := range logLevelInfo {
 		if value == level {
@@ -145,13 +164,15 @@ func ToIntLevel(level string) (int, error) {
 }
 
 // GetLevel get the log level
-//  ex) level := GetLevel()
+//
+// ex) level := GetLevel()
 func GetLevel() int {
 	return singleton().getLevel()
 }
 
 // SetLevel set the log level
-//  ex) SetLevel(log.DEBUG
+//
+// ex) SetLevel(log.DEBUG
 func SetLevel(level int) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -160,7 +181,8 @@ func SetLevel(level int) {
 }
 
 // GetFileName get the file name
-//  ex) fileName := GetFileName()
+//
+// ex) fileName := GetFileName()
 func GetFileName() string {
 	return singleton().getFileName()
 }

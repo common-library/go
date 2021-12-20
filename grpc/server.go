@@ -1,4 +1,5 @@
-// Package grpc provides grpc interface.
+// Package grpc provides grpc server interface.
+//
 // Used "google.golang.org/grpc".
 package grpc
 
@@ -24,7 +25,8 @@ type Server struct {
 }
 
 // Initialize is initialize.
-//  ex) server.Initialize("127.0.0.1:50051", &Sample.Server{})
+//
+// ex) server.Initialize("127.0.0.1:50051", &Sample.Server{})
 func (server *Server) Initialize(address string, serverDetail serverDetail) error {
 	server.address = address
 	server.serverDetail = serverDetail
@@ -46,7 +48,8 @@ func (server *Server) Initialize(address string, serverDetail serverDetail) erro
 }
 
 // Finalize is finalize.
-//  ex) server.Finalize()
+//
+// ex) server.Finalize()
 func (server *Server) Finalize() error {
 	if server.grpcServer != nil {
 		server.grpcServer.Stop()
@@ -62,9 +65,12 @@ func (server *Server) Finalize() error {
 }
 
 // Run is server run.
+//
 // Note that it waits until Finalize() is called.
-//  ex 1) server.Run()
-//  ex 2) go server.Run()
+//
+// ex 1) server.Run()
+//
+// ex 2) go server.Run()
 func (server *Server) Run() error {
 	if server.grpcServer == nil {
 		return errors.New("please call Initialize first")
