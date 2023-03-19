@@ -214,7 +214,7 @@ func TestExecute(t *testing.T) {
 	defer mysql.Finalize()
 
 	err = mysql.Execute(``)
-	if err.Error() != `Error 1065: Query was empty` {
+	if err.Error() != `Error 1065 (42000): Query was empty` {
 		t.Error(err)
 	}
 
@@ -533,7 +533,7 @@ func TestEndTransaction(t *testing.T) {
 		}
 
 		err = mysql.ExecuteTransaction(``)
-		if err.Error() != `Error 1065: Query was empty` {
+		if err.Error() != `Error 1065 (42000): Query was empty` {
 			t.Error(err)
 		}
 

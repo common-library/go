@@ -76,7 +76,7 @@ func TestSelect(t *testing.T) {
 	}
 
 	err = redis.Select(1024)
-	if err.Error() != "ERR invalid DB index" {
+	if err.Error() != "ERR DB index is out of range" {
 		t.Error(err)
 	}
 
