@@ -31,18 +31,27 @@ type Elasticsearch struct {
 
 // Initialize is initialize.
 //
-// ex) err := elasticsearch.Initialize([]string{"127.0.0.1:9200"}, 60)
-func (this *Elasticsearch) Initialize(addresses []string, timeout int) error {
+// ex) err := elasticsearch.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
+func (this *Elasticsearch) Initialize(addresses []string, timeout int, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
 	this.addresses = addresses
 	this.timeout = timeout
 
 	config := es_v8.Config{
+		CloudID:                cloudID,
+		APIKey:                 apiKey,
+		Username:               username,
+		Password:               password,
+		CertificateFingerprint: certificateFingerprint,
+
 		Addresses:         this.addresses,
 		EnableDebugLogger: true,
 		Logger:            &elastictransport.ColorLogger{Output: os.Stdout},
 		Transport: &http.Transport{
 			ResponseHeaderTimeout: time.Second * time.Duration(timeout),
 		},
+	}
+	if len(caCert) != 0 {
+		config.CACert = caCert
 	}
 
 	var err error
