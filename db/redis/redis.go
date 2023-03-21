@@ -5,9 +5,10 @@ package redis
 
 import (
 	"errors"
-	redigo_redis "github.com/gomodule/redigo/redis"
 	"strings"
 	"time"
+
+	redigo_redis "github.com/gomodule/redigo/redis"
 )
 
 // Redis is object that provides redis interface.

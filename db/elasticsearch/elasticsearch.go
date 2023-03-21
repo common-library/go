@@ -8,16 +8,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
-	es_v8 "github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
-	"github.com/thedevsaddam/gojsonq/v2"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/elastic/elastic-transport-go/v8/elastictransport"
+	es_v8 "github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/thedevsaddam/gojsonq/v2"
 )
 
 // Elasticsearch is object that provides elasticsearch interface.

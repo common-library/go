@@ -3,8 +3,9 @@ package json
 
 import (
 	"encoding/json"
-	"github.com/heaven-chp/common-library-go/file"
 	"strings"
+
+	"github.com/heaven-chp/common-library-go/file"
 )
 
 // ToString is convert struct to json.

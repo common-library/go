@@ -1,8 +1,9 @@
 package grpc
 
 import (
-	"github.com/heaven-chp/common-library-go/grpc/sample"
 	"testing"
+
+	"github.com/heaven-chp/common-library-go/grpc/sample"
 )
 
 func TestGetConnection(t *testing.T) {

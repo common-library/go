@@ -3,10 +3,11 @@ package log
 import (
 	"errors"
 	"fmt"
-	"github.com/heaven-chp/common-library-go/file"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/heaven-chp/common-library-go/file"
 )
 
 func check1(log_level int) error {

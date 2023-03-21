@@ -2,9 +2,10 @@ package sample
 
 import (
 	"context"
-	"github.com/heaven-chp/common-library-go/grpc"
 	"testing"
 	"time"
+
+	"github.com/heaven-chp/common-library-go/grpc"
 )
 
 func client_conn(t *testing.T) {

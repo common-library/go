@@ -1,11 +1,12 @@
 package mysql
 
 import (
-	"github.com/google/uuid"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 var database string = strings.ReplaceAll(uuid.NewString(), "-", "")

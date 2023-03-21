@@ -1,8 +1,9 @@
 package mongodb
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
 	"testing"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type TestStruct struct {

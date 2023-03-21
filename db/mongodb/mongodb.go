@@ -6,11 +6,12 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"reflect"
+	"time"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"reflect"
-	"time"
 )
 
 // Mongodb is object that provides mongodb interface.
@@ -92,11 +93,11 @@ func (mongodb *Mongodb) Finalize() error {
 
 // "FindOne" is returns one result value corresponding to the filter argument as an "dataForm" argument type interface.
 //
-//  ex)
+//	ex)
 //
-//   result_interface, err := mongodb.FindOne("test_database", "test_collection", bson.M{"value1": 1}, TestStruct{})
+//	 result_interface, err := mongodb.FindOne("test_database", "test_collection", bson.M{"value1": 1}, TestStruct{})
 //
-//   result, ok := result_interface.(TestStruct)
+//	 result, ok := result_interface.(TestStruct)
 func (mongodb *Mongodb) FindOne(databaseName string, collectionName string, filter interface{}, dataForm interface{}) (interface{}, error) {
 	if mongodb.client == nil {
 		return nil, errors.New("please call Initialize first")
@@ -122,9 +123,9 @@ func (mongodb *Mongodb) FindOne(databaseName string, collectionName string, filt
 //
 // ex)
 //
-//   results_interface, err := mongodb.Find("test_database", "test_collection", bson.M{}, TestStruct{})
+//	results_interface, err := mongodb.Find("test_database", "test_collection", bson.M{}, TestStruct{})
 //
-//   results, ok := results_interface.([]TestStruct)
+//	results, ok := results_interface.([]TestStruct)
 func (mongodb *Mongodb) Find(databaseName string, collectionName string, filter interface{}, dataForm interface{}) (interface{}, error) {
 	if mongodb.client == nil {
 		return nil, errors.New("please call Initialize first")
@@ -180,11 +181,11 @@ func (mongodb *Mongodb) InsertOne(databaseName string, collectionName string, do
 //
 // ex)
 //
-//   insertData := make([]interface{}, 0)
+//	insertData := make([]interface{}, 0)
 //
-//   insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
+//	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
 //
-//   err := mongodb.InsertMany("test_database", "test_collection", insertData)
+//	err := mongodb.InsertMany("test_database", "test_collection", insertData)
 func (mongodb *Mongodb) InsertMany(databaseName string, collectionName string, documents []interface{}) error {
 	if mongodb.client == nil {
 		return errors.New("please call Initialize first")

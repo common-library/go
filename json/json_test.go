@@ -3,9 +3,10 @@ package json
 import (
 	"errors"
 	"fmt"
-	"github.com/heaven-chp/common-library-go/file"
 	"strings"
 	"testing"
+
+	"github.com/heaven-chp/common-library-go/file"
 )
 
 type test1Struct struct {

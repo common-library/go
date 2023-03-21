@@ -3,9 +3,10 @@ package elasticsearch
 import (
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/thedevsaddam/gojsonq/v2"
-	"testing"
 )
 
 var addresses []string = []string{"http://127.0.0.1:9200"}
