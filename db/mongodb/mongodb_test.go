@@ -1,8 +1,9 @@
-package mongodb
+package mongodb_test
 
 import (
 	"testing"
 
+	"github.com/heaven-chp/common-library-go/db/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -17,7 +18,7 @@ const database_name string = "testDatabase"
 const collection_name string = "testCollection"
 
 func TestInitialize(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	err := mongodb.Initialize(address, timeout)
 	if err != nil {
@@ -31,7 +32,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestFinalize(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	err := mongodb.Finalize()
 	if err != nil {
@@ -40,7 +41,7 @@ func TestFinalize(t *testing.T) {
 }
 
 func TestFindOne(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	filter := bson.M{"value1": 1}
 
@@ -86,7 +87,7 @@ func TestFindOne(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	filter := bson.M{}
 
@@ -138,7 +139,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestInsertOne(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	err := mongodb.InsertOne(database_name, collection_name, TestStruct{})
 	if err.Error() != "please call Initialize first" {
@@ -168,7 +169,7 @@ func TestInsertOne(t *testing.T) {
 }
 
 func TestInsertMany(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
@@ -200,7 +201,7 @@ func TestInsertMany(t *testing.T) {
 }
 
 func TestUpdateOne(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	filter := bson.M{"value1": 1}
 	update := bson.D{{"$set", bson.D{{"value2", "update_value"}}}}
@@ -268,7 +269,7 @@ func TestUpdateOne(t *testing.T) {
 }
 
 func TestUpdateMany(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	filter := bson.M{"value1": 1}
 	update := bson.D{{"$set", bson.D{{"value2", "update_value"}}}}
@@ -336,7 +337,7 @@ func TestUpdateMany(t *testing.T) {
 }
 
 func TestDeleteOne(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	filter := bson.M{}
 
@@ -367,7 +368,7 @@ func TestDeleteOne(t *testing.T) {
 }
 
 func TestDeleteMany(t *testing.T) {
-	var mongodb Mongodb
+	var mongodb mongodb.Mongodb
 
 	filter := bson.M{}
 

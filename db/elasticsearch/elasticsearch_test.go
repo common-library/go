@@ -1,4 +1,4 @@
-package elasticsearch
+package elasticsearch_test
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	es "github.com/heaven-chp/common-library-go/db/elasticsearch"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
@@ -15,11 +16,11 @@ var index string = uuid.NewString()
 var documentId string = uuid.NewString()
 var template string = uuid.NewString()
 
-func initialize(elasticsearch *Elasticsearch, addresses []string) error {
+func initialize(elasticsearch *es.Elasticsearch, addresses []string) error {
 	return elasticsearch.Initialize(addresses, timeout, "", "", "", "", "", []byte(""))
 }
 
-func exists(elasticsearch *Elasticsearch) error {
+func exists(elasticsearch *es.Elasticsearch) error {
 	err := initialize(elasticsearch, addresses)
 	if err != nil {
 		return err
@@ -44,7 +45,7 @@ func exists(elasticsearch *Elasticsearch) error {
 	return nil
 }
 
-func deletes(elasticsearch *Elasticsearch) error {
+func deletes(elasticsearch *es.Elasticsearch) error {
 	err := elasticsearch.IndicesDelete([]string{index})
 	if err != nil {
 		return err
@@ -61,7 +62,7 @@ func deletes(elasticsearch *Elasticsearch) error {
 	return nil
 }
 
-func existsTemplate(elasticsearch *Elasticsearch) error {
+func existsTemplate(elasticsearch *es.Elasticsearch) error {
 	err := initialize(elasticsearch, addresses)
 	if err != nil {
 		return err
@@ -78,7 +79,7 @@ func existsTemplate(elasticsearch *Elasticsearch) error {
 	return nil
 }
 
-func deletesTemplate(elasticsearch *Elasticsearch) error {
+func deletesTemplate(elasticsearch *es.Elasticsearch) error {
 	err := elasticsearch.IndicesDeleteTemplate(template)
 	if err != nil {
 		return err
@@ -96,7 +97,7 @@ func deletesTemplate(elasticsearch *Elasticsearch) error {
 }
 
 func TestInitialize(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := initialize(&elasticsearch, addresses)
 	if err != nil {
@@ -105,7 +106,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	_, err := elasticsearch.Exists("", "")
 	if err.Error() != `please call Initialize first` {
@@ -156,7 +157,7 @@ func TestExists(t *testing.T) {
 }
 
 func TestIndex(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.Index(index, documentId, "")
 	if err.Error() != `please call Initialize first` {
@@ -202,7 +203,7 @@ func TestIndex(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.Delete(index, documentId)
 	if err.Error() != `please call Initialize first` {
@@ -253,7 +254,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteByQuery(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.DeleteByQuery([]string{index}, ``)
 	if err.Error() != `please call Initialize first` {
@@ -309,7 +310,7 @@ func TestDeleteByQuery(t *testing.T) {
 }
 
 func TestIndicesExists(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	_, err := elasticsearch.IndicesExists([]string{index})
 	if err.Error() != `please call Initialize first` {
@@ -355,7 +356,7 @@ func TestIndicesExists(t *testing.T) {
 }
 
 func TestIndicesCreate(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.IndicesCreate(index, "")
 	if err.Error() != `please call Initialize first` {
@@ -401,7 +402,7 @@ func TestIndicesCreate(t *testing.T) {
 }
 
 func TestIndicesDelete(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.IndicesDelete([]string{""})
 	if err.Error() != `please call Initialize first` {
@@ -439,7 +440,7 @@ func TestIndicesDelete(t *testing.T) {
 }
 
 func TestIndicesExistsTemplate(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	_, err := elasticsearch.IndicesExistsTemplate([]string{template})
 	if err.Error() != `please call Initialize first` {
@@ -485,7 +486,7 @@ func TestIndicesExistsTemplate(t *testing.T) {
 }
 
 func TestIndicesPutTemplate(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.IndicesPutTemplate(template, ``)
 	if err.Error() != `please call Initialize first` {
@@ -531,7 +532,7 @@ func TestIndicesPutTemplate(t *testing.T) {
 }
 
 func TestIndicesDeleteTemplate(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.IndicesDeleteTemplate(template)
 	if err.Error() != `please call Initialize first` {
@@ -577,7 +578,7 @@ func TestIndicesDeleteTemplate(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	_, err := elasticsearch.Search(index, ``)
 	if err.Error() != `please call Initialize first` {
@@ -623,7 +624,7 @@ func TestSearch(t *testing.T) {
 }
 
 func TestIndicesForcemerge(t *testing.T) {
-	elasticsearch := Elasticsearch{}
+	elasticsearch := es.Elasticsearch{}
 
 	err := elasticsearch.IndicesForcemerge([]string{index})
 	if err.Error() != `please call Initialize first` {

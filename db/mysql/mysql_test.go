@@ -1,4 +1,4 @@
-package mysql
+package mysql_test
 
 import (
 	"strconv"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/heaven-chp/common-library-go/db/mysql"
 )
 
 var database string = strings.ReplaceAll(uuid.NewString(), "-", "")
@@ -27,7 +28,7 @@ func createTable() error {
 		}
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err := mysql.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
 	if err != nil {
@@ -59,7 +60,7 @@ func createTable() error {
 }
 
 func deleteDatabase() error {
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err := mysql.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
 	if err != nil {
@@ -76,7 +77,7 @@ func deleteDatabase() error {
 }
 
 func TestInitialize(t *testing.T) {
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err := mysql.Initialize(`root:root@tcp(127.0.0.1)`, 1)
 	if err.Error() != `invalid DSN: missing the slash separating the database name` {
@@ -91,7 +92,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestFinalize(t *testing.T) {
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	mysql.Finalize()
 
@@ -108,7 +109,7 @@ func TestQuery(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	_, err = mysql.Query(`SELECT field FROM ` + table + `;`)
 	if err.Error() != `please call Initialize first` {
@@ -167,7 +168,7 @@ func TestQueryRow(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.QueryRow(``)
 	if err.Error() != `please call Initialize first` {
@@ -201,7 +202,7 @@ func TestExecute(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.Execute(`UPDATE ` + table + ` SET field=2`)
 	if err.Error() != `please call Initialize first` {
@@ -259,7 +260,7 @@ func TestSetPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 	if err.Error() != `please call Initialize first` {
@@ -303,7 +304,7 @@ func TestQueryPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	_, err = mysql.QueryPrepare(1)
 	if err.Error() != `please call SetPrepare first` {
@@ -351,7 +352,7 @@ func TestQueryRowPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	_, err = mysql.QueryRowPrepare(1)
 	if err.Error() != `please call SetPrepare first` {
@@ -400,7 +401,7 @@ func TestExecutePrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.ExecutePrepare(2)
 	if err.Error() != `please call SetPrepare first` {
@@ -449,7 +450,7 @@ func TestBeginTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.BeginTransaction()
 	if err.Error() != `please call Initialize first` {
@@ -505,7 +506,7 @@ func TestEndTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.EndTransaction(nil)
 	if err.Error() != `please call BeginTransaction first` {
@@ -566,7 +567,7 @@ func TestQueryTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	_, err = mysql.QueryTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
@@ -618,7 +619,7 @@ func TestQueryRowTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.QueryRowTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
@@ -669,7 +670,7 @@ func TestExecuteTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.ExecuteTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
@@ -725,7 +726,7 @@ func TestSetPrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.SetPrepareTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
@@ -786,7 +787,7 @@ func TestQueryPrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	_, err = mysql.QueryPrepareTransaction(``)
 	if err.Error() != `please call SetPrepareTransaction first` {
@@ -844,7 +845,7 @@ func TestQueryRowPrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	_, err = mysql.QueryRowPrepareTransaction()
 	if err.Error() != `please call SetPrepareTransaction first` {
@@ -903,7 +904,7 @@ func TestExecutePrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := MySQL{}
+	mysql := mysql.MySQL{}
 
 	err = mysql.ExecutePrepareTransaction()
 	if err.Error() != `please call SetPrepareTransaction first` {

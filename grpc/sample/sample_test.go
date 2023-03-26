@@ -1,4 +1,4 @@
-package sample
+package sample_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/heaven-chp/common-library-go/grpc"
+	"github.com/heaven-chp/common-library-go/grpc/sample"
 )
 
 func client_conn(t *testing.T) {
@@ -18,12 +19,12 @@ func client_conn(t *testing.T) {
 	}
 	defer connection.Close()
 
-	client := NewSampleClient(connection)
+	client := sample.NewSampleClient(connection)
 
 	const Data1 = 1
 	const Data2 = "message"
 
-	request := Request{Data1: Data1, Data2: Data2}
+	request := sample.Request{Data1: Data1, Data2: Data2}
 	reply, err := client.Func(ctx, &request)
 	if err != nil {
 		t.Error(err)
@@ -37,7 +38,7 @@ func client_conn(t *testing.T) {
 func TestFunc(t *testing.T) {
 	var server grpc.Server
 
-	err := server.Initialize("127.0.0.1:50051", &Server{})
+	err := server.Initialize("127.0.0.1:50051", &sample.Server{})
 	if err != nil {
 		t.Error(err)
 	}

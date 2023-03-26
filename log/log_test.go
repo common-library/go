@@ -1,4 +1,4 @@
-package log
+package log_test
 
 import (
 	"errors"
@@ -8,21 +8,22 @@ import (
 	"time"
 
 	"github.com/heaven-chp/common-library-go/file"
+	"github.com/heaven-chp/common-library-go/log"
 )
 
 func check1(log_level int) error {
-	err := Initialize(log_level, "", "")
+	err := log.Initialize(log_level, "", "")
 	if err != nil {
 		return errors.New(fmt.Sprintf("Initialize fail - error : (%s)", err))
 	}
 
-	Critical("(%d) (%s)", 1, "a")
-	Error("(%d) (%s)", 2, "b")
-	Warning("(%d) (%s)", 3, "c")
-	Info("(%d) (%s)", 4, "d")
-	Debug("(%d) (%s)", 5, "e")
+	log.Critical("(%d) (%s)", 1, "a")
+	log.Error("(%d) (%s)", 2, "b")
+	log.Warning("(%d) (%s)", 3, "c")
+	log.Info("(%d) (%s)", 4, "d")
+	log.Debug("(%d) (%s)", 5, "e")
 
-	err = Finalize()
+	err = log.Finalize()
 	if err != nil {
 		return errors.New(fmt.Sprintf("Finalize fail - error : (%s)", err))
 	}
@@ -31,23 +32,23 @@ func check1(log_level int) error {
 }
 
 func check2(outputPath string, log_level int) error {
-	err := Initialize(log_level, outputPath, "test")
+	err := log.Initialize(log_level, outputPath, "test")
 	if err != nil {
 		return errors.New(fmt.Sprintf("Initialize fail - error : (%s)", err))
 	}
 
-	Critical("(%d) (%s)", 1, "a")
-	Error("(%d) (%s)", 2, "b")
-	Warning("(%d) (%s)", 3, "c")
-	Info("(%d) (%s)", 4, "d")
-	Debug("(%d) (%s)", 5, "e")
+	log.Critical("(%d) (%s)", 1, "a")
+	log.Error("(%d) (%s)", 2, "b")
+	log.Warning("(%d) (%s)", 3, "c")
+	log.Info("(%d) (%s)", 4, "d")
+	log.Debug("(%d) (%s)", 5, "e")
 
 	err = resultCheck(log_level)
 	if err != nil {
 		return err
 	}
 
-	err = Finalize()
+	err = log.Finalize()
 	if err != nil {
 		return errors.New(fmt.Sprintf("Finalize fail - error : (%s)", err))
 	}
@@ -56,7 +57,7 @@ func check2(outputPath string, log_level int) error {
 }
 
 func resultCheck(log_level int) error {
-	Flush()
+	log.Flush()
 
 	results := []string{
 		" [CRITICAL] : (1) (a)",
@@ -66,7 +67,7 @@ func resultCheck(log_level int) error {
 		" [DEBUG] : (5) (e)",
 	}
 
-	fileName := GetFileName()
+	fileName := log.GetFileName()
 
 	data, err := file.Read(fileName)
 
@@ -85,35 +86,26 @@ func resultCheck(log_level int) error {
 	return nil
 }
 
-func TestSingleton(t *testing.T) {
-	loggerManager1 := singleton()
-	loggerManager2 := singleton()
-
-	if loggerManager1 != loggerManager2 {
-		t.Errorf("invalid Singleton()")
-	}
-}
-
 func TestInitialize(t *testing.T) {
-	err := Initialize(DEBUG, "", "")
+	err := log.Initialize(log.DEBUG, "", "")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = Finalize()
+	err = log.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 func TestFinalize(t *testing.T) {
-	err := Finalize()
+	err := log.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestCritical(t *testing.T) {
-	log_level := CRITICAL
+	log_level := log.CRITICAL
 
 	err := check1(log_level)
 	if err != nil {
@@ -127,7 +119,7 @@ func TestCritical(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	log_level := ERROR
+	log_level := log.ERROR
 
 	err := check1(log_level)
 	if err != nil {
@@ -141,7 +133,7 @@ func TestError(t *testing.T) {
 }
 
 func TestWarning(t *testing.T) {
-	log_level := WARNING
+	log_level := log.WARNING
 
 	err := check1(log_level)
 	if err != nil {
@@ -155,7 +147,7 @@ func TestWarning(t *testing.T) {
 }
 
 func TestInfo(t *testing.T) {
-	log_level := INFO
+	log_level := log.INFO
 
 	err := check1(log_level)
 	if err != nil {
@@ -169,7 +161,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestDebug(t *testing.T) {
-	log_level := DEBUG
+	log_level := log.DEBUG
 
 	err := check1(log_level)
 	if err != nil {
@@ -183,29 +175,29 @@ func TestDebug(t *testing.T) {
 }
 
 func TestFlush(t *testing.T) {
-	Flush()
+	log.Flush()
 }
 
 func TestToIntLevel(t *testing.T) {
-	level, err := ToIntLevel("DEBUG")
+	level, err := log.ToIntLevel("DEBUG")
 	if err != nil {
 		t.Error(err)
 	}
-	if level != DEBUG {
+	if level != log.DEBUG {
 		t.Error("ToIntLevel fail")
 	}
 
 	invalidLevel := "ABC"
-	level, err = ToIntLevel(invalidLevel)
+	level, err = log.ToIntLevel(invalidLevel)
 	if level != -1 || err.Error() != "invalid level - level : ("+invalidLevel+")" {
 		t.Error("ToIntLevel fail")
 	}
 }
 
 func TestGetSetLevel(t *testing.T) {
-	for i := CRITICAL; i <= DEBUG; i++ {
-		SetLevel(i)
-		if GetLevel() != i {
+	for i := log.CRITICAL; i <= log.DEBUG; i++ {
+		log.SetLevel(i)
+		if log.GetLevel() != i {
 			t.Errorf("invalid GetLevel() - (%d)", i)
 		}
 	}
@@ -215,22 +207,22 @@ func TestGetFileName(t *testing.T) {
 	outputPath := t.TempDir()
 	fileNamePrefix := "test"
 
-	if GetFileName() != "" {
-		t.Errorf("invalid file name - fileName : (%s)", GetFileName())
+	if log.GetFileName() != "" {
+		t.Errorf("invalid file name - fileName : (%s)", log.GetFileName())
 	}
 
-	err := Initialize(DEBUG, outputPath, fileNamePrefix)
+	err := log.Initialize(log.DEBUG, outputPath, fileNamePrefix)
 	if err != nil {
 		t.Error(err)
 	}
 
-	fileName := GetFileName()
+	fileName := log.GetFileName()
 	compare := outputPath + "/" + fileNamePrefix + "_" + time.Now().Format("20060102") + ".log"
 	if fileName != compare {
 		t.Errorf("invalid file name - fileName : (%s), compare : (%s", fileName, compare)
 	}
 
-	err = Finalize()
+	err = log.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
