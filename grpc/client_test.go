@@ -1,12 +1,14 @@
-package grpc
+package grpc_test
 
 import (
-	"github.com/heaven-chp/common-library-go/grpc/sample"
 	"testing"
+
+	"github.com/heaven-chp/common-library-go/grpc"
+	"github.com/heaven-chp/common-library-go/grpc/sample"
 )
 
 func TestGetConnection(t *testing.T) {
-	var server Server
+	var server grpc.Server
 	err := server.Initialize("127.0.0.1:50051", &sample.Server{})
 	if err != nil {
 		t.Error(err)
@@ -14,7 +16,7 @@ func TestGetConnection(t *testing.T) {
 
 	go server.Run()
 
-	connection, err := GetConnection("127.0.0.1:50051")
+	connection, err := grpc.GetConnection("127.0.0.1:50051")
 	if err != nil {
 		t.Error(err)
 	}

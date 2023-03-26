@@ -1,11 +1,13 @@
-package json
+package json_test
 
 import (
 	"errors"
 	"fmt"
-	"github.com/heaven-chp/common-library-go/file"
 	"strings"
 	"testing"
+
+	"github.com/heaven-chp/common-library-go/file"
+	"github.com/heaven-chp/common-library-go/json"
 )
 
 type test1Struct struct {
@@ -88,7 +90,7 @@ func checkTestData(sampleStruct sampleStruct) error {
 
 func TestToString(t *testing.T) {
 	sampleStruct := getTestData()
-	output, err := ToString(sampleStruct)
+	output, err := json.ToString(sampleStruct)
 	if err != nil {
 		t.Error(err)
 	}
@@ -110,7 +112,7 @@ func TestToString(t *testing.T) {
 func TestToStringIndent(t *testing.T) {
 	sampleStruct := getTestData()
 
-	output, err := ToStringIndent(sampleStruct, "", "\t")
+	output, err := json.ToStringIndent(sampleStruct, "", "\t")
 	if err != nil {
 		t.Error(err)
 	}
@@ -133,7 +135,7 @@ func TestToStructFromString(t *testing.T) {
 	}
 
 	var sampleStruct sampleStruct
-	err = ToStructFromString(strings.Join(jsonData, ""), &sampleStruct)
+	err = json.ToStructFromString(strings.Join(jsonData, ""), &sampleStruct)
 	if err != nil {
 		t.Error(err)
 	}
@@ -147,12 +149,12 @@ func TestToStructFromString(t *testing.T) {
 func TestToStructFromFile(t *testing.T) {
 	var sampleStruct sampleStruct
 
-	err := ToStructFromFile("./no_such_file", &sampleStruct)
-	if err.Error() != "no such file - (./no_such_file)" {
+	err := json.ToStructFromFile("./no_such_file", &sampleStruct)
+	if err.Error() != "open ./no_such_file: no such file or directory" {
 		t.Error(err)
 	}
 
-	err = ToStructFromFile("./sample.json", &sampleStruct)
+	err = json.ToStructFromFile("./sample.json", &sampleStruct)
 	if err != nil {
 		t.Error(err)
 	}

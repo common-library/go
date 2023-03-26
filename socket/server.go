@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"time"
 )
 
 // Server is object that provides server infomation.
@@ -51,23 +52,17 @@ func (server *Server) Finalize() error {
 
 	if server.channel != nil {
 		for len(server.channel) != 0 {
-			var client Client = <-server.channel
-
-			server.jobFunc(client)
-
-			client.Close()
+			time.Sleep(time.Millisecond)
 		}
 	}
 
-	if server.listener != nil {
-		err := server.listener.Close()
-		server.listener = nil
-		if err != nil {
-			return err
-		}
+	if server.listener == nil {
+		return nil
 	}
 
-	return nil
+	err := server.listener.Close()
+	server.listener = nil
+	return err
 }
 
 // Run is server run.
@@ -94,18 +89,17 @@ func (server *Server) Run() error {
 }
 
 func (server *Server) listen() error {
-	if len(server.network) == 0 || len(server.address) == 0 {
-		return errors.New("please call Initialize first")
+	if len(server.network) == 0 {
+		return errors.New("invalid network")
 	}
 
-	listener, err := net.Listen(server.network, server.address)
-	if err != nil {
-		return err
+	if len(server.address) == 0 {
+		return errors.New("invalid address")
 	}
 
-	server.listener = listener
-
-	return nil
+	var err error
+	server.listener, err = net.Listen(server.network, server.address)
+	return err
 }
 
 func (server *Server) accept() (Client, error) {
@@ -114,13 +108,7 @@ func (server *Server) accept() (Client, error) {
 	}
 
 	connnetion, err := server.listener.Accept()
-	if err != nil {
-		return Client{}, err
-	}
-
-	client := Client{connnetion}
-
-	return client, nil
+	return Client{connnetion}, err
 }
 
 func (server *Server) job() {

@@ -3,8 +3,9 @@ module github.com/heaven-chp/common-library-go
 go 1.15
 
 require (
-	github.com/elastic/elastic-transport-go/v8 v8.0.0-alpha
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20211217154309-2c4492af575e
+	github.com/elastic/elastic-transport-go/v8 v8.1.0
+	github.com/elastic/go-elasticsearch/v7 v7.17.7
+	github.com/elastic/go-elasticsearch/v8 v8.6.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang/protobuf v1.5.3
 	github.com/gomodule/redigo v1.8.9

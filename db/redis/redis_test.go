@@ -1,12 +1,14 @@
-package redis
+package redis_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/heaven-chp/common-library-go/db/redis"
 )
 
 func TestInitialize(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Initialize("", "127.0.0.1:6378", 3, 240)
 	if err.Error() != "dial tcp 127.0.0.1:6378: connect: connection refused" {
@@ -25,7 +27,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestFinalize(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Finalize()
 	if err != nil {
@@ -34,7 +36,7 @@ func TestFinalize(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Ping()
 	if err.Error() != "please call Initialize first" {
@@ -58,7 +60,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Select(0)
 	if err.Error() != "please call Initialize first" {
@@ -87,7 +89,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	_, err := redis.Get("key")
 	if err.Error() != "please call Initialize first" {
@@ -116,7 +118,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Set("key", "value")
 	if err.Error() != "please call Initialize first" {
@@ -153,7 +155,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestSetex(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Setex("key", 2, "value")
 	if err.Error() != "please call Initialize first" {
@@ -202,7 +204,7 @@ func TestSetex(t *testing.T) {
 	}
 }
 func TestMGet(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	_, err := redis.MGet("key1", "key2")
 	if err.Error() != "please call Initialize first" {
@@ -225,7 +227,7 @@ func TestMGet(t *testing.T) {
 }
 
 func TestMSet(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.MSet("key1", "value1", "key2", "value2")
 	if err.Error() != "please call Initialize first" {
@@ -270,7 +272,7 @@ func TestMSet(t *testing.T) {
 }
 
 func TestDel(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Del("key")
 	if err.Error() != "please call Initialize first" {
@@ -304,7 +306,7 @@ func TestDel(t *testing.T) {
 }
 
 func TestFlushDB(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.FlushDB()
 	if err.Error() != "please call Initialize first" {
@@ -349,7 +351,7 @@ func TestFlushDB(t *testing.T) {
 }
 
 func TestFlushAll(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.FlushAll()
 	if err.Error() != "please call Initialize first" {
@@ -394,7 +396,7 @@ func TestFlushAll(t *testing.T) {
 }
 
 func TestTtl(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	ttl, err := redis.Ttl("key")
 	if err.Error() != "please call Initialize first" {
@@ -457,7 +459,7 @@ func TestTtl(t *testing.T) {
 }
 
 func TestInfo(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	_, err := redis.Info("ALL")
 	if err.Error() != "please call Initialize first" {
@@ -485,7 +487,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestDBsize(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	keyCount, err := redis.DBsize()
 	if keyCount != -1 || err.Error() != "please call Initialize first" {
@@ -527,7 +529,7 @@ func TestDBsize(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	existsKey, err := redis.Exists("key")
 	if err.Error() != "please call Initialize first" {
@@ -587,7 +589,7 @@ func TestExists(t *testing.T) {
 	}
 }
 func TestRename(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	err := redis.Rename("key", "key_rename")
 	if err.Error() != "please call Initialize first" {
@@ -629,7 +631,7 @@ func TestRename(t *testing.T) {
 }
 
 func TestRandomKey(t *testing.T) {
-	var redis Redis
+	var redis redis.Redis
 
 	key, err := redis.RandomKey()
 	if err.Error() != "please call Initialize first" {

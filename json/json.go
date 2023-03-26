@@ -3,8 +3,9 @@ package json
 
 import (
 	"encoding/json"
-	"github.com/heaven-chp/common-library-go/file"
 	"strings"
+
+	"github.com/heaven-chp/common-library-go/file"
 )
 
 // ToString is convert struct to json.
@@ -12,11 +13,7 @@ import (
 // ex) output, err := ToString(testStruct)
 func ToString(input interface{}) (string, error) {
 	output, err := json.Marshal(input)
-	if err != nil {
-		return "", err
-	}
-
-	return string(output), nil
+	return string(output), err
 }
 
 // ToStringIndent is convert the structto json by apply prefix and indent.
@@ -24,11 +21,7 @@ func ToString(input interface{}) (string, error) {
 // ex) output, err := ToStringIndent(testStruct, "", "\t")
 func ToStringIndent(input interface{}, prefix string, indent string) (string, error) {
 	output, err := json.MarshalIndent(input, prefix, indent)
-	if err != nil {
-		return "", err
-	}
-
-	return string(output), nil
+	return string(output), err
 }
 
 // ToStructFromString is convert json string to struct.

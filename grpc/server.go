@@ -5,8 +5,9 @@ package grpc
 
 import (
 	"errors"
-	"google.golang.org/grpc"
 	"net"
+
+	"google.golang.org/grpc"
 )
 
 type serverDetail interface {

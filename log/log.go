@@ -62,16 +62,19 @@ func logging() {
 // log level priority : CRITICAL < ERROR < WARNING < INFO < DEBUG
 //
 // ex 1)
-//   log.Initialize(log.DEBUG, "./log", "")
-//   // filename : ./log/20200630.log
+//
+//	log.Initialize(log.DEBUG, "./log", "")
+//	// filename : ./log/20200630.log
 //
 // ex 2)
-//    log.Initialize(log.DEBUG, "./log", "abc")
-//    // filename : ./log/abc_20200630.log
+//
+//	log.Initialize(log.DEBUG, "./log", "abc")
+//	// filename : ./log/abc_20200630.log
 //
 // ex 3)
-//   log.Initialize(log.DEBUG, "", "")
-//   // standard output
+//
+//	log.Initialize(log.DEBUG, "", "")
+//	// standard output
 func Initialize(level int, outputPath string, fileNamePrefix string) error {
 	mutex.Lock()
 	defer mutex.Unlock()

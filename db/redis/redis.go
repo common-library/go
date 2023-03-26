@@ -5,9 +5,10 @@ package redis
 
 import (
 	"errors"
-	redigo_redis "github.com/gomodule/redigo/redis"
 	"strings"
 	"time"
+
+	redigo_redis "github.com/gomodule/redigo/redis"
 )
 
 // Redis is object that provides redis interface.
@@ -37,11 +38,7 @@ func (redis *Redis) Initialize(password string, address string, maxConnection in
 		IdleTimeout: time.Duration(timeout) * time.Second,
 
 		Dial: func() (redigo_redis.Conn, error) {
-			connection, err := redigo_redis.Dial("tcp", address)
-			if err != nil {
-				return nil, err
-			}
-			return connection, err
+			return redigo_redis.Dial("tcp", address)
 		},
 		TestOnBorrow: func(connection redigo_redis.Conn, t time.Time) error {
 			_, err := connection.Do("PING")
@@ -57,11 +54,7 @@ func (redis *Redis) Initialize(password string, address string, maxConnection in
 	}
 
 	_, err = redis.redisConnection.Do("PING")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Finalize is finalize.

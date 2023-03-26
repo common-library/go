@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -24,9 +25,9 @@ type MySQL struct {
 //
 // ex)
 //
-//   err := mysql.Initialize(`id:password@tcp(address)/table`, 1)
+//	err := mysql.Initialize(`id:password@tcp(address)/table`, 1)
 //
-//   defer mysql.Finalize()
+//	defer mysql.Finalize()
 func (this *MySQL) Initialize(dsn string, maxOpenConnection int) error {
 	this.Finalize()
 
@@ -45,19 +46,17 @@ func (this *MySQL) Initialize(dsn string, maxOpenConnection int) error {
 //
 // ex)
 //
-//   err := mysql.Initialize(`id:password@tcp(address)/table`, 1)
+//	err := mysql.Initialize(`id:password@tcp(address)/table`, 1)
 //
-//   defer mysql.Finalize()
+//	defer mysql.Finalize()
 func (this *MySQL) Finalize() error {
-	if this.connection != nil {
-		err := this.connection.Close()
-		if err != nil {
-			return err
-		}
-		this.connection = nil
+	if this.connection == nil {
+		return nil
 	}
 
-	return nil
+	err := this.connection.Close()
+	this.connection = nil
+	return err
 }
 
 // Query is executes a query and returns the result rows.
@@ -68,10 +67,10 @@ func (this *MySQL) Finalize() error {
 //
 // defer rows.Close()
 //
-// for rows.Next() {
-//     field := 0
-//     err := rows.Scan(&field)
-// }
+//	for rows.Next() {
+//	    field := 0
+//	    err := rows.Scan(&field)
+//	}
 func (this *MySQL) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	if this.connection == nil {
 		return nil, errors.New(fmt.Sprintf("please call Initialize first"))
@@ -107,11 +106,7 @@ func (this *MySQL) Execute(query string, args ...interface{}) error {
 	}
 
 	_, err = result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // SetPrepare is set prepared statement.
@@ -131,16 +126,16 @@ func (this *MySQL) SetPrepare(query string) error {
 //
 // ex)
 //
-//   err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
+//	err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
 //
-//   rows, err := mysql.QueryPrepare("value")
+//	rows, err := mysql.QueryPrepare("value")
 //
-//   defer rows.Close()
+//	defer rows.Close()
 //
-//   for rows.Next() {
-//       field := 0
-//       err := rows.Scan(&field)
-//   }
+//	for rows.Next() {
+//	    field := 0
+//	    err := rows.Scan(&field)
+//	}
 func (this *MySQL) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
 	if this.stmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepare first"))
@@ -153,13 +148,13 @@ func (this *MySQL) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
 //
 // ex)
 //
-//   err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
+//	err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
 //
-//   row, err := mysql.QueryRowPrepare("value")
+//	row, err := mysql.QueryRowPrepare("value")
 //
-//   field := 0
+//	field := 0
 //
-//   err := row.Scan(&field)
+//	err := row.Scan(&field)
 func (this *MySQL) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
 	if this.stmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepare first"))
@@ -178,9 +173,9 @@ func (this *MySQL) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
 //
 // ex)
 //
-//   err := mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
+//	err := mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 //
-//   err = mysql.ExecutePrepare(2)
+//	err = mysql.ExecutePrepare(2)
 func (this *MySQL) ExecutePrepare(args ...interface{}) error {
 	if this.stmt == nil {
 		return errors.New(fmt.Sprintf("please call SetPrepare first"))
@@ -196,11 +191,11 @@ func (this *MySQL) ExecutePrepare(args ...interface{}) error {
 //
 // ex)
 //
-//   err := mysql.BeginTransaction()
+//	err := mysql.BeginTransaction()
 //
-//   err = mysql.ExecuteTransaction(`...`)
+//	err = mysql.ExecuteTransaction(`...`)
 //
-//   err = mysql.EndTransaction(err)
+//	err = mysql.EndTransaction(err)
 func (this *MySQL) BeginTransaction() error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
@@ -218,11 +213,11 @@ func (this *MySQL) BeginTransaction() error {
 //
 // ex)
 //
-//   err := mysql.BeginTransaction()
+//	err := mysql.BeginTransaction()
 //
-//   err = mysql.ExecuteTransaction(`...`)
+//	err = mysql.ExecuteTransaction(`...`)
 //
-//   err = mysql.EndTransaction(err)
+//	err = mysql.EndTransaction(err)
 func (this *MySQL) EndTransaction(err error) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
@@ -241,14 +236,14 @@ func (this *MySQL) EndTransaction(err error) error {
 //
 // ex 2)
 //
-//   rows, err := mysql.QueryTransaction(`SELECT field ... WHERE field=? ...;`, "value")
+//	rows, err := mysql.QueryTransaction(`SELECT field ... WHERE field=? ...;`, "value")
 //
-//   defer rows.Close()
+//	defer rows.Close()
 //
-//   for rows.Next() {
-//       field := 0
-//       err := rows.Scan(&field)
-//   }
+//	for rows.Next() {
+//	    field := 0
+//	    err := rows.Scan(&field)
+//	}
 func (this *MySQL) QueryTransaction(query string, args ...interface{}) (*sql.Rows, error) {
 	if this.tx == nil {
 		return nil, errors.New(fmt.Sprintf("please call BeginTransaction first"))
@@ -284,11 +279,7 @@ func (this *MySQL) ExecuteTransaction(query string, args ...interface{}) error {
 	}
 
 	_, err = result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // SetPrepareTransaction is set prepared statement.
@@ -308,16 +299,16 @@ func (this *MySQL) SetPrepareTransaction(query string) error {
 //
 // ex)
 //
-//   err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
+//	err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
 //
-//   rows, err := mysql.QueryPrepareTransaction("value")
+//	rows, err := mysql.QueryPrepareTransaction("value")
 //
-//   defer rows.Close()
+//	defer rows.Close()
 //
-//   for rows.Next() {
-//       field := 0
-//       err := rows.Scan(&field)
-//   }
+//	for rows.Next() {
+//	    field := 0
+//	    err := rows.Scan(&field)
+//	}
 func (this *MySQL) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, error) {
 	if this.txStmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
@@ -330,13 +321,13 @@ func (this *MySQL) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, erro
 //
 // ex)
 //
-//   err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
+//	err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
 //
-//   row, err := mysql.QueryRowPrepareTransaction("value")
+//	row, err := mysql.QueryRowPrepareTransaction("value")
 //
-//   field := 0
+//	field := 0
 //
-//   err := row.Scan(&field)
+//	err := row.Scan(&field)
 func (this *MySQL) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, error) {
 	if this.txStmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
@@ -355,9 +346,9 @@ func (this *MySQL) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, er
 //
 // ex)
 //
-//   err := mysql.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
+//	err := mysql.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
 //
-//   err = mysql.ExecutePrepareTransaction(2)
+//	err = mysql.ExecutePrepareTransaction(2)
 func (this *MySQL) ExecutePrepareTransaction(args ...interface{}) error {
 	if this.txStmt == nil {
 		return errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))

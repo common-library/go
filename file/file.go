@@ -3,7 +3,6 @@ package file
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 )
@@ -16,9 +15,6 @@ func Read(fileName string) ([]string, error) {
 
 	file, err := os.Open(fileName)
 	defer file.Close()
-	if os.IsNotExist(err) {
-		return nil, errors.New(fmt.Sprintf("no such file - (%s)", fileName))
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -27,11 +23,7 @@ func Read(fileName string) ([]string, error) {
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
-	if scanner.Err() != nil {
-		return nil, err
-	}
-
-	return lines, nil
+	return lines, scanner.Err()
 }
 
 // Write is write data to file.

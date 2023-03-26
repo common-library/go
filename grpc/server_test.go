@@ -1,12 +1,14 @@
-package grpc
+package grpc_test
 
 import (
-	"github.com/heaven-chp/common-library-go/grpc/sample"
 	"testing"
+
+	"github.com/heaven-chp/common-library-go/grpc"
+	"github.com/heaven-chp/common-library-go/grpc/sample"
 )
 
 func TestInitialize(t *testing.T) {
-	var server Server
+	var server grpc.Server
 
 	err := server.Initialize("1.1.1.1:50051", &sample.Server{})
 	if err.Error() != "listen tcp 1.1.1.1:50051: bind: cannot assign requested address" {
@@ -25,7 +27,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestFinalize(t *testing.T) {
-	var server Server
+	var server grpc.Server
 
 	err := server.Finalize()
 	if err != nil {
@@ -44,7 +46,7 @@ func TestFinalize(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	var server Server
+	var server grpc.Server
 
 	err := server.Run()
 	if err.Error() != "please call Initialize first" {
