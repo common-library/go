@@ -21,7 +21,7 @@ go get -u github.com/heaven-chp/common-library-go
 
 <br/>
 
-## Test
+## Test and Coverage
  - prepare
    - Elasticsearch
      - `docker run --name elasticsearch -d -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.17.9`
@@ -31,16 +31,13 @@ go get -u github.com/heaven-chp/common-library-go
      - `docker run --name redis -d -p 6379:6379 redis:7`
    - MySQL
      - `docker run --name mysql -e MYSQL_ROOT_PASSWORD=root -d -p 3306:3306 mysql:8.0.32`
- - run
+ - Test
    - `go clean -testcache && go test -cover ./...`
-
-<br/>
-
-## Coverage
- - make coverage file
-   - `go clean -testcache && go test -cover -coverprofile=coverage.out ./...`
- - convert coverage file to html file
-   - `go tool cover -html=./coverage.out -o ./coverage.html`
+ - Coverage
+   - make coverage file
+     - `go clean -testcache && go test -cover -coverprofile=coverage.out ./...`
+   - convert coverage file to html file
+     - `go tool cover -html=./coverage.out -o ./coverage.html`
 
 <br/>
 
