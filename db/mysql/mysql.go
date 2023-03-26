@@ -50,15 +50,13 @@ func (this *MySQL) Initialize(dsn string, maxOpenConnection int) error {
 //
 //	defer mysql.Finalize()
 func (this *MySQL) Finalize() error {
-	if this.connection != nil {
-		err := this.connection.Close()
-		if err != nil {
-			return err
-		}
-		this.connection = nil
+	if this.connection == nil {
+		return nil
 	}
 
-	return nil
+	err := this.connection.Close()
+	this.connection = nil
+	return err
 }
 
 // Query is executes a query and returns the result rows.
@@ -108,11 +106,7 @@ func (this *MySQL) Execute(query string, args ...interface{}) error {
 	}
 
 	_, err = result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // SetPrepare is set prepared statement.
@@ -285,11 +279,7 @@ func (this *MySQL) ExecuteTransaction(query string, args ...interface{}) error {
 	}
 
 	_, err = result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // SetPrepareTransaction is set prepared statement.

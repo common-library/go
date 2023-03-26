@@ -9,7 +9,7 @@ import (
 
 func TestRead(t *testing.T) {
 	_, err := file.Read("./no_such_file")
-	if err.Error() != "no such file - (./no_such_file)" {
+	if err.Error() != "open ./no_such_file: no such file or directory" {
 		t.Error(err)
 	}
 
@@ -32,7 +32,12 @@ func TestWrite(t *testing.T) {
 	flag := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 	const mode uint32 = 0600
 
-	err := file.Write(fileName, writeData, flag, mode)
+	err := file.Write(fileName, writeData, -1, mode)
+	if err.Error() != "open ./temp.txt: no such file or directory" {
+		t.Error(err)
+	}
+
+	err = file.Write(fileName, writeData, flag, mode)
 	if err != nil {
 		t.Error(err)
 	}

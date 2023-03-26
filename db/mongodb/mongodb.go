@@ -17,7 +17,7 @@ import (
 // Mongodb is object that provides mongodb interface.
 type Mongodb struct {
 	address string
-	timeout int
+	timeout uint64
 
 	ctx           context.Context
 	ctxCancelFunc context.CancelFunc
@@ -43,6 +43,7 @@ func (mongodb *Mongodb) connect() error {
 	}
 	mongodb.client = client
 
+	mongodb.ctx = context.TODO()
 	if mongodb.timeout > 0 {
 		mongodb.ctx, mongodb.ctxCancelFunc = context.WithTimeout(context.Background(), time.Duration(mongodb.timeout)*time.Second)
 	}
@@ -77,7 +78,7 @@ func (mongodb *Mongodb) disConnect() error {
 // Initialize is initialize.
 //
 // ex) err := mongodb.Initialize("localhost:27017", 10)
-func (mongodb *Mongodb) Initialize(address string, timeout int) error {
+func (mongodb *Mongodb) Initialize(address string, timeout uint64) error {
 	mongodb.address = address
 	mongodb.timeout = timeout
 

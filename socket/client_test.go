@@ -6,15 +6,17 @@ import (
 	"github.com/heaven-chp/common-library-go/socket"
 )
 
-const network string = "tcp"
-const address string = "127.0.0.1:22222"
+const networkClient string = "tcp"
+const addressClient string = "127.0.0.1:22222"
+const networkServer string = "tcp"
+const addressServer string = "127.0.0.1:11111"
 
 func TestConnect(t *testing.T) {
 	var client socket.Client
 	defer client.Close()
 
-	err := client.Connect(network, address)
-	if err.Error() != "dial tcp "+address+": connect: connection refused" {
+	err := client.Connect(networkClient, addressClient)
+	if err.Error() != "dial tcp "+addressClient+": connect: connection refused" {
 		t.Error(err)
 	}
 }
@@ -32,7 +34,7 @@ func TestReadWrite(t *testing.T) {
 
 	var server socket.Server
 
-	err := server.Initialize(networkServerTest, addressServerTest, 1024, jobFunc)
+	err := server.Initialize(networkServer, addressServer, 1024, jobFunc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -41,7 +43,7 @@ func TestReadWrite(t *testing.T) {
 
 	var client socket.Client
 	defer client.Close()
-	err = client.Connect(networkServerTest, addressServerTest)
+	err = client.Connect(networkServer, addressServer)
 	if err != nil {
 		t.Error(err)
 	}

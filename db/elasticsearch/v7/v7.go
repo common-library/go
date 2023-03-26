@@ -8,22 +8,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
-	"github.com/elastic/go-elasticsearch/v7"
-	"github.com/elastic/go-elasticsearch/v7/esapi"
-	"github.com/thedevsaddam/gojsonq/v2"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/elastic/elastic-transport-go/v8/elastictransport"
+	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"github.com/thedevsaddam/gojsonq/v2"
 )
 
 // Elasticsearch is object that provides elasticsearch interface.
 type Elasticsearch struct {
 	addresses []string
-	timeout   int
+	timeout   uint64
 
 	client *elasticsearch.Client
 }
@@ -31,7 +32,7 @@ type Elasticsearch struct {
 // Initialize is initialize.
 //
 // ex) err := elasticsearch.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
-func (this *Elasticsearch) Initialize(addresses []string, timeout int, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
+func (this *Elasticsearch) Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
 	this.addresses = addresses
 	this.timeout = timeout
 
@@ -55,11 +56,7 @@ func (this *Elasticsearch) Initialize(addresses []string, timeout int, cloudID, 
 
 	var err error
 	this.client, err = elasticsearch.NewClient(config)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Exists is checks if a document exists in the index.
@@ -429,11 +426,7 @@ func (this *Elasticsearch) Search(index, body string) (string, error) {
 	}
 
 	result, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(result), nil
+	return string(result), err
 }
 
 func (this *Elasticsearch) responseErrorToError(status string, reader io.Reader) error {

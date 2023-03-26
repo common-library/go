@@ -35,11 +35,7 @@ func (fileLog *fileLog) initialize(level int, outputPath string, fileNamePrefix 
 
 	options := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 	fileLog.file, err = os.OpenFile(fileLog.makeFileName(), options, os.FileMode(0644))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (fileLog *fileLog) finalize() error {

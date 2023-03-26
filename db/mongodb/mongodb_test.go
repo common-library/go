@@ -1,6 +1,7 @@
 package mongodb_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/heaven-chp/common-library-go/db/mongodb"
@@ -13,14 +14,24 @@ type TestStruct struct {
 }
 
 const address string = "localhost:27017"
-const timeout int = 3
+const timeout uint64 = 3
 const database_name string = "testDatabase"
 const collection_name string = "testCollection"
 
 func TestInitialize(t *testing.T) {
 	var mongodb mongodb.Mongodb
 
-	err := mongodb.Initialize(address, timeout)
+	err := mongodb.Initialize("invalid_address", timeout)
+	if strings.HasPrefix(err.Error(), "server selection error:") == false {
+		t.Error(err)
+	}
+
+	err = mongodb.Initialize(address, 0)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = mongodb.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}

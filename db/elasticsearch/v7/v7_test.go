@@ -11,7 +11,7 @@ import (
 )
 
 var addresses []string = []string{"http://127.0.0.1:9200"}
-var timeout int = 10
+var timeout uint64 = 10
 var index string = uuid.NewString()
 var documentId string = uuid.NewString()
 var template string = uuid.NewString()
@@ -99,7 +99,22 @@ func deletesTemplate(elasticsearch *v7.Elasticsearch) error {
 func TestInitialize(t *testing.T) {
 	elasticsearch := v7.Elasticsearch{}
 
-	err := initialize(&elasticsearch, addresses)
+	err := elasticsearch.Initialize(addresses, timeout, "", "", "", "", "", []byte("invalid"))
+	if err.Error() != "error creating transport: unable to add CA certificate" {
+		t.Error(err)
+	}
+
+	err = elasticsearch.Initialize(addresses, 0, "", "", "", "", "", []byte(""))
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = initialize(&elasticsearch, []string{"invalid_address"})
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = initialize(&elasticsearch, addresses)
 	if err != nil {
 		t.Error(err)
 	}
@@ -113,7 +128,7 @@ func TestExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -164,7 +179,7 @@ func TestIndex(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -210,7 +225,7 @@ func TestDelete(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -261,7 +276,7 @@ func TestDeleteByQuery(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -317,7 +332,7 @@ func TestIndicesExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -363,7 +378,7 @@ func TestIndicesCreate(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -409,7 +424,7 @@ func TestIndicesDelete(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -447,7 +462,7 @@ func TestIndicesExistsTemplate(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -493,7 +508,7 @@ func TestIndicesPutTemplate(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -539,7 +554,7 @@ func TestIndicesDeleteTemplate(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -585,7 +600,7 @@ func TestSearch(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -631,7 +646,7 @@ func TestIndicesForcemerge(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid address"})
+	err = initialize(&elasticsearch, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}

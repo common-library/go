@@ -1,7 +1,7 @@
 package elasticsearch
 
 type Elasticsearch interface {
-	Initialize(addresses []string, timeout int, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error
+	Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error
 
 	Exists(index, documentID string) (bool, error)
 

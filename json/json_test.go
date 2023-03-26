@@ -150,7 +150,7 @@ func TestToStructFromFile(t *testing.T) {
 	var sampleStruct sampleStruct
 
 	err := json.ToStructFromFile("./no_such_file", &sampleStruct)
-	if err.Error() != "no such file - (./no_such_file)" {
+	if err.Error() != "open ./no_such_file: no such file or directory" {
 		t.Error(err)
 	}
 
