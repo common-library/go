@@ -10,7 +10,7 @@ import (
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
-var addresses []string = []string{"http://127.0.0.1:9200"}
+var addresses []string = []string{"http://127.0.0.1:29200"}
 var timeout uint64 = 10
 var index string = uuid.NewString()
 var documentId string = uuid.NewString()
