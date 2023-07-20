@@ -3,16 +3,16 @@ package socket
 
 import (
 	"errors"
+	"io/ioutil"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // Server is object that provides server infomation.
 type Server struct {
-	isRun   bool
-	network string
-	address string
+	condition atomic.Bool
 
 	listener net.Listener
 	channel  chan Client
@@ -21,104 +21,95 @@ type Server struct {
 	jobWaitGroup sync.WaitGroup
 }
 
-// Initialize is initialize.
+// Start is start the server.
 //
-// ex) server.Initialize("tcp", "127.0.0.1:11111", 1024, func(client Client) {})
-func (server *Server) Initialize(network string, address string, clientPoolSize int, jobFunc func(client Client)) error {
-	server.Finalize()
+// ex) err := server.Start("tcp", "127.0.0.1:10000", 1024, func(client Client) {...})
+func (this *Server) Start(network string, address string, clientPoolSize int, jobFunc func(client Client)) error {
+	this.Stop()
 
-	server.isRun = true
-	server.network = network
-	server.address = address
-	server.channel = make(chan Client, clientPoolSize)
-	server.jobFunc = jobFunc
-
-	return server.listen()
-}
-
-// Finalize is finalize.
-//
-// server.Finalize()
-func (server *Server) Finalize() error {
-	server.isRun = false
-
-	var client Client
-	client.Connect(server.network, server.address)
-	client.Close()
-
-	server.jobWaitGroup.Add(1)
-	server.jobWaitGroup.Done()
-	server.jobWaitGroup.Wait()
-
-	if server.channel != nil {
-		for len(server.channel) != 0 {
-			time.Sleep(time.Millisecond)
-		}
+	if len(network) == 0 {
+		return errors.New("invalid network")
 	}
 
-	if server.listener == nil {
-		return nil
+	if len(address) == 0 {
+		return errors.New("invalid address")
 	}
 
-	err := server.listener.Close()
-	server.listener = nil
-	return err
-}
+	this.channel = make(chan Client, clientPoolSize)
+	this.jobFunc = jobFunc
 
-// Run is server run.
-//
-// Note that it waits until Finalize() is called.
-//
-// ex 1) server.Run()
-//
-// ex 2) go server.Run()
-func (server *Server) Run() error {
-	for server.isRun {
-		client, err := server.accept()
+	listener, err := net.Listen(network, address)
+	if err != nil {
+		return err
+	}
+	this.listener = listener
+
+	this.condition.Store(true)
+	for this.condition.Load() {
+		client, err := this.accept()
 		if err != nil {
-			return err
+			if this.condition.Load() {
+				ioutil.WriteFile("./temp.txt", []byte(err.Error()+"\r\n"), 0777)
+				return err
+			} else {
+				break
+			}
 		}
 
-		server.channel <- client
+		this.channel <- client
 
-		server.jobWaitGroup.Add(1)
-		go server.job()
+		this.jobWaitGroup.Add(1)
+		go this.job()
 	}
 
 	return nil
 }
 
-func (server *Server) listen() error {
-	if len(server.network) == 0 {
-		return errors.New("invalid network")
+// Stop is stop the server.
+//
+// ex) err := server.Stop()
+func (this *Server) Stop() error {
+	this.condition.Store(false)
+
+	this.jobWaitGroup.Wait()
+
+	if this.channel != nil {
+		for len(this.channel) != 0 {
+			time.Sleep(time.Millisecond)
+		}
+		this.channel = nil
 	}
 
-	if len(server.address) == 0 {
-		return errors.New("invalid address")
+	if this.listener != nil {
+		err := this.listener.Close()
+		this.listener = nil
+		if err != nil {
+			return err
+		}
 	}
 
-	var err error
-	server.listener, err = net.Listen(server.network, server.address)
-	return err
+	return nil
 }
 
-func (server *Server) accept() (Client, error) {
-	if server.listener == nil {
-		return Client{}, errors.New("please call Initialize first")
-	}
+// GetCondition is get the condition
+//
+// ex) condition := server.GetCondition()
+func (this *Server) GetCondition() bool {
+	return this.condition.Load()
+}
 
-	connnetion, err := server.listener.Accept()
+func (this *Server) accept() (Client, error) {
+	connnetion, err := this.listener.Accept()
 	return Client{connnetion}, err
 }
 
-func (server *Server) job() {
-	defer server.jobWaitGroup.Done()
+func (this *Server) job() {
+	defer this.jobWaitGroup.Done()
 
-	var client Client = <-server.channel
+	client := <-this.channel
+	defer client.Close()
 
-	if server.jobFunc != nil {
-		server.jobFunc(client)
+	if this.jobFunc != nil {
+		this.jobFunc(client)
 	}
-
-	client.Close()
 }

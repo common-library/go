@@ -12,14 +12,13 @@ type Client struct {
 
 // Connect is connect to the address.
 //
-// ex) client.Connect("127.0.0.1:22222")
-func (client *Client) Connect(network string, address string) error {
+// ex) err := client.Connect("tcp", "127.0.0.1:10000")
+func (this *Client) Connect(network string, address string) error {
 	connnetion, err := net.Dial(network, address)
 	if err != nil {
 		return err
 	}
-
-	client.connnetion = connnetion
+	this.connnetion = connnetion
 
 	return nil
 }
@@ -27,10 +26,10 @@ func (client *Client) Connect(network string, address string) error {
 // Read is read data from connection.
 //
 // ex) readData, err := client.Read(1024)
-func (client *Client) Read(recvSize int) (string, error) {
+func (this *Client) Read(recvSize int) (string, error) {
 	buffer := make([]byte, recvSize)
 
-	recvLen, err := client.connnetion.Read(buffer)
+	recvLen, err := this.connnetion.Read(buffer)
 	if err != nil {
 		return "", err
 	}
@@ -40,21 +39,21 @@ func (client *Client) Read(recvSize int) (string, error) {
 
 // Write is write data to connection.
 //
-// ex) serverClient.Write("example")
-func (client *Client) Write(data string) (int, error) {
-	return client.connnetion.Write([]byte(data))
+// ex) writeLen, err := client.Write("example")
+func (this *Client) Write(data string) (int, error) {
+	return this.connnetion.Write([]byte(data))
 }
 
 // Close is close the connection.
 //
-// ex) client.Close()
-func (client *Client) Close() error {
-	if client.connnetion == nil {
+// ex) err := client.Close()
+func (this *Client) Close() error {
+	if this.connnetion == nil {
 		return nil
 	}
 
-	err := client.connnetion.Close()
-	client.connnetion = nil
+	err := this.connnetion.Close()
+	this.connnetion = nil
 
 	return err
 }

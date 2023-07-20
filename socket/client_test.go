@@ -1,83 +1,145 @@
 package socket_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/heaven-chp/common-library-go/socket"
 )
 
-const networkClient string = "tcp"
-const addressClient string = "127.0.0.1:22222"
-const networkServer string = "tcp"
-const addressServer string = "127.0.0.1:11111"
-
 func TestConnect(t *testing.T) {
+	const network = "tcp"
+	const address = ":10001"
+
 	var client socket.Client
 	defer client.Close()
 
-	err := client.Connect(networkClient, addressClient)
-	if err.Error() != "dial tcp "+addressClient+": connect: connection refused" {
+	err := client.Connect("", address)
+	if err.Error() != "dial: unknown network " {
+		t.Error(err)
+	}
+
+	err = client.Connect("invalid", address)
+	if err.Error() != "dial invalid: unknown network invalid" {
+		t.Error(err)
+	}
+
+	err = client.Connect(network, "")
+	if err.Error() != "dial tcp: missing address" {
+		t.Error(err)
+	}
+
+	err = client.Connect(network, "127.0.0.1")
+	if err.Error() != "dial tcp: address 127.0.0.1: missing port in address" {
+		t.Error(err)
+	}
+
+	err = client.Connect(network, address)
+	if err.Error() != "dial tcp "+address+": connect: connection refused" {
+		t.Error(err)
+	}
+
+	err = client.Close()
+	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestReadWrite(t *testing.T) {
-	jobFunc := func(client socket.Client) {
-		const writeData string = "greeting"
+	const network = "tcp"
+	const address = ":10002"
+	const greeting = "greeting"
+	const prefixOfResponse = "[response] "
 
-		client.Write(writeData)
+	serverJob := func(client socket.Client) {
+		writeLen, err := client.Write(greeting)
+		if err != nil {
+			t.Error(err)
+		}
+		if writeLen != len(greeting) {
+			t.Errorf("invalid write - (%d)(%d)", writeLen, len(greeting))
+		}
 
-		readData, _ := client.Read(1024)
+		readData, err := client.Read(1024)
+		if err != nil {
+			t.Error(err)
+		}
 
-		client.Write(readData)
+		writeData := prefixOfResponse + readData
+		writeLen, err = client.Write(writeData)
+		if err != nil {
+			t.Error(err)
+		}
+		if writeLen != len(writeData) {
+			t.Errorf("invalid write - (%d)(%d)", writeLen, len(writeData))
+		}
 	}
 
-	var server socket.Server
+	server := socket.Server{}
 
-	err := server.Initialize(networkServer, addressServer, 1024, jobFunc)
+	go func() {
+		err := server.Start(network, address, 100, serverJob)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+	for server.GetCondition() == false {
+	}
+
+	clientJob := func(wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		client := socket.Client{}
+		defer client.Close()
+
+		err := client.Connect(network, address)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		readData, err := client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if readData != greeting {
+			t.Fatalf("invalid read - (%s)(%s)", readData, greeting)
+		}
+
+		writeData := "test"
+		writeLen, err := client.Write(writeData)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if writeLen != len(writeData) {
+			t.Fatalf("invalid write - (%d)(%d)", writeLen, len(writeData))
+		}
+
+		readData, err = client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if readData != prefixOfResponse+writeData {
+			t.Fatalf("invalid read - (%s)(%s)", writeData, prefixOfResponse+readData)
+		}
+	}
+
+	wg := sync.WaitGroup{}
+	for i := 1; i <= 1000; i++ {
+		wg.Add(1)
+		go clientJob(&wg)
+	}
+	wg.Wait()
+
+	err := server.Stop()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
+}
 
-	go server.Run()
+func TestClose(t *testing.T) {
+	client := socket.Client{}
 
-	var client socket.Client
-	defer client.Close()
-	err = client.Connect(networkServer, addressServer)
-	if err != nil {
-		t.Error(err)
-	}
-
-	readData, err := client.Read(1024)
-	if err != nil {
-		t.Error(err)
-	}
-
-	var writeData string = "greeting"
-
-	if readData != writeData {
-		t.Errorf("read error - writeData : (%s), readData : (%s)", writeData, readData)
-	}
-
-	writeData = "12345"
-	writeLen, err := client.Write(writeData)
-	if err != nil {
-		t.Error(err)
-	}
-	if writeLen != len(writeData) {
-		t.Errorf("writeLen !=len(writeData) - writeLen : (%d), len(writeData) : (%d)", writeLen, len(writeData))
-	}
-
-	readData, err = client.Read(1024)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if readData != writeData {
-		t.Errorf("read error - writeData : (%s), readData : (%s)", writeData, readData)
-	}
-
-	err = server.Finalize()
+	err := client.Close()
 	if err != nil {
 		t.Error(err)
 	}
