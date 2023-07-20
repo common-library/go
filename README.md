@@ -23,14 +23,17 @@ go get -u github.com/heaven-chp/common-library-go
 
 ## Test and Coverage
  - prepare
-   - Elasticsearch
-     - `docker run --name elasticsearch -d -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.17.9`
+   - Elasticsearch v7
+     - `docker run --name elasticsearch-v7 -d -p 19200:9200 -p 19300:9300 -e discovery.type=single-node -e ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.10`
+   - Elasticsearch v8
+     - `docker network create elastic`
+     - `docker run --name elasticsearch-v8 --net elastic -d -p 29200:9200 -p 29300:9300 -e discovery.type=single-node -e ES_JAVA_OPTS="-Xms500m -Xmx500m" -e xpack.security.enabled=false elasticsearch:8.8.1`
    - MongoDB
-     - `docker run --name mongodb -d -p 27017:27017 mongo:6.0.5`
-   - Redis
-     - `docker run --name redis -d -p 6379:6379 redis:7`
+     - `docker run --name mongodb -d -p 27017:27017 mongo:6.0.8`
    - MySQL
-     - `docker run --name mysql -e MYSQL_ROOT_PASSWORD=root -d -p 3306:3306 mysql:8.0.32`
+     - `docker run --name mysql -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8.0.33`
+   - Redis
+     - `docker run --name redis -d -p 6379:6379 redis:7.0.12`
  - Test
    - `go clean -testcache && go test -cover ./...`
  - Coverage

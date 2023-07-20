@@ -2,120 +2,134 @@ package socket_test
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/heaven-chp/common-library-go/socket"
 )
 
-const network string = "tcp"
-const address string = "127.0.0.1:11111"
+func TestStart1(t *testing.T) {
+	const network = "tcp"
+	const address = ":10001"
 
-func TestInitialize(t *testing.T) {
-	var server socket.Server
-	defer server.Finalize()
+	server := socket.Server{}
 
-	err := server.Initialize("", address, 1024, nil)
+	err := server.Start("", address, 1024, nil)
 	if err.Error() != "invalid network" {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	err = server.Initialize(network, "", 1024, nil)
+	err = server.Start(network, "", 1024, nil)
 	if err.Error() != "invalid address" {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	err = server.Initialize(network, "invalid_address", 1024, nil)
+	err = server.Start(network, "invalid_address", 1024, nil)
 	if err.Error() != "listen tcp: address invalid_address: missing port in address" {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	err = server.Initialize(network, "invalid_address:1000", 1024, nil)
+	err = server.Start(network, "invalid_address:10000", 1024, nil)
 	if strings.HasPrefix(err.Error(), "listen tcp: lookup invalid_address on") == false {
-		t.Error(err)
-	}
-
-	err = server.Initialize(network, address, 1024, nil)
-	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 }
 
-func TestFinalize(t *testing.T) {
-	var server socket.Server
+func TestStart2(t *testing.T) {
+	const network = "tcp"
+	const address = ":10002"
+	const greeting = "greeting"
+	const prefixOfResponse = "[response] "
 
-	err := server.Finalize()
+	serverJob := func(client socket.Client) {
+		writeLen, err := client.Write(greeting)
+		if err != nil {
+			t.Error(err)
+		}
+		if writeLen != len(greeting) {
+			t.Errorf("invalid write - (%d)(%d)", writeLen, len(greeting))
+		}
+
+		readData, err := client.Read(1024)
+		if err != nil {
+			t.Error(err)
+		}
+
+		writeData := prefixOfResponse + readData
+		writeLen, err = client.Write(writeData)
+		if err != nil {
+			t.Error(err)
+		}
+		if writeLen != len(writeData) {
+			t.Errorf("invalid write - (%d)(%d)", writeLen, len(writeData))
+		}
+	}
+
+	server := socket.Server{}
+
+	go func() {
+		err := server.Start(network, address, 100, serverJob)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+	for server.GetCondition() == false {
+	}
+
+	clientJob := func(wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		client := socket.Client{}
+		defer client.Close()
+
+		err := client.Connect(network, address)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		readData, err := client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if readData != greeting {
+			t.Fatalf("invalid read - (%s)(%s)", readData, greeting)
+		}
+
+		writeData := "test"
+		writeLen, err := client.Write(writeData)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if writeLen != len(writeData) {
+			t.Fatalf("invalid write - (%d)(%d)", writeLen, len(writeData))
+		}
+
+		readData, err = client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if readData != prefixOfResponse+writeData {
+			t.Fatalf("invalid read - (%s)(%s)", writeData, prefixOfResponse+readData)
+		}
+	}
+
+	wg := sync.WaitGroup{}
+	for i := 1; i <= 1000; i++ {
+		wg.Add(1)
+		go clientJob(&wg)
+	}
+	wg.Wait()
+
+	err := server.Stop()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 }
 
-func TestRun(t *testing.T) {
-	jobFunc := func(client socket.Client) {
-		const writeData string = "greeting"
-
-		client.Write(writeData)
-
-		readData, _ := client.Read(1024)
-
-		client.Write(readData)
-	}
-
-	var server socket.Server
-
-	err := server.Initialize("", address, 1024, nil)
-	if err.Error() != "invalid network" {
-		t.Error(err)
-	}
-	err = server.Run()
-	if err.Error() != "please call Initialize first" {
-		t.Error(err)
-	}
-
-	err = server.Initialize(network, address, 1024, jobFunc)
+func TestStop(t *testing.T) {
+	server := socket.Server{}
+	err := server.Stop()
 	if err != nil {
-		t.Error(err)
-	}
-
-	go server.Run()
-
-	var client socket.Client
-	defer client.Close()
-	err = client.Connect(network, address)
-	if err != nil {
-		t.Error(err)
-	}
-
-	readData, err := client.Read(1024)
-	if err != nil {
-		t.Error(err)
-	}
-
-	var writeData string = "greeting"
-
-	if readData != writeData {
-		t.Errorf("read error - writeData : (%s), readData : (%s)", writeData, readData)
-	}
-
-	writeData = "12345"
-	writeLen, err := client.Write(writeData)
-	if err != nil {
-		t.Error(err)
-	}
-	if writeLen != len(writeData) {
-		t.Errorf("writeLen !=len(writeData) - writeLen : (%d), len(writeData) : (%d)", writeLen, len(writeData))
-	}
-
-	readData, err = client.Read(1024)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if readData != writeData {
-		t.Errorf("read error - writeData : (%s), readData : (%s)", writeData, readData)
-	}
-
-	err = server.Finalize()
-	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 }
