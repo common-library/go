@@ -16,14 +16,14 @@ type fileLog struct {
 	file *os.File
 }
 
-func (fileLog *fileLog) initialize(level int, outputPath string, fileNamePrefix string) error {
-	fileLog.level = level
-	fileLog.outputPath = outputPath
-	fileLog.fileNamePrefix = fileNamePrefix
+func (this *fileLog) initialize(level int, outputPath string, fileNamePrefix string) error {
+	this.finalize()
 
-	fileLog.finalize()
+	this.level = level
+	this.outputPath = outputPath
+	this.fileNamePrefix = fileNamePrefix
 
-	if len(fileLog.outputPath) == 0 {
+	if len(this.outputPath) == 0 {
 		return nil
 	}
 
@@ -34,14 +34,23 @@ func (fileLog *fileLog) initialize(level int, outputPath string, fileNamePrefix 
 	}
 
 	options := os.O_WRONLY | os.O_APPEND | os.O_CREATE
-	fileLog.file, err = os.OpenFile(fileLog.makeFileName(), options, os.FileMode(0644))
-	return err
+	file, err := os.OpenFile(this.makeFileName(), options, os.FileMode(0644))
+	if err != nil {
+		return err
+	}
+	this.file = file
+
+	return nil
 }
 
-func (fileLog *fileLog) finalize() error {
-	if fileLog.file != nil {
-		err := fileLog.file.Close()
-		fileLog.file = nil
+func (this *fileLog) finalize() error {
+	this.level = DEBUG
+	this.outputPath = ""
+	this.fileNamePrefix = ""
+
+	if this.file != nil {
+		err := this.file.Close()
+		this.file = nil
 
 		return err
 	}
@@ -49,15 +58,15 @@ func (fileLog *fileLog) finalize() error {
 	return nil
 }
 
-func (fileLog *fileLog) isShow(level int) bool {
-	if level > fileLog.level {
+func (this *fileLog) isShow(level int) bool {
+	if level > this.level {
 		return false
 	}
 
 	return true
 }
 
-func (fileLog *fileLog) makeContents(level int, format string, value ...interface{}) string {
+func (this *fileLog) makeContents(level int, format string, value ...interface{}) string {
 	t := time.Now()
 	contents := fmt.Sprintf(format, value...)
 
@@ -66,41 +75,41 @@ func (fileLog *fileLog) makeContents(level int, format string, value ...interfac
 	return contentsFinal
 }
 
-func (fileLog *fileLog) logging(level int, format string, value ...interface{}) {
-	if fileLog.isShow(level) == false {
+func (this *fileLog) logging(level int, format string, value ...interface{}) {
+	if this.isShow(level) == false {
 		return
 	}
 
-	if fileLog.file != nil && strings.Contains(fileLog.file.Name(), time.Now().Format("20060102")) == false {
-		err := fileLog.initialize(fileLog.level, fileLog.outputPath, fileLog.fileNamePrefix)
+	if this.file != nil && strings.Contains(this.file.Name(), time.Now().Format("20060102")) == false {
+		err := this.initialize(this.level, this.outputPath, this.fileNamePrefix)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 	}
 
-	contents := fileLog.makeContents(level, format, value...)
+	contents := this.makeContents(level, format, value...)
 
-	if len(singleton().outputPath) == 0 {
+	if this.file == nil {
 		fmt.Println(contents)
 		return
 	}
 
-	_, err := fmt.Fprintln(fileLog.file, contents)
+	_, err := fmt.Fprintln(this.file, contents)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (fileLog *fileLog) makeFileName() string {
+func (this *fileLog) makeFileName() string {
 	fileName := ""
 
-	if len(fileLog.outputPath) != 0 {
-		fileName = fileLog.outputPath + "/"
+	if len(this.outputPath) != 0 {
+		fileName = this.outputPath + "/"
 	}
 
-	if len(fileLog.fileNamePrefix) != 0 {
-		fileName += fileLog.fileNamePrefix + "_"
+	if len(this.fileNamePrefix) != 0 {
+		fileName += this.fileNamePrefix + "_"
 	}
 
 	fileName += time.Now().Format("20060102") + ".log"
@@ -108,17 +117,17 @@ func (fileLog *fileLog) makeFileName() string {
 	return fileName
 }
 
-func (fileLog *fileLog) getLevel() int {
-	return fileLog.level
+func (this *fileLog) getLevel() int {
+	return this.level
 }
 
-func (fileLog *fileLog) setLevel(level int) {
-	fileLog.level = level
+func (this *fileLog) setLevel(level int) {
+	this.level = level
 }
 
-func (fileLog *fileLog) getFileName() string {
-	if fileLog.file != nil {
-		return fileLog.file.Name()
+func (this *fileLog) getFileName() string {
+	if this.file != nil {
+		return this.file.Name()
 	}
 
 	return ""

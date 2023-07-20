@@ -105,6 +105,9 @@ func TestFinalize(t *testing.T) {
 }
 
 func TestCritical(t *testing.T) {
+	log.Critical("")
+	defer log.Critical("")
+
 	log_level := log.CRITICAL
 
 	err := check1(log_level)
@@ -119,6 +122,9 @@ func TestCritical(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
+	log.Error("")
+	defer log.Error("")
+
 	log_level := log.ERROR
 
 	err := check1(log_level)
@@ -133,6 +139,9 @@ func TestError(t *testing.T) {
 }
 
 func TestWarning(t *testing.T) {
+	log.Warning("")
+	defer log.Warning("")
+
 	log_level := log.WARNING
 
 	err := check1(log_level)
@@ -147,6 +156,9 @@ func TestWarning(t *testing.T) {
 }
 
 func TestInfo(t *testing.T) {
+	log.Info("")
+	defer log.Info("")
+
 	log_level := log.INFO
 
 	err := check1(log_level)
@@ -161,6 +173,9 @@ func TestInfo(t *testing.T) {
 }
 
 func TestDebug(t *testing.T) {
+	log.Debug("")
+	defer log.Debug("")
+
 	log_level := log.DEBUG
 
 	err := check1(log_level)
@@ -219,7 +234,7 @@ func TestGetFileName(t *testing.T) {
 	fileName := log.GetFileName()
 	compare := outputPath + "/" + fileNamePrefix + "_" + time.Now().Format("20060102") + ".log"
 	if fileName != compare {
-		t.Errorf("invalid file name - fileName : (%s), compare : (%s", fileName, compare)
+		t.Errorf("invalid file name - fileName : (%s), compare : (%s)", fileName, compare)
 	}
 
 	err = log.Finalize()
