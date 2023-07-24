@@ -1,6 +1,9 @@
 package socket_test
 
 import (
+	"math/rand"
+	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -19,7 +22,7 @@ type TestServer struct {
 
 func (this *TestServer) Start(t *testing.T) {
 	this.Network = "tcp"
-	this.Address = ":10002"
+	this.Address = ":" + strconv.Itoa(10000+rand.Intn(100))
 	this.Greeting = "greeting"
 	this.PrefixOfResponse = "[response] "
 
@@ -171,5 +174,99 @@ func TestClose(t *testing.T) {
 	err := client.Close()
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestGetLocalAddr(t *testing.T) {
+	testServer := TestServer{}
+	testServer.Start(t)
+	defer testServer.Stop(t)
+
+	client := socket.Client{}
+
+	addr := client.GetLocalAddr()
+	if addr != nil {
+		t.Errorf("invalid addr - (%#v)", addr)
+	}
+
+	err := client.Connect(testServer.Network, testServer.Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	{
+		_, err = client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = client.Write("test")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	addr = client.GetLocalAddr()
+	if addr == nil {
+		t.Errorf("invalid addr")
+	}
+
+	if addr.Network() != testServer.Network {
+		t.Errorf("invalid addr network - (%s)(%s)", addr.Network(), testServer.Network)
+	}
+}
+
+func TestGetRemoteAddr(t *testing.T) {
+	testServer := TestServer{}
+	testServer.Start(t)
+	defer testServer.Stop(t)
+
+	client := socket.Client{}
+
+	addr := client.GetRemoteAddr()
+	if addr != nil {
+		t.Fatalf("invalid addr - (%#v)", addr)
+	}
+
+	err := client.Connect(testServer.Network, testServer.Address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	{
+		_, err = client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = client.Write("test")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = client.Read(1024)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	addr = client.GetRemoteAddr()
+	if addr == nil {
+		t.Errorf("invalid addr")
+	}
+
+	if addr.Network() != testServer.Network {
+		t.Errorf("invalid addr network - (%s)(%s)", addr.Network(), testServer.Network)
+	}
+
+	if strings.HasSuffix(addr.String(), testServer.Address) == false {
+		t.Errorf("invalid addr string - (%s)(%s)", addr.String(), testServer.Address)
 	}
 }

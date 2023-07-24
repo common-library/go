@@ -66,3 +66,25 @@ func (this *Client) Close() error {
 
 	return err
 }
+
+// GetRemoteAddr is get the local Addr
+//
+// ex) addr := client.GetLocalAddr()
+func (this *Client) GetLocalAddr() net.Addr {
+	if this.connnetion == nil {
+		return nil
+	}
+
+	return this.connnetion.LocalAddr()
+}
+
+// GetRemoteAddr is get the remote Addr
+//
+// ex) addr := client.GetRemoteAddr()
+func (this *Client) GetRemoteAddr() net.Addr {
+	if this.connnetion == nil {
+		return nil
+	}
+
+	return this.connnetion.RemoteAddr()
+}
