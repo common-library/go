@@ -3,7 +3,6 @@ package socket
 
 import (
 	"errors"
-	"io/ioutil"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -14,17 +13,18 @@ import (
 type Server struct {
 	condition atomic.Bool
 
-	listener net.Listener
-	channel  chan Client
-	jobFunc  func(client Client)
+	listener          net.Listener
+	channel           chan Client
+	acceptSuccessFunc func(client Client)
+	acceptFailureFunc func(err error)
 
 	jobWaitGroup sync.WaitGroup
 }
 
 // Start is start the server.
 //
-// ex) err := server.Start("tcp", "127.0.0.1:10000", 1024, func(client Client) {...})
-func (this *Server) Start(network string, address string, clientPoolSize int, jobFunc func(client Client)) error {
+// ex) err := server.Start("tcp", "127.0.0.1:10000", 1024, func(client Client) {...}, func(err error) {...})
+func (this *Server) Start(network, address string, clientPoolSize int, acceptSuccessFunc func(client Client), acceptFailureFunc func(err error)) error {
 	this.Stop()
 
 	if len(network) == 0 {
@@ -36,7 +36,8 @@ func (this *Server) Start(network string, address string, clientPoolSize int, jo
 	}
 
 	this.channel = make(chan Client, clientPoolSize)
-	this.jobFunc = jobFunc
+	this.acceptSuccessFunc = acceptSuccessFunc
+	this.acceptFailureFunc = acceptFailureFunc
 
 	listener, err := net.Listen(network, address)
 	if err != nil {
@@ -44,23 +45,24 @@ func (this *Server) Start(network string, address string, clientPoolSize int, jo
 	}
 	this.listener = listener
 
-	this.condition.Store(true)
-	for this.condition.Load() {
-		client, err := this.accept()
-		if err != nil {
-			if this.condition.Load() {
-				ioutil.WriteFile("./temp.txt", []byte(err.Error()+"\r\n"), 0777)
-				return err
-			} else {
-				break
+	go func() {
+		this.condition.Store(true)
+		for this.condition.Load() {
+			client, err := this.accept()
+			if err != nil {
+				if this.condition.Load() && this.acceptFailureFunc != nil {
+					this.acceptFailureFunc(err)
+				}
+
+				continue
 			}
+
+			this.channel <- client
+
+			this.jobWaitGroup.Add(1)
+			go this.job()
 		}
-
-		this.channel <- client
-
-		this.jobWaitGroup.Add(1)
-		go this.job()
-	}
+	}()
 
 	return nil
 }
@@ -109,7 +111,7 @@ func (this *Server) job() {
 	client := <-this.channel
 	defer client.Close()
 
-	if this.jobFunc != nil {
-		this.jobFunc(client)
+	if this.acceptSuccessFunc != nil {
+		this.acceptSuccessFunc(client)
 	}
 }

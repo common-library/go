@@ -44,7 +44,7 @@ func (this *fileLog) initialize(level int, outputPath string, fileNamePrefix str
 }
 
 func (this *fileLog) finalize() error {
-	this.level = DEBUG
+	this.level = 0
 	this.outputPath = ""
 	this.fileNamePrefix = ""
 

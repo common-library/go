@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/heaven-chp/common-library-go/socket"
 )
@@ -14,22 +15,22 @@ func TestStart1(t *testing.T) {
 
 	server := socket.Server{}
 
-	err := server.Start("", address, 1024, nil)
+	err := server.Start("", address, 1024, nil, nil)
 	if err.Error() != "invalid network" {
 		t.Fatal(err)
 	}
 
-	err = server.Start(network, "", 1024, nil)
+	err = server.Start(network, "", 1024, nil, nil)
 	if err.Error() != "invalid address" {
 		t.Fatal(err)
 	}
 
-	err = server.Start(network, "invalid_address", 1024, nil)
+	err = server.Start(network, "invalid_address", 1024, nil, nil)
 	if err.Error() != "listen tcp: address invalid_address: missing port in address" {
 		t.Fatal(err)
 	}
 
-	err = server.Start(network, "invalid_address:10000", 1024, nil)
+	err = server.Start(network, "invalid_address:10000", 1024, nil, nil)
 	if strings.HasPrefix(err.Error(), "listen tcp: lookup invalid_address on") == false {
 		t.Fatal(err)
 	}
@@ -41,7 +42,7 @@ func TestStart2(t *testing.T) {
 	const greeting = "greeting"
 	const prefixOfResponse = "[response] "
 
-	serverJob := func(client socket.Client) {
+	acceptSuccessFunc := func(client socket.Client) {
 		writeLen, err := client.Write(greeting)
 		if err != nil {
 			t.Error(err)
@@ -65,15 +66,17 @@ func TestStart2(t *testing.T) {
 		}
 	}
 
-	server := socket.Server{}
+	acceptFailureFunc := func(err error) {
+		t.Error(err)
+	}
 
-	go func() {
-		err := server.Start(network, address, 100, serverJob)
-		if err != nil {
-			t.Error(err)
-		}
-	}()
+	server := socket.Server{}
+	err := server.Start(network, address, 100, acceptSuccessFunc, acceptFailureFunc)
+	if err != nil {
+		t.Error(err)
+	}
 	for server.GetCondition() == false {
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	clientJob := func(wg *sync.WaitGroup) {
@@ -120,7 +123,7 @@ func TestStart2(t *testing.T) {
 	}
 	wg.Wait()
 
-	err := server.Stop()
+	err = server.Stop()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,6 +131,7 @@ func TestStart2(t *testing.T) {
 
 func TestStop(t *testing.T) {
 	server := socket.Server{}
+
 	err := server.Stop()
 	if err != nil {
 		t.Fatal(err)
