@@ -10,6 +10,7 @@ go get -u github.com/heaven-chp/common-library-go
 ## Features
  - command-line-argument interface
  - db interface
+   - dynamodb
    - elasticsearch
    - mongodb
    - mysql
@@ -25,6 +26,8 @@ go get -u github.com/heaven-chp/common-library-go
 
 ## Test and Coverage
  - prepare
+   - dynamodb
+     - `docker run --name dynamodb -d -p 8000:8000 -e "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.0.0`
    - Elasticsearch v7
      - `docker run --name elasticsearch-v7 -d -p 19200:9200 -p 19300:9300 -e discovery.type=single-node -e ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.10`
    - Elasticsearch v8
