@@ -8,6 +8,7 @@ go get -u github.com/heaven-chp/common-library-go
 <br/>
 
 ## Features
+ - command-line-argument interface
  - db interface
    - elasticsearch
    - mongodb
