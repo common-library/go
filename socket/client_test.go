@@ -92,7 +92,17 @@ func TestReadWrite(t *testing.T) {
 		client := socket.Client{}
 		defer client.Close()
 
-		err := client.Connect(network, address)
+		_, err := client.Read(1024)
+		if err.Error() != "please call the Connect function first" {
+			t.Fatal(err)
+		}
+
+		_, err = client.Write("")
+		if err.Error() != "please call the Connect function first" {
+			t.Fatal(err)
+		}
+
+		err = client.Connect(network, address)
 		if err != nil {
 			t.Fatal(err)
 		}

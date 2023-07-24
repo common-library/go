@@ -2,6 +2,7 @@
 package socket
 
 import (
+	"errors"
 	"net"
 )
 
@@ -13,7 +14,7 @@ type Client struct {
 // Connect is connect to the address.
 //
 // ex) err := client.Connect("tcp", "127.0.0.1:10000")
-func (this *Client) Connect(network string, address string) error {
+func (this *Client) Connect(network, address string) error {
 	connnetion, err := net.Dial(network, address)
 	if err != nil {
 		return err
@@ -27,6 +28,10 @@ func (this *Client) Connect(network string, address string) error {
 //
 // ex) readData, err := client.Read(1024)
 func (this *Client) Read(recvSize int) (string, error) {
+	if this.connnetion == nil {
+		return "", errors.New("please call the Connect function first")
+	}
+
 	buffer := make([]byte, recvSize)
 
 	recvLen, err := this.connnetion.Read(buffer)
@@ -41,6 +46,10 @@ func (this *Client) Read(recvSize int) (string, error) {
 //
 // ex) writeLen, err := client.Write("example")
 func (this *Client) Write(data string) (int, error) {
+	if this.connnetion == nil {
+		return -1, errors.New("please call the Connect function first")
+	}
+
 	return this.connnetion.Write([]byte(data))
 }
 

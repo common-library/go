@@ -3,7 +3,6 @@ package socket
 
 import (
 	"errors"
-	"io/ioutil"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -49,7 +48,6 @@ func (this *Server) Start(network string, address string, clientPoolSize int, jo
 		client, err := this.accept()
 		if err != nil {
 			if this.condition.Load() {
-				ioutil.WriteFile("./temp.txt", []byte(err.Error()+"\r\n"), 0777)
 				return err
 			} else {
 				break
