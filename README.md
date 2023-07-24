@@ -18,6 +18,7 @@ go get -u github.com/heaven-chp/common-library-go
  - json interface
  - log interface
  - socket interface
+ - utility interface
 
 <br/>
 
