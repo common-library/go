@@ -17,6 +17,7 @@ go get -u github.com/heaven-chp/common-library-go
    - redis
  - file interface
  - grpc interface
+ - http interface
  - json interface
  - log interface
  - socket interface
