@@ -59,6 +59,6 @@ go get -u github.com/heaven-chp/common-library-go
    - `unzip protoc-3.20.3-linux-x86_64.zip -d protoc/`
    - `protoc/bin/protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative grpc/sample/sample.proto`
   - implement functions defined in IDL file
-    - implement to satisfy serverDetail interface
-    - see [grpc/sample/sample.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/sample.go)
-    - see [grpc/sample/sample_test.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/sample_test.go)
+    - implement to satisfy [implementServer interface](https://github.com/heaven-chp/common-library-go/blob/main/grpc/server.go)
+    - see [grpc/sample/Server.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/Server.go)
+    - see [grpc/sample/Server_test.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/Server_test.go)

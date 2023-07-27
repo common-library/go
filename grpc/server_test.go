@@ -1,66 +1,42 @@
 package grpc_test
 
 import (
+	"math/rand"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/heaven-chp/common-library-go/grpc"
 	"github.com/heaven-chp/common-library-go/grpc/sample"
 )
 
-func TestInitialize(t *testing.T) {
-	var server grpc.Server
+func TestStart(t *testing.T) {
+	server := grpc.Server{}
 
-	err := server.Initialize("1.1.1.1:50051", &sample.Server{})
-	if err.Error() != "listen tcp 1.1.1.1:50051: bind: cannot assign requested address" {
+	err := server.Start("1.1.1.1:10000", &sample.Server{})
+
+	if err.Error() != "listen tcp 1.1.1.1:10000: bind: cannot assign requested address" {
 		t.Error(err)
 	}
 
-	err = server.Initialize("127.0.0.1:50051", &sample.Server{})
-	if err != nil {
-		t.Error(err)
-	}
+	go func() {
+		err = server.Start(":"+strconv.Itoa(10000+rand.Intn(10000)), &sample.Server{})
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+	time.Sleep(200 * time.Millisecond)
 
-	err = server.Finalize()
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestFinalize(t *testing.T) {
-	var server grpc.Server
-
-	err := server.Finalize()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = server.Initialize("127.0.0.1:50051", &sample.Server{})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = server.Finalize()
+	err = server.Stop()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func TestRun(t *testing.T) {
-	var server grpc.Server
+func TestStop(t *testing.T) {
+	server := grpc.Server{}
 
-	err := server.Run()
-	if err.Error() != "please call Initialize first" {
-		t.Error(err)
-	}
-
-	err = server.Initialize("127.0.0.1:50051", &sample.Server{})
-	if err != nil {
-		t.Error(err)
-	}
-
-	go server.Run()
-
-	err = server.Finalize()
+	err := server.Stop()
 	if err != nil {
 		t.Error(err)
 	}

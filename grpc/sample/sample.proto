@@ -13,5 +13,6 @@ message Reply {
 }
 
 service Sample {
-    rpc Func(Request) returns (Reply) {}
+	rpc Func1(Request) returns (Reply) {}
+	rpc Func2(stream Request) returns (stream  Reply) {}
 }

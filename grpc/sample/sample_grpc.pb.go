@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Sample_Func_FullMethodName = "/Sample/Func"
+	Sample_Func1_FullMethodName = "/Sample/Func1"
+	Sample_Func2_FullMethodName = "/Sample/Func2"
 )
 
 // SampleClient is the client API for Sample service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SampleClient interface {
-	Func(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
+	Func1(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error)
+	Func2(ctx context.Context, opts ...grpc.CallOption) (Sample_Func2Client, error)
 }
 
 type sampleClient struct {
@@ -37,20 +39,52 @@ func NewSampleClient(cc grpc.ClientConnInterface) SampleClient {
 	return &sampleClient{cc}
 }
 
-func (c *sampleClient) Func(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
+func (c *sampleClient) Func1(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Reply, error) {
 	out := new(Reply)
-	err := c.cc.Invoke(ctx, Sample_Func_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Sample_Func1_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
+func (c *sampleClient) Func2(ctx context.Context, opts ...grpc.CallOption) (Sample_Func2Client, error) {
+	stream, err := c.cc.NewStream(ctx, &Sample_ServiceDesc.Streams[0], Sample_Func2_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &sampleFunc2Client{stream}
+	return x, nil
+}
+
+type Sample_Func2Client interface {
+	Send(*Request) error
+	Recv() (*Reply, error)
+	grpc.ClientStream
+}
+
+type sampleFunc2Client struct {
+	grpc.ClientStream
+}
+
+func (x *sampleFunc2Client) Send(m *Request) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *sampleFunc2Client) Recv() (*Reply, error) {
+	m := new(Reply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // SampleServer is the server API for Sample service.
 // All implementations must embed UnimplementedSampleServer
 // for forward compatibility
 type SampleServer interface {
-	Func(context.Context, *Request) (*Reply, error)
+	Func1(context.Context, *Request) (*Reply, error)
+	Func2(Sample_Func2Server) error
 	mustEmbedUnimplementedSampleServer()
 }
 
@@ -58,8 +92,11 @@ type SampleServer interface {
 type UnimplementedSampleServer struct {
 }
 
-func (UnimplementedSampleServer) Func(context.Context, *Request) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Func not implemented")
+func (UnimplementedSampleServer) Func1(context.Context, *Request) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Func1 not implemented")
+}
+func (UnimplementedSampleServer) Func2(Sample_Func2Server) error {
+	return status.Errorf(codes.Unimplemented, "method Func2 not implemented")
 }
 func (UnimplementedSampleServer) mustEmbedUnimplementedSampleServer() {}
 
@@ -74,22 +111,48 @@ func RegisterSampleServer(s grpc.ServiceRegistrar, srv SampleServer) {
 	s.RegisterService(&Sample_ServiceDesc, srv)
 }
 
-func _Sample_Func_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Sample_Func1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SampleServer).Func(ctx, in)
+		return srv.(SampleServer).Func1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Sample_Func_FullMethodName,
+		FullMethod: Sample_Func1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SampleServer).Func(ctx, req.(*Request))
+		return srv.(SampleServer).Func1(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _Sample_Func2_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SampleServer).Func2(&sampleFunc2Server{stream})
+}
+
+type Sample_Func2Server interface {
+	Send(*Reply) error
+	Recv() (*Request, error)
+	grpc.ServerStream
+}
+
+type sampleFunc2Server struct {
+	grpc.ServerStream
+}
+
+func (x *sampleFunc2Server) Send(m *Reply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *sampleFunc2Server) Recv() (*Request, error) {
+	m := new(Request)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // Sample_ServiceDesc is the grpc.ServiceDesc for Sample service.
@@ -100,10 +163,17 @@ var Sample_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SampleServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Func",
-			Handler:    _Sample_Func_Handler,
+			MethodName: "Func1",
+			Handler:    _Sample_Func1_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Func2",
+			Handler:       _Sample_Func2_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "grpc/sample/sample.proto",
 }

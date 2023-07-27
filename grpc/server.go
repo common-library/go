@@ -4,78 +4,54 @@
 package grpc
 
 import (
-	"errors"
 	"net"
 
 	"google.golang.org/grpc"
 )
 
-type serverDetail interface {
+type implementServer interface {
 	RegisterServer(server *grpc.Server)
 }
 
 // Server is object that provides server common infomation.
 type Server struct {
-	address string
-
 	listener net.Listener
-
-	serverDetail serverDetail
 
 	grpcServer *grpc.Server
 }
 
-// Initialize is initialize.
+// Start is start the server.
 //
-// ex) server.Initialize("127.0.0.1:50051", &Sample.Server{})
-func (server *Server) Initialize(address string, serverDetail serverDetail) error {
-	server.address = address
-	server.serverDetail = serverDetail
+// ex) err := server.Start(":10000", &Sample.Server{})
+func (this *Server) Start(address string, server implementServer) error {
+	this.Stop()
 
-	var err error
-	server.listener, err = net.Listen("tcp", server.address)
+	this.grpcServer = grpc.NewServer()
+
+	server.RegisterServer(this.grpcServer)
+
+	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
 	}
+	this.listener = listener
 
-	server.grpcServer = grpc.NewServer()
-	if server.grpcServer == nil {
-		return errors.New("grpc.NewServer() fail")
-	}
-
-	server.serverDetail.RegisterServer(server.grpcServer)
-
-	return nil
+	return this.grpcServer.Serve(this.listener)
 }
 
-// Finalize is finalize.
+// Stop is stop the server.
 //
-// ex) server.Finalize()
-func (server *Server) Finalize() error {
-	if server.grpcServer != nil {
-		server.grpcServer.Stop()
-		server.grpcServer = nil
+// ex) err := server.Stop()
+func (this *Server) Stop() error {
+	if this.grpcServer != nil {
+		this.grpcServer.Stop()
+		this.grpcServer = nil
 	}
 
-	if server.listener != nil {
-		server.listener.Close()
-		server.listener = nil
+	if this.listener != nil {
+		this.listener.Close()
+		this.listener = nil
 	}
 
 	return nil
-}
-
-// Run is server run.
-//
-// Note that it waits until Finalize() is called.
-//
-// ex 1) server.Run()
-//
-// ex 2) go server.Run()
-func (server *Server) Run() error {
-	if server.grpcServer == nil {
-		return errors.New("please call Initialize first")
-	}
-
-	return server.grpcServer.Serve(server.listener)
 }
