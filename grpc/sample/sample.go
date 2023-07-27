@@ -9,6 +9,7 @@ import (
 
 // Server is struct that satisfies the serverDetail interface and implements the function defined in protobuf IDL.
 type Server struct {
+	UnimplementedSampleServer
 }
 
 // RegisterServer is function to register in grpc server.

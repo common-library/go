@@ -43,7 +43,7 @@ go get -u github.com/heaven-chp/common-library-go
    - `go clean -testcache && go test -cover ./...`
  - Coverage
    - make coverage file
-     - `go clean -testcache && go test -cover -coverprofile=coverage.out ./...`
+     - `go clean -testcache && go test -coverprofile=coverage.out -cover ./...`
    - convert coverage file to html file
      - `go tool cover -html=./coverage.out -o ./coverage.html`
 
@@ -53,11 +53,12 @@ go get -u github.com/heaven-chp/common-library-go
  - create protobuf IDL(Interface Definition Language) file
    - see [grpc/sample/sample.proto](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/sample.proto)
  - convert IDL file to code
-   - `wget https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip`
-   - `unzip protoc-3.12.3-linux-x86_64.zip -d bin/protoc`
-   - `go get -u google.golang.org/grpc`
-   - `go get -u github.com/golang/protobuf/protoc-gen-go`
-   - `./bin/protoc/bin/protoc src/github.com/heaven-chp/common-library-go/grpc/sample_server/sample.proto --go_out=plugins=grpc:src/github.com/heaven-chp/common-library-go/grpc/sample_server/ --plugin=bin/protoc-gen-go`
+   - `go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0`
+   - `go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0`
+   - `wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip`
+   - `unzip protoc-3.20.3-linux-x86_64.zip -d protoc/`
+   - `protoc/bin/protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative grpc/sample/sample.proto`
   - implement functions defined in IDL file
     - implement to satisfy serverDetail interface
     - see [grpc/sample/sample.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/sample.go)
+    - see [grpc/sample/sample_test.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/sample_test.go)
