@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/heaven-chp/common-library-go/http"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -108,4 +109,12 @@ func TestStop(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestSetRouter(t *testing.T) {
+	router := mux.NewRouter()
+
+	server := http.Server{}
+
+	server.SetRouter(router)
 }
