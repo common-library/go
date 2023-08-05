@@ -78,11 +78,15 @@ func (this *Server) Stop(shutdownTimeout uint64) error {
 		return nil
 	}
 
-	server := this.server
-	this.server = nil
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(shutdownTimeout)*time.Second)
 	defer cancel()
 
-	return server.Shutdown(ctx)
+	return this.server.Shutdown(ctx)
+}
+
+// SetRouter is set the router
+//
+// ex) server.SetRouter(router)
+func (this *Server) SetRouter(router *mux.Router) {
+	this.router = router
 }

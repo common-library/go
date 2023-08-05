@@ -20,6 +20,7 @@ go get -u github.com/heaven-chp/common-library-go
  - http interface
  - json interface
  - log interface
+ - long-polling interface
  - socket interface
  - utility interface
 

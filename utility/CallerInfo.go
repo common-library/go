@@ -20,8 +20,8 @@ type CallerInfo struct {
 // GetCallerInfo is get the caller information.
 //
 // ex) callerInfo, err := utility.GetCallerInfo()
-func GetCallerInfo() (CallerInfo, error) {
-	pc, file, line, ok := runtime.Caller(1)
+func GetCallerInfo(numberOfStackFramesToAscend int) (CallerInfo, error) {
+	pc, file, line, ok := runtime.Caller(numberOfStackFramesToAscend)
 	if ok == false {
 		return CallerInfo{}, errors.New("runtime.Caller() call fail")
 	}
