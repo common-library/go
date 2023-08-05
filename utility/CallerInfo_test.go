@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetCallerInfo(t *testing.T) {
-	callerInfo, err := utility.GetCallerInfo()
+	callerInfo, err := utility.GetCallerInfo(1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestGetCallerInfo(t *testing.T) {
 	}
 
 	{
-		callerInfo2, err := utility.GetCallerInfo()
+		callerInfo2, err := utility.GetCallerInfo(1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -38,14 +38,16 @@ func TestGetCallerInfo(t *testing.T) {
 		if callerInfo.GoroutineID != callerInfo2.GoroutineID {
 			t.Errorf("invalid goroutine id - (%d)", callerInfo.GoroutineID)
 		}
+	}
 
-		wg := sync.WaitGroup{}
+	{
+		wg := new(sync.WaitGroup)
 		goroutineID := 0
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			callerInfo, err := utility.GetCallerInfo()
+			callerInfo, err := utility.GetCallerInfo(1)
 			if err != nil {
 				t.Fatal(err)
 			}
