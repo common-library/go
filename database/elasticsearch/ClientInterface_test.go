@@ -8,7 +8,7 @@ import (
 	v8 "github.com/heaven-chp/common-library-go/database/elasticsearch/v8"
 )
 
-func TestInterface(t *testing.T) {
-	func(elasticsearch.Client) {}(&v7.Client{})
-	func(elasticsearch.Client) {}(&v8.Client{})
+func TestClientInterface(t *testing.T) {
+	func(elasticsearch.ClientInterface) {}(&v7.Client{})
+	func(elasticsearch.ClientInterface) {}(&v8.Client{})
 }

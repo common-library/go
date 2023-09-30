@@ -14,7 +14,7 @@ import (
 	aws_dynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/database/dynamodb"
+	"github.com/heaven-chp/common-library-go/aws/dynamodb"
 )
 
 var TABLE_NAME = strings.ReplaceAll(uuid.NewString(), "-", "")

@@ -8,9 +8,10 @@ go get -u github.com/heaven-chp/common-library-go
 <br/>
 
 ## Features
+ - aws interface
+   - Amazon DynamoDB
  - command-line-argument interface
  - database interface
-   - Amazon DynamoDB
    - Elasticsearch v7/v8
    - MongoDB
    - MySQL

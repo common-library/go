@@ -1,6 +1,6 @@
 package elasticsearch
 
-type Client interface {
+type ClientInterface interface {
 	Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error
 
 	Exists(index, documentID string) (bool, error)
