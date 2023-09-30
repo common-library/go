@@ -10,6 +10,7 @@ go get -u github.com/heaven-chp/common-library-go
 ## Features
  - aws interface
    - Amazon DynamoDB
+   - Amazon S3
  - command-line-argument interface
  - database interface
    - Elasticsearch v7/v8
@@ -42,6 +43,8 @@ go get -u github.com/heaven-chp/common-library-go
      - `docker run --name mysql -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8.0.33`
    - Redis
      - `docker run --name redis -d -p 6379:6379 redis:7.0.12`
+   - Amazon S3
+     - `docker run --name s3mock -d -p 9090:9090 -p 9191:9191 adobe/s3mock:3.1.0`
  - Test
    - `go clean -testcache && go test -cover ./...`
  - Coverage

@@ -33,6 +33,7 @@ jobs:
         docker run --name mongodb -d -p 27017:27017 mongo:6.0.8
         docker run --name mysql -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8.0.33
         docker run --name redis -d -p 6379:6379 redis:7.0.12
+        docker run --name s3mock -d -p 9090:9090 -p 9191:9191 adobe/s3mock:3.1.0
 
     - name: Test
       run: go clean -testcache && go test -coverprofile=coverage.out -cover ./...
