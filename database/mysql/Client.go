@@ -11,8 +11,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// MySQL is object that provides MySQL interface.
-type MySQL struct {
+// Client is object that provides MySQL interface.
+type Client struct {
 	tx     *sql.Tx
 	txStmt *sql.Stmt
 
@@ -25,16 +25,16 @@ type MySQL struct {
 //
 // ex)
 //
-//	err := mysql.Initialize(`id:password@tcp(address)/table`, 1)
+//	err := client.Initialize(`id:password@tcp(address)/table`, 1)
 //
-//	defer mysql.Finalize()
-func (this *MySQL) Initialize(dsn string, maxOpenConnection int) error {
+//	defer client.Finalize()
+func (this *Client) Initialize(dsn string, maxOpenConnection int) error {
 	this.Finalize()
 
-	var err error
-	this.connection, err = sql.Open("mysql", dsn)
-	if err != nil {
+	if connection, err := sql.Open("mysql", dsn); err != nil {
 		return err
+	} else {
+		this.connection = connection
 	}
 
 	this.connection.SetMaxOpenConns(maxOpenConnection)
@@ -46,24 +46,25 @@ func (this *MySQL) Initialize(dsn string, maxOpenConnection int) error {
 //
 // ex)
 //
-//	err := mysql.Initialize(`id:password@tcp(address)/table`, 1)
+//	err := client.Initialize(`id:password@tcp(address)/table`, 1)
 //
-//	defer mysql.Finalize()
-func (this *MySQL) Finalize() error {
+//	defer client.Finalize()
+func (this *Client) Finalize() error {
 	if this.connection == nil {
 		return nil
 	}
 
 	err := this.connection.Close()
 	this.connection = nil
+
 	return err
 }
 
 // Query is executes a query and returns the result rows.
 //
-// ex 1) rows, err := mysql.Query(`SELECT field ...;`)
+// ex 1) rows, err := client.Query(`SELECT field ...;`)
 //
-// ex 2) rows, err := mysql.Query(`SELECT field ... WHERE field=? ...;`, "value")
+// ex 2) rows, err := client.Query(`SELECT field ... WHERE field=? ...;`, "value")
 //
 // defer rows.Close()
 //
@@ -71,7 +72,7 @@ func (this *MySQL) Finalize() error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *MySQL) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (this *Client) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	if this.connection == nil {
 		return nil, errors.New(fmt.Sprintf("please call Initialize first"))
 	}
@@ -81,8 +82,8 @@ func (this *MySQL) Query(query string, args ...interface{}) (*sql.Rows, error) {
 
 // QueryRow is select row
 //
-// ex) err := mysql.QueryRow(`SELECT field ...;`, &field)
-func (this *MySQL) QueryRow(query string, result ...interface{}) error {
+// ex) err := client.QueryRow(`SELECT field ...;`, &field)
+func (this *Client) QueryRow(query string, result ...interface{}) error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
@@ -92,43 +93,47 @@ func (this *MySQL) QueryRow(query string, result ...interface{}) error {
 
 // Execute is executes a query.
 //
-// ex 1) err := mysql.Execute(`...`)
+// ex 1) err := client.Execute(`...`)
 //
-// ex 2) err := mysql.Execute(`... WHERE field=? ...;`, "value")
-func (this *MySQL) Execute(query string, args ...interface{}) error {
+// ex 2) err := client.Execute(`... WHERE field=? ...;`, "value")
+func (this *Client) Execute(query string, args ...interface{}) error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
 
-	result, err := this.connection.Exec(query, args...)
-	if err != nil {
+	if result, err := this.connection.Exec(query, args...); err != nil {
+		return err
+	} else if _, err = result.RowsAffected(); err != nil {
 		return err
 	}
 
-	_, err = result.RowsAffected()
-	return err
+	return nil
 }
 
 // SetPrepare is set prepared statement.
 //
-// ex) err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
-func (this *MySQL) SetPrepare(query string) error {
+// ex) err := client.SetPrepare(`SELECT field ... WHERE field=? ...;`)
+func (this *Client) SetPrepare(query string) error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
 
-	var err error
-	this.stmt, err = this.connection.Prepare(query)
-	return err
+	if stmt, err := this.connection.Prepare(query); err != nil {
+		return err
+	} else {
+		this.stmt = stmt
+	}
+
+	return nil
 }
 
 // QueryPrepare is query a prepared statement.
 //
 // ex)
 //
-//	err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
+//	err := client.SetPrepare(`SELECT field ... WHERE field=? ...;`)
 //
-//	rows, err := mysql.QueryPrepare("value")
+//	rows, err := client.QueryPrepare("value")
 //
 //	defer rows.Close()
 //
@@ -136,7 +141,7 @@ func (this *MySQL) SetPrepare(query string) error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *MySQL) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
+func (this *Client) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
 	if this.stmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepare first"))
 	}
@@ -148,35 +153,31 @@ func (this *MySQL) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
 //
 // ex)
 //
-//	err := mysql.SetPrepare(`SELECT field ... WHERE field=? ...;`)
+//	err := client.SetPrepare(`SELECT field ... WHERE field=? ...;`)
 //
-//	row, err := mysql.QueryRowPrepare("value")
+//	row, err := client.QueryRowPrepare("value")
 //
 //	field := 0
 //
 //	err := row.Scan(&field)
-func (this *MySQL) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
+func (this *Client) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
 	if this.stmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepare first"))
 	}
 
 	row := this.stmt.QueryRow(args...)
 
-	if row.Err() != nil {
-		return nil, row.Err()
-	}
-
-	return row, nil
+	return row, row.Err()
 }
 
 // ExecutePrepare is executes a prepared statement.
 //
 // ex)
 //
-//	err := mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
+//	err := client.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 //
-//	err = mysql.ExecutePrepare(2)
-func (this *MySQL) ExecutePrepare(args ...interface{}) error {
+//	err = client.ExecutePrepare(2)
+func (this *Client) ExecutePrepare(args ...interface{}) error {
 	if this.stmt == nil {
 		return errors.New(fmt.Sprintf("please call SetPrepare first"))
 	}
@@ -191,20 +192,23 @@ func (this *MySQL) ExecutePrepare(args ...interface{}) error {
 //
 // ex)
 //
-//	err := mysql.BeginTransaction()
+//	err := client.BeginTransaction()
 //
-//	err = mysql.ExecuteTransaction(`...`)
+//	err = client.ExecuteTransaction(`...`)
 //
-//	err = mysql.EndTransaction(err)
-func (this *MySQL) BeginTransaction() error {
+//	err = client.EndTransaction(err)
+func (this *Client) BeginTransaction() error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
 
-	var err error
-	this.tx, err = this.connection.Begin()
+	if tx, err := this.connection.Begin(); err != nil {
+		return err
+	} else {
+		this.tx = tx
+	}
 
-	return err
+	return nil
 }
 
 // EndTransaction is ends a transaction.
@@ -213,12 +217,12 @@ func (this *MySQL) BeginTransaction() error {
 //
 // ex)
 //
-//	err := mysql.BeginTransaction()
+//	err := client.BeginTransaction()
 //
-//	err = mysql.ExecuteTransaction(`...`)
+//	err = client.ExecuteTransaction(`...`)
 //
-//	err = mysql.EndTransaction(err)
-func (this *MySQL) EndTransaction(err error) error {
+//	err = client.EndTransaction(err)
+func (this *Client) EndTransaction(err error) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
@@ -232,11 +236,11 @@ func (this *MySQL) EndTransaction(err error) error {
 
 // QueryTransaction is executes a query and returns the result rows.
 //
-// ex 1) rows, err := mysql.QueryTransaction(`SELECT field ...;`)
+// ex 1) rows, err := client.QueryTransaction(`SELECT field ...;`)
 //
 // ex 2)
 //
-//	rows, err := mysql.QueryTransaction(`SELECT field ... WHERE field=? ...;`, "value")
+//	rows, err := client.QueryTransaction(`SELECT field ... WHERE field=? ...;`, "value")
 //
 //	defer rows.Close()
 //
@@ -244,7 +248,7 @@ func (this *MySQL) EndTransaction(err error) error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *MySQL) QueryTransaction(query string, args ...interface{}) (*sql.Rows, error) {
+func (this *Client) QueryTransaction(query string, args ...interface{}) (*sql.Rows, error) {
 	if this.tx == nil {
 		return nil, errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
@@ -254,8 +258,8 @@ func (this *MySQL) QueryTransaction(query string, args ...interface{}) (*sql.Row
 
 // QueryRowTransaction is select row
 //
-// ex) err := mysql.QueryRowTransaction(`SELECT field ...;`, &field)
-func (this *MySQL) QueryRowTransaction(query string, result ...interface{}) error {
+// ex) err := client.QueryRowTransaction(`SELECT field ...;`, &field)
+func (this *Client) QueryRowTransaction(query string, result ...interface{}) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
@@ -265,43 +269,47 @@ func (this *MySQL) QueryRowTransaction(query string, result ...interface{}) erro
 
 // ExecuteTransaction is executes a query.
 //
-// ex 1) err := mysql.ExecuteTransaction(`...`)
+// ex 1) err := client.ExecuteTransaction(`...`)
 //
-// ex 2) err := mysql.ExecuteTransaction(`... WHERE field=? ...;`, "value")
-func (this *MySQL) ExecuteTransaction(query string, args ...interface{}) error {
+// ex 2) err := client.ExecuteTransaction(`... WHERE field=? ...;`, "value")
+func (this *Client) ExecuteTransaction(query string, args ...interface{}) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
 
-	result, err := this.tx.Exec(query, args...)
-	if err != nil {
+	if result, err := this.tx.Exec(query, args...); err != nil {
+		return err
+	} else if _, err = result.RowsAffected(); err != nil {
 		return err
 	}
 
-	_, err = result.RowsAffected()
-	return err
+	return nil
 }
 
 // SetPrepareTransaction is set prepared statement.
 //
-// ex) err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
-func (this *MySQL) SetPrepareTransaction(query string) error {
+// ex) err := client.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
+func (this *Client) SetPrepareTransaction(query string) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
 
-	var err error
-	this.txStmt, err = this.tx.Prepare(query)
-	return err
+	if txStmt, err := this.tx.Prepare(query); err != nil {
+		return err
+	} else {
+		this.txStmt = txStmt
+	}
+
+	return nil
 }
 
 // QueryPrepareTransaction is query a prepared statement.
 //
 // ex)
 //
-//	err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
+//	err := client.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
 //
-//	rows, err := mysql.QueryPrepareTransaction("value")
+//	rows, err := client.QueryPrepareTransaction("value")
 //
 //	defer rows.Close()
 //
@@ -309,7 +317,7 @@ func (this *MySQL) SetPrepareTransaction(query string) error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *MySQL) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, error) {
+func (this *Client) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, error) {
 	if this.txStmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
 	}
@@ -321,35 +329,31 @@ func (this *MySQL) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, erro
 //
 // ex)
 //
-//	err := mysql.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
+//	err := client.SetPrepareTransaction(`SELECT field ... WHERE field=? ...;`)
 //
-//	row, err := mysql.QueryRowPrepareTransaction("value")
+//	row, err := client.QueryRowPrepareTransaction("value")
 //
 //	field := 0
 //
 //	err := row.Scan(&field)
-func (this *MySQL) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, error) {
+func (this *Client) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, error) {
 	if this.txStmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
 	}
 
 	row := this.txStmt.QueryRow(args...)
 
-	if row.Err() != nil {
-		return nil, row.Err()
-	}
-
-	return row, nil
+	return row, row.Err()
 }
 
 // ExecutePrepareTransaction is executes a prepared statement.
 //
 // ex)
 //
-//	err := mysql.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
+//	err := client.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
 //
-//	err = mysql.ExecutePrepareTransaction(2)
-func (this *MySQL) ExecutePrepareTransaction(args ...interface{}) error {
+//	err = client.ExecutePrepareTransaction(2)
+func (this *Client) ExecutePrepareTransaction(args ...interface{}) error {
 	if this.txStmt == nil {
 		return errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
 	}
