@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -23,15 +24,18 @@ type Client struct {
 //
 // See dynamodb_test.go for a detailed example.
 //
-// ex) err := client.CreateClient(context.TODO(), ...)
-func (this *Client) CreateClient(ctx context.Context, optionFunctions ...func(*config.LoadOptions) error) error {
-	cfg, err := config.LoadDefaultConfig(ctx, optionFunctions...)
-	if err != nil {
-		return err
-	}
+// ex) err := client.CreateClient(context.TODO(), region, accessKey, secretAccessKey, sessionToken)
+func (this *Client) CreateClient(ctx context.Context, region, accessKey, secretAccessKey, sessionToken string, loadOptionFunctions ...func(*config.LoadOptions) error) error {
+	loadOptionFunctions = append(loadOptionFunctions, config.WithRegion(region))
+	loadOptionFunctions = append(loadOptionFunctions, config.WithCredentialsProvider(
+		credentials.NewStaticCredentialsProvider(accessKey, secretAccessKey, sessionToken)))
 
-	this.ctx = ctx
-	this.client = dynamodb.NewFromConfig(cfg)
+	if cfg, err := config.LoadDefaultConfig(ctx, loadOptionFunctions...); err != nil {
+		return err
+	} else {
+		this.ctx = ctx
+		this.client = dynamodb.NewFromConfig(cfg)
+	}
 
 	return nil
 }
@@ -49,9 +53,10 @@ func (this *Client) CreateTable(request *dynamodb.CreateTableInput, wait bool, w
 
 	if wait {
 		waiter := dynamodb.NewTableExistsWaiter(this.client)
-		err := waiter.Wait(this.ctx, &dynamodb.DescribeTableInput{
-			TableName: request.TableName}, time.Duration(waitTimeout)*time.Second)
-		if err != nil {
+		if err := waiter.Wait(
+			this.ctx,
+			&dynamodb.DescribeTableInput{TableName: request.TableName},
+			time.Duration(waitTimeout)*time.Second); err != nil {
 			return nil, err
 		}
 	}
@@ -99,9 +104,10 @@ func (this *Client) DeleteTable(tableName string, wait bool, waitTimeout uint64,
 
 	if wait {
 		waiter := dynamodb.NewTableNotExistsWaiter(this.client)
-		err := waiter.Wait(this.ctx, &dynamodb.DescribeTableInput{
-			TableName: aws.String(tableName)}, time.Duration(waitTimeout)*time.Second)
-		if err != nil {
+		if err := waiter.Wait(
+			this.ctx,
+			&dynamodb.DescribeTableInput{TableName: aws.String(tableName)},
+			time.Duration(waitTimeout)*time.Second); err != nil {
 			return nil, err
 		}
 	}
@@ -169,7 +175,10 @@ func (this *Client) Scan(request *dynamodb.ScanInput, optionFunctions ...func(*d
 //
 // ex) response, err := client.DescribeTimeToLive(TABLE_NAME)
 func (this *Client) DescribeTimeToLive(tableName string, optionFunctions ...func(*dynamodb.Options)) (*dynamodb.DescribeTimeToLiveOutput, error) {
-	return this.client.DescribeTimeToLive(this.ctx, &dynamodb.DescribeTimeToLiveInput{TableName: aws.String(tableName)}, optionFunctions...)
+	return this.client.DescribeTimeToLive(
+		this.ctx,
+		&dynamodb.DescribeTimeToLiveInput{TableName: aws.String(tableName)},
+		optionFunctions...)
 }
 
 // UpdateTimeToLive is update the TTL information.
@@ -178,7 +187,14 @@ func (this *Client) DescribeTimeToLive(tableName string, optionFunctions ...func
 //
 // ex) response, err := client.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true)
 func (this *Client) UpdateTimeToLive(tableName, attributeName string, enabled bool, optionFunctions ...func(*dynamodb.Options)) (*dynamodb.UpdateTimeToLiveOutput, error) {
-	return this.client.UpdateTimeToLive(this.ctx, &dynamodb.UpdateTimeToLiveInput{TableName: aws.String(tableName), TimeToLiveSpecification: &types.TimeToLiveSpecification{AttributeName: aws.String(attributeName), Enabled: aws.Bool(enabled)}}, optionFunctions...)
+	return this.client.UpdateTimeToLive(
+		this.ctx,
+		&dynamodb.UpdateTimeToLiveInput{
+			TableName: aws.String(tableName),
+			TimeToLiveSpecification: &types.TimeToLiveSpecification{
+				AttributeName: aws.String(attributeName),
+				Enabled:       aws.Bool(enabled)}},
+		optionFunctions...)
 }
 
 // QueryPaginatorNextPage is fetch the next page using QueryPaginator.

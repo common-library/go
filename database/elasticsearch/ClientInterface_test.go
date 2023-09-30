@@ -9,9 +9,6 @@ import (
 )
 
 func TestInterface(t *testing.T) {
-	func(elasticsearch.Client) {
-	}(&v7.Client{})
-
-	func(elasticsearch.Client) {
-	}(&v8.Client{})
+	func(elasticsearch.Client) {}(&v7.Client{})
+	func(elasticsearch.Client) {}(&v8.Client{})
 }

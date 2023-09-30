@@ -29,27 +29,24 @@ type Client struct {
 //
 // ex) err := client.connect()
 func (this *Client) connect() error {
-	if this.client != nil {
-		if this.client.Ping(this.ctx, readpref.Primary()) == nil {
-			return nil
-		}
+	if this.client != nil && this.client.Ping(this.ctx, readpref.Primary()) == nil {
+		return nil
 	}
 
 	this.disConnect()
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://" + this.address))
-	if err != nil {
+	if client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://" + this.address)); err != nil {
 		return err
+	} else {
+		this.client = client
 	}
-	this.client = client
 
 	this.ctx = context.TODO()
 	if this.timeout > 0 {
 		this.ctx, this.ctxCancelFunc = context.WithTimeout(context.Background(), time.Duration(this.timeout)*time.Second)
 	}
 
-	err = this.client.Connect(this.ctx)
-	if err != nil {
+	if err := this.client.Connect(this.ctx); err != nil {
 		return err
 	}
 
@@ -104,16 +101,15 @@ func (this *Client) FindOne(databaseName string, collectionName string, filter i
 		return nil, errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return nil, err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
 
 	document := reflect.New(reflect.TypeOf(dataForm))
-	err = collection.FindOne(this.ctx, filter).Decode(document.Interface())
-	if err != nil {
+
+	if err := collection.FindOne(this.ctx, filter).Decode(document.Interface()); err != nil {
 		return nil, err
 	}
 
@@ -132,8 +128,7 @@ func (this *Client) Find(databaseName string, collectionName string, filter inte
 		return nil, errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return nil, err
 	}
 
@@ -149,12 +144,13 @@ func (this *Client) Find(databaseName string, collectionName string, filter inte
 	results := reflect.New(tempSlice.Type())
 	results.Elem().Set(tempSlice)
 
-	err = cursor.All(this.ctx, results.Interface())
-	if err != nil {
+	if err := cursor.All(this.ctx, results.Interface()); err != nil {
 		return nil, err
 	}
 
-	cursor.Close(this.ctx)
+	if err := cursor.Close(this.ctx); err != nil {
+		return nil, err
+	}
 
 	return results.Elem().Interface(), nil
 }
@@ -167,15 +163,16 @@ func (this *Client) InsertOne(databaseName string, collectionName string, docume
 		return errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
+	if _, err := collection.InsertOne(this.ctx, document); err != nil {
+		return err
+	}
 
-	_, err = collection.InsertOne(this.ctx, document)
-	return err
+	return nil
 }
 
 // InsertMany is insert a array type documents.
@@ -192,15 +189,16 @@ func (this *Client) InsertMany(databaseName string, collectionName string, docum
 		return errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
+	if _, err := collection.InsertMany(this.ctx, documents); err != nil {
+		return err
+	}
 
-	_, err = collection.InsertMany(this.ctx, documents)
-	return err
+	return nil
 }
 
 // UpdateOne is update the one value corresponding to the filter argument with the value of the "update" argument.
@@ -211,15 +209,16 @@ func (this *Client) UpdateOne(databaseName string, collectionName string, filter
 		return errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
+	if _, err := collection.UpdateOne(this.ctx, filter, update); err != nil {
+		return err
+	}
 
-	_, err = collection.UpdateOne(this.ctx, filter, update)
-	return err
+	return nil
 }
 
 // UpdateMany is update the value corresponding to the filter argument with the values of the "update" argument.
@@ -230,15 +229,16 @@ func (this *Client) UpdateMany(databaseName string, collectionName string, filte
 		return errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
+	if _, err := collection.UpdateMany(this.ctx, filter, update); err != nil {
+		return err
+	}
 
-	_, err = collection.UpdateMany(this.ctx, filter, update)
-	return err
+	return nil
 }
 
 // DeleteOne is delete one value corresponding to the filter argument.
@@ -249,15 +249,16 @@ func (this *Client) DeleteOne(databaseName string, collectionName string, filter
 		return errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
+	if _, err := collection.DeleteOne(this.ctx, filter); err != nil {
+		return err
+	}
 
-	_, err = collection.DeleteOne(this.ctx, filter)
-	return err
+	return nil
 }
 
 // DeleteMany is delete the values corresponding to the filter argument.
@@ -268,13 +269,14 @@ func (this *Client) DeleteMany(databaseName string, collectionName string, filte
 		return errors.New("please call Initialize first")
 	}
 
-	err := this.connect()
-	if err != nil {
+	if err := this.connect(); err != nil {
 		return err
 	}
 
 	collection := this.client.Database(databaseName).Collection(collectionName)
+	if _, err := collection.DeleteMany(this.ctx, filter); err != nil {
+		return err
+	}
 
-	_, err = collection.DeleteMany(this.ctx, filter)
-	return err
+	return nil
 }

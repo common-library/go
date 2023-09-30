@@ -23,9 +23,6 @@ import (
 
 // Client is object that provides elasticsearch interface.
 type Client struct {
-	addresses []string
-	timeout   uint64
-
 	client *elasticsearch.Client
 }
 
@@ -33,9 +30,6 @@ type Client struct {
 //
 // ex) err := client.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
 func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
-	this.addresses = addresses
-	this.timeout = timeout
-
 	config := elasticsearch.Config{
 		CloudID:                cloudID,
 		APIKey:                 apiKey,
@@ -43,7 +37,7 @@ func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiK
 		Password:               password,
 		CertificateFingerprint: certificateFingerprint,
 
-		Addresses:         this.addresses,
+		Addresses:         addresses,
 		EnableDebugLogger: true,
 		Logger:            &elastictransport.ColorLogger{Output: os.Stdout},
 		Transport: &http.Transport{
@@ -54,9 +48,13 @@ func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiK
 		config.CACert = caCert
 	}
 
-	var err error
-	this.client, err = elasticsearch.NewClient(config)
-	return err
+	if client, err := elasticsearch.NewClient(config); err != nil {
+		return err
+	} else {
+		this.client = client
+	}
+
+	return nil
 }
 
 // Exists is checks if a document exists in the index.
@@ -74,21 +72,18 @@ func (this *Client) Exists(index, documentID string) (bool, error) {
 		DocumentID: documentID,
 		Refresh:    &refresh,
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return false, err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.StatusCode == http.StatusNotFound {
-		return false, nil
-	}
-
-	if response.IsError() {
-		return false, this.responseErrorToError(response.Status(), response.Body)
+		if response.StatusCode == http.StatusNotFound {
+			return false, nil
+		} else if response.IsError() {
+			return false, this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return true, nil
@@ -102,8 +97,10 @@ func (this *Client) Index(index, documentID, body string) error {
 		return errors.New("please call Initialize first")
 	}
 
-	var builder strings.Builder
-	builder.WriteString(body)
+	builder := strings.Builder{}
+	if _, err := builder.WriteString(body); err != nil {
+		return err
+	}
 
 	request := esapi.IndexRequest{
 		Index:      index,
@@ -111,17 +108,16 @@ func (this *Client) Index(index, documentID, body string) error {
 		Body:       strings.NewReader(builder.String()),
 		Refresh:    "true",
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -140,17 +136,16 @@ func (this *Client) Delete(index, documentID string) error {
 		DocumentID: documentID,
 		Refresh:    "true",
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -164,8 +159,10 @@ func (this *Client) DeleteByQuery(indices []string, body string) error {
 		return errors.New("please call Initialize first")
 	}
 
-	var builder strings.Builder
-	builder.WriteString(body)
+	builder := strings.Builder{}
+	if _, err := builder.WriteString(body); err != nil {
+		return err
+	}
 
 	refresh := true
 
@@ -174,17 +171,16 @@ func (this *Client) DeleteByQuery(indices []string, body string) error {
 		Body:       strings.NewReader(builder.String()),
 		Refresh:    &refresh,
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -201,21 +197,18 @@ func (this *Client) IndicesExists(indices []string) (bool, error) {
 	request := esapi.IndicesExistsRequest{
 		Index:      indices,
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return false, err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.StatusCode == http.StatusNotFound {
-		return false, nil
-	}
-
-	if response.IsError() {
-		return false, this.responseErrorToError(response.Status(), response.Body)
+		if response.StatusCode == http.StatusNotFound {
+			return false, nil
+		} else if response.IsError() {
+			return false, this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return true, nil
@@ -229,24 +222,25 @@ func (this *Client) IndicesCreate(index, body string) error {
 		return errors.New("please call Initialize first")
 	}
 
-	var builder strings.Builder
-	builder.WriteString(body)
+	builder := strings.Builder{}
+	if _, err := builder.WriteString(body); err != nil {
+		return err
+	}
 
 	request := esapi.IndicesCreateRequest{
 		Index:      index,
 		Body:       strings.NewReader(builder.String()),
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -263,17 +257,16 @@ func (this *Client) IndicesDelete(indices []string) error {
 	request := esapi.IndicesDeleteRequest{
 		Index:      indices,
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -290,21 +283,18 @@ func (this *Client) IndicesExistsTemplate(name []string) (bool, error) {
 	request := esapi.IndicesExistsTemplateRequest{
 		Name:       name,
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return false, err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.StatusCode == http.StatusNotFound {
-		return false, nil
-	}
-
-	if response.IsError() {
-		return false, this.responseErrorToError(response.Status(), response.Body)
+		if response.StatusCode == http.StatusNotFound {
+			return false, nil
+		} else if response.IsError() {
+			return false, this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return true, nil
@@ -318,24 +308,25 @@ func (this *Client) IndicesPutTemplate(name, body string) error {
 		return errors.New("please call Initialize first")
 	}
 
-	var builder strings.Builder
-	builder.WriteString(body)
+	builder := strings.Builder{}
+	if _, err := builder.WriteString(body); err != nil {
+		return err
+	}
 
 	request := esapi.IndicesPutTemplateRequest{
 		Name:       name,
 		Body:       strings.NewReader(builder.String()),
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -352,17 +343,16 @@ func (this *Client) IndicesDeleteTemplate(name string) error {
 	request := esapi.IndicesDeleteTemplateRequest{
 		Name:       name,
 		Human:      true,
-		ErrorTrace: true,
-	}
+		ErrorTrace: true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -382,17 +372,16 @@ func (this *Client) IndicesForcemerge(indices []string) error {
 		Index:              indices,
 		OnlyExpungeDeletes: &onlyExpungeDeletes,
 		Human:              true,
-		ErrorTrace:         true,
-	}
+		ErrorTrace:         true}
 
-	response, err := request.Do(context.Background(), this.client)
-	if err != nil {
+	if response, err := request.Do(context.Background(), this.client); err != nil {
 		return err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return this.responseErrorToError(response.Status(), response.Body)
+		if response.IsError() {
+			return this.responseErrorToError(response.Status(), response.Body)
+		}
 	}
 
 	return nil
@@ -406,27 +395,28 @@ func (this *Client) Search(index, body string) (string, error) {
 		return "", errors.New("please call Initialize first")
 	}
 
-	var builder strings.Builder
-	builder.WriteString(body)
+	builder := strings.Builder{}
+	if _, err := builder.WriteString(body); err != nil {
+		return "", err
+	}
 
-	response, err := this.client.Search(
+	if response, err := this.client.Search(
 		this.client.Search.WithContext(context.Background()),
 		this.client.Search.WithIndex(index),
 		this.client.Search.WithBody(strings.NewReader(builder.String())),
 		this.client.Search.WithTrackTotalHits(true),
-		this.client.Search.WithPretty(),
-	)
-	if err != nil {
+		this.client.Search.WithPretty()); err != nil {
 		return "", err
-	}
-	defer response.Body.Close()
+	} else {
+		defer response.Body.Close()
 
-	if response.IsError() {
-		return "", this.responseErrorToError(response.Status(), response.Body)
-	}
+		if response.IsError() {
+			return "", this.responseErrorToError(response.Status(), response.Body)
+		}
 
-	result, err := ioutil.ReadAll(response.Body)
-	return string(result), err
+		result, err := ioutil.ReadAll(response.Body)
+		return string(result), err
+	}
 }
 
 func (this *Client) responseErrorToError(status string, reader io.Reader) error {
@@ -437,8 +427,9 @@ func (this *Client) responseErrorToError(status string, reader io.Reader) error 
 		return errors.New(fmt.Sprintf("response error - status : (%s)", status))
 	}
 
-	return errors.New(fmt.Sprintf("response error - status : (%s), type : (%s), reason : (%s)",
-		status,
-		gojsonq.New().FromString(buffer.String()).Find("error.type").(string),
-		gojsonq.New().FromString(buffer.String()).Find("error.reason").(string)))
+	return errors.New(
+		fmt.Sprintf("response error - status : (%s), type : (%s), reason : (%s)",
+			status,
+			gojsonq.New().FromString(buffer.String()).Find("error.type").(string),
+			gojsonq.New().FromString(buffer.String()).Find("error.reason").(string)))
 }

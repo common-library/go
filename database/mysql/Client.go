@@ -31,10 +31,10 @@ type Client struct {
 func (this *Client) Initialize(dsn string, maxOpenConnection int) error {
 	this.Finalize()
 
-	var err error
-	this.connection, err = sql.Open("mysql", dsn)
-	if err != nil {
+	if connection, err := sql.Open("mysql", dsn); err != nil {
 		return err
+	} else {
+		this.connection = connection
 	}
 
 	this.connection.SetMaxOpenConns(maxOpenConnection)
@@ -56,6 +56,7 @@ func (this *Client) Finalize() error {
 
 	err := this.connection.Close()
 	this.connection = nil
+
 	return err
 }
 
@@ -100,13 +101,13 @@ func (this *Client) Execute(query string, args ...interface{}) error {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
 
-	result, err := this.connection.Exec(query, args...)
-	if err != nil {
+	if result, err := this.connection.Exec(query, args...); err != nil {
+		return err
+	} else if _, err = result.RowsAffected(); err != nil {
 		return err
 	}
 
-	_, err = result.RowsAffected()
-	return err
+	return nil
 }
 
 // SetPrepare is set prepared statement.
@@ -117,9 +118,13 @@ func (this *Client) SetPrepare(query string) error {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
 
-	var err error
-	this.stmt, err = this.connection.Prepare(query)
-	return err
+	if stmt, err := this.connection.Prepare(query); err != nil {
+		return err
+	} else {
+		this.stmt = stmt
+	}
+
+	return nil
 }
 
 // QueryPrepare is query a prepared statement.
@@ -162,11 +167,7 @@ func (this *Client) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
 
 	row := this.stmt.QueryRow(args...)
 
-	if row.Err() != nil {
-		return nil, row.Err()
-	}
-
-	return row, nil
+	return row, row.Err()
 }
 
 // ExecutePrepare is executes a prepared statement.
@@ -201,10 +202,13 @@ func (this *Client) BeginTransaction() error {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
 
-	var err error
-	this.tx, err = this.connection.Begin()
+	if tx, err := this.connection.Begin(); err != nil {
+		return err
+	} else {
+		this.tx = tx
+	}
 
-	return err
+	return nil
 }
 
 // EndTransaction is ends a transaction.
@@ -273,13 +277,13 @@ func (this *Client) ExecuteTransaction(query string, args ...interface{}) error 
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
 
-	result, err := this.tx.Exec(query, args...)
-	if err != nil {
+	if result, err := this.tx.Exec(query, args...); err != nil {
+		return err
+	} else if _, err = result.RowsAffected(); err != nil {
 		return err
 	}
 
-	_, err = result.RowsAffected()
-	return err
+	return nil
 }
 
 // SetPrepareTransaction is set prepared statement.
@@ -290,9 +294,13 @@ func (this *Client) SetPrepareTransaction(query string) error {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
 
-	var err error
-	this.txStmt, err = this.tx.Prepare(query)
-	return err
+	if txStmt, err := this.tx.Prepare(query); err != nil {
+		return err
+	} else {
+		this.txStmt = txStmt
+	}
+
+	return nil
 }
 
 // QueryPrepareTransaction is query a prepared statement.
@@ -335,11 +343,7 @@ func (this *Client) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, e
 
 	row := this.txStmt.QueryRow(args...)
 
-	if row.Err() != nil {
-		return nil, row.Err()
-	}
-
-	return row, nil
+	return row, row.Err()
 }
 
 // ExecutePrepareTransaction is executes a prepared statement.

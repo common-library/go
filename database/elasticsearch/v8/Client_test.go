@@ -20,42 +20,34 @@ func initialize(client *v8.Client, addresses []string) error {
 	return client.Initialize(addresses, timeout, "", "", "", "", "", []byte(""))
 }
 
-func exists(client *v8.Client) error {
-	err := initialize(client, addresses)
-	if err != nil {
+func indicesExists(client *v8.Client) error {
+	if err := initialize(client, addresses); err != nil {
 		return err
 	}
 
-	exist, err := client.IndicesExists([]string{index})
-	if err != nil {
+	if exist, err := client.IndicesExists([]string{index}); err != nil {
 		return err
-	}
-	if exist {
+	} else if exist {
 		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
 	}
 
-	exist, err = client.Exists(index, documentId)
-	if err != nil {
+	if exist, err := client.Exists(index, documentId); err != nil {
 		return err
-	}
-	if exist {
+	} else if exist {
 		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
 	}
 
 	return nil
 }
 
-func deletes(client *v8.Client) error {
-	err := client.IndicesDelete([]string{index})
-	if err != nil {
+func indicesDelete(client *v8.Client) error {
+	if err := client.IndicesDelete([]string{index}); err != nil {
 		return err
 	}
 
-	exist, err := client.IndicesExists([]string{index})
-	if err != nil {
+	if exist, err := client.IndicesExists([]string{index}); err != nil {
 		return err
-	}
-	if exist {
+	} else if exist {
 		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
 	}
 
@@ -63,33 +55,27 @@ func deletes(client *v8.Client) error {
 }
 
 func existsTemplate(client *v8.Client) error {
-	err := initialize(client, addresses)
-	if err != nil {
+	if err := initialize(client, addresses); err != nil {
 		return err
 	}
 
-	exist, err := client.IndicesExistsTemplate([]string{template})
-	if err != nil {
+	if exist, err := client.IndicesExistsTemplate([]string{template}); err != nil {
 		return err
-	}
-	if exist {
+	} else if exist {
 		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
 	}
 
 	return nil
 }
 
-func deletesTemplate(client *v8.Client) error {
-	err := client.IndicesDeleteTemplate(template)
-	if err != nil {
+func indicesDeleteTemplate(client *v8.Client) error {
+	if err := client.IndicesDeleteTemplate(template); err != nil {
 		return err
 	}
 
-	exist, err := client.IndicesExistsTemplate([]string{template})
-	if err != nil {
+	if exist, err := client.IndicesExistsTemplate([]string{template}); err != nil {
 		return err
-	}
-	if exist {
+	} else if exist {
 		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
 	}
 
@@ -104,18 +90,15 @@ func TestInitialize(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(addresses, 0, "", "", "", "", "", []byte(""))
-	if err != nil {
+	if err := client.Initialize(addresses, 0, "", "", "", "", "", []byte("")); err != nil {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = initialize(&client, addresses)
-	if err != nil {
+	if err := initialize(&client, addresses); err != nil {
 		t.Error(err)
 	}
 }
@@ -123,50 +106,41 @@ func TestInitialize(t *testing.T) {
 func TestExists(t *testing.T) {
 	client := v8.Client{}
 
-	_, err := client.Exists("", "")
-	if err.Error() != `please call Initialize first` {
+	if _, err := client.Exists("", ""); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = client.Exists(index, documentId)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if _, err := client.Exists(index, documentId); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = client.Exists("", "")
-	if err.Error() != `response error - status : (405 Method Not Allowed)` {
+	if _, err := client.Exists("", ""); err.Error() != `response error - status : (405 Method Not Allowed)` {
 		t.Error(err)
 	}
 
-	_, err = client.Exists("*", "")
-	if err.Error() != `response error - status : (405 Method Not Allowed)` {
+	if _, err := client.Exists("*", ""); err.Error() != `response error - status : (405 Method Not Allowed)` {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId, `{"field":"value"}`)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value"}`); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.Exists(index, documentId)
-	if err != nil {
+	if exist, err := client.Exists(index, documentId); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -174,45 +148,37 @@ func TestExists(t *testing.T) {
 func TestIndex(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.Index(index, documentId, "")
-	if err.Error() != `please call Initialize first` {
+	if err := client.Index(index, documentId, ""); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.Index(index, documentId, `{"field":"value"}`)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value"}`); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.Index(index, documentId, "")
-	if err.Error() != `response error - status : (400 Bad Request), type : (parse_exception), reason : (request body is required)` {
+	if err := client.Index(index, documentId, ""); err.Error() != `response error - status : (400 Bad Request), type : (parse_exception), reason : (request body is required)` {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId, `{"field":"value"}`)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value"}`); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.Exists(index, documentId)
-	if err != nil {
+	if exist, err := client.Exists(index, documentId); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -220,50 +186,41 @@ func TestIndex(t *testing.T) {
 func TestDelete(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.Delete(index, documentId)
-	if err.Error() != `please call Initialize first` {
+	if err := client.Delete(index, documentId); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.Delete(index, documentId)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if err := client.Delete(index, documentId); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.Delete(index, documentId)
-	if err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
+	if err := client.Delete(index, documentId); err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId, `{"field":"value"}`)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value"}`); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Delete(index, documentId)
-	if err != nil {
+	if err := client.Delete(index, documentId); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.Exists(index, documentId)
-	if err != nil {
+	if exist, err := client.Exists(index, documentId); err != nil {
 		t.Error(err)
-	}
-	if exist {
+	} else if exist {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -271,55 +228,45 @@ func TestDelete(t *testing.T) {
 func TestDeleteByQuery(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.DeleteByQuery([]string{index}, ``)
-	if err.Error() != `please call Initialize first` {
+	if err := client.DeleteByQuery([]string{index}, ``); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if err := client.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.DeleteByQuery([]string{index}, `{}`)
-	if err.Error() != `response error - status : (400 Bad Request), type : (action_request_validation_exception), reason : (Validation Failed: 1: query is missing;)` {
+	if err := client.DeleteByQuery([]string{index}, `{}`); err.Error() != `response error - status : (400 Bad Request), type : (action_request_validation_exception), reason : (Validation Failed: 1: query is missing;)` {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId, `{"field":"value_1"}`)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value_1"}`); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId+"_temp", `{"field":"value_2"}`)
-	if err != nil {
+	if err := client.Index(index, documentId+"_temp", `{"field":"value_2"}`); err != nil {
 		t.Error(err)
 	}
 
-	err = client.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`)
-	if err != nil {
+	if err := client.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.Exists(index, documentId)
-	if err != nil {
+	if exist, err := client.Exists(index, documentId); err != nil {
 		t.Error(err)
-	}
-	if exist {
+	} else if exist {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -327,45 +274,37 @@ func TestDeleteByQuery(t *testing.T) {
 func TestIndicesExists(t *testing.T) {
 	client := v8.Client{}
 
-	_, err := client.IndicesExists([]string{index})
-	if err.Error() != `please call Initialize first` {
+	if _, err := client.IndicesExists([]string{index}); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = client.IndicesExists([]string{index})
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if _, err := client.IndicesExists([]string{index}); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = client.IndicesExists([]string{"<>"})
-	if err.Error() != `response error - status : (400 Bad Request)` {
+	if _, err := client.IndicesExists([]string{"<>"}); err.Error() != `response error - status : (400 Bad Request)` {
 		t.Error(err)
 	}
 
-	err = client.IndicesCreate(index, "")
-	if err != nil {
+	if err := client.IndicesCreate(index, ""); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.IndicesExists([]string{index})
-	if err != nil {
+	if exist, err := client.IndicesExists([]string{index}); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -373,45 +312,37 @@ func TestIndicesExists(t *testing.T) {
 func TestIndicesCreate(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.IndicesCreate(index, "")
-	if err.Error() != `please call Initialize first` {
+	if err := client.IndicesCreate(index, ""); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.IndicesCreate(index, "")
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if err := client.IndicesCreate(index, ""); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.IndicesCreate(index, "~")
-	if err.Error() != `response error - status : (500 Internal Server Error), type : (not_x_content_exception), reason : (Compressor detection can only be called on some xcontent bytes or compressed xcontent bytes)` {
+	if err := client.IndicesCreate(index, "~"); err.Error() != `response error - status : (500 Internal Server Error), type : (not_x_content_exception), reason : (Compressor detection can only be called on some xcontent bytes or compressed xcontent bytes)` {
 		t.Error(err)
 	}
 
-	err = client.IndicesCreate(index, "")
-	if err != nil {
+	if err := client.IndicesCreate(index, ""); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.IndicesExists([]string{index})
-	if err != nil {
+	if exist, err := client.IndicesExists([]string{index}); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -419,37 +350,31 @@ func TestIndicesCreate(t *testing.T) {
 func TestIndicesDelete(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.IndicesDelete([]string{""})
-	if err.Error() != `please call Initialize first` {
+	if err := client.IndicesDelete([]string{""}); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.IndicesDelete([]string{""})
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if err := client.IndicesDelete([]string{""}); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.IndicesDelete([]string{""})
-	if err.Error() != `response error - status : (400 Bad Request), type : (action_request_validation_exception), reason : (Validation Failed: 1: index / indices is missing;)` {
+	if err := client.IndicesDelete([]string{""}); err.Error() != `response error - status : (400 Bad Request), type : (action_request_validation_exception), reason : (Validation Failed: 1: index / indices is missing;)` {
 		t.Fatal(err)
 	}
 
-	err = client.IndicesCreate(index, "")
-	if err != nil {
+	if err := client.IndicesCreate(index, ""); err != nil {
 		t.Error(err)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -457,45 +382,37 @@ func TestIndicesDelete(t *testing.T) {
 func TestIndicesExistsTemplate(t *testing.T) {
 	client := v8.Client{}
 
-	_, err := client.IndicesExistsTemplate([]string{template})
-	if err.Error() != `please call Initialize first` {
+	if _, err := client.IndicesExistsTemplate([]string{template}); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = client.IndicesExistsTemplate([]string{template})
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = existsTemplate(&client)
-	if err != nil {
+	if _, err := client.IndicesExistsTemplate([]string{template}); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := existsTemplate(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = client.IndicesExistsTemplate([]string{""})
-	if err.Error() != `response error - status : (405 Method Not Allowed)` {
+	if _, err := client.IndicesExistsTemplate([]string{""}); err.Error() != `response error - status : (405 Method Not Allowed)` {
 		t.Error(err)
 	}
 
-	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
-	if err != nil {
+	if err := client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.IndicesExistsTemplate([]string{template})
-	if err != nil {
+	if exist, err := client.IndicesExistsTemplate([]string{template}); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletesTemplate(&client)
-	if err != nil {
+	if err := indicesDeleteTemplate(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -503,45 +420,37 @@ func TestIndicesExistsTemplate(t *testing.T) {
 func TestIndicesPutTemplate(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.IndicesPutTemplate(template, ``)
-	if err.Error() != `please call Initialize first` {
+	if err := client.IndicesPutTemplate(template, ``); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = existsTemplate(&client)
-	if err != nil {
+	if err := client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := existsTemplate(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.IndicesPutTemplate(template, "")
-	if err.Error() != `response error - status : (400 Bad Request), type : (parse_exception), reason : (request body is required)` {
+	if err := client.IndicesPutTemplate(template, ""); err.Error() != `response error - status : (400 Bad Request), type : (parse_exception), reason : (request body is required)` {
 		t.Error(err)
 	}
 
-	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
-	if err != nil {
+	if err := client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.IndicesExistsTemplate([]string{template})
-	if err != nil {
+	if exist, err := client.IndicesExistsTemplate([]string{template}); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletesTemplate(&client)
-	if err != nil {
+	if err := indicesDeleteTemplate(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -549,45 +458,37 @@ func TestIndicesPutTemplate(t *testing.T) {
 func TestIndicesDeleteTemplate(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.IndicesDeleteTemplate(template)
-	if err.Error() != `please call Initialize first` {
+	if err := client.IndicesDeleteTemplate(template); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.IndicesDeleteTemplate(template)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = existsTemplate(&client)
-	if err != nil {
+	if err := client.IndicesDeleteTemplate(template); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := existsTemplate(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.IndicesDeleteTemplate(template)
-	if err.Error() != `response error - status : (404 Not Found), type : (index_template_missing_exception), reason : (index_template [`+template+`] missing)` {
+	if err := client.IndicesDeleteTemplate(template); err.Error() != `response error - status : (404 Not Found), type : (index_template_missing_exception), reason : (index_template [`+template+`] missing)` {
 		t.Error(err)
 	}
 
-	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
-	if err != nil {
+	if err := client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`); err != nil {
 		t.Error(err)
 	}
 
-	exist, err := client.IndicesExistsTemplate([]string{template})
-	if err != nil {
+	if exist, err := client.IndicesExistsTemplate([]string{template}); err != nil {
 		t.Error(err)
-	}
-	if exist == false {
+	} else if exist == false {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletesTemplate(&client)
-	if err != nil {
+	if err := indicesDeleteTemplate(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -595,45 +496,37 @@ func TestIndicesDeleteTemplate(t *testing.T) {
 func TestSearch(t *testing.T) {
 	client := v8.Client{}
 
-	_, err := client.Search(index, ``)
-	if err.Error() != `please call Initialize first` {
+	if _, err := client.Search(index, ``); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = client.Search(index, `{"query":{"match_all":{}}}`)
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if _, err := client.Search(index, `{"query":{"match_all":{}}}`); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = client.Search(index, `{}`)
-	if err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
+	if _, err := client.Search(index, `{}`); err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId, `{"field":"value"}`)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value"}`); err != nil {
 		t.Error(err)
 	}
 
-	result, err := client.Search(index, `{"query":{"match_all":{}}}`)
-	if err != nil {
+	if result, err := client.Search(index, `{"query":{"match_all":{}}}`); err != nil {
 		t.Error(err)
-	}
-	if gojsonq.New().FromString(result).Find("hits.total.value").(float64) != 1 {
+	} else if gojsonq.New().FromString(result).Find("hits.total.value").(float64) != 1 {
 		t.Errorf("invalid result - result : (\n%s)", result)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }
@@ -641,42 +534,35 @@ func TestSearch(t *testing.T) {
 func TestIndicesForcemerge(t *testing.T) {
 	client := v8.Client{}
 
-	err := client.IndicesForcemerge([]string{index})
-	if err.Error() != `please call Initialize first` {
+	if err := client.IndicesForcemerge([]string{index}); err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&client, []string{"invalid_address"})
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.IndicesForcemerge([]string{index})
-	if err.Error() != `unsupported protocol scheme ""` {
+	if err := initialize(&client, []string{"invalid_address"}); err != nil {
 		t.Error(err)
 	}
 
-	err = exists(&client)
-	if err != nil {
+	if err := client.IndicesForcemerge([]string{index}); err.Error() != `unsupported protocol scheme ""` {
+		t.Error(err)
+	}
+
+	if err := indicesExists(&client); err != nil {
 		t.Fatal(err)
 	}
 
-	err = client.IndicesForcemerge([]string{index})
-	if err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
+	if err := client.IndicesForcemerge([]string{index}); err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
 		t.Error(err)
 	}
 
-	err = client.Index(index, documentId, `{"field":"value"}`)
-	if err != nil {
+	if err := client.Index(index, documentId, `{"field":"value"}`); err != nil {
 		t.Error(err)
 	}
 
-	err = client.IndicesForcemerge([]string{index})
-	if err != nil {
+	if err := client.IndicesForcemerge([]string{index}); err != nil {
 		t.Error(err)
 	}
 
-	err = deletes(&client)
-	if err != nil {
+	if err := indicesDelete(&client); err != nil {
 		t.Error(err)
 	}
 }

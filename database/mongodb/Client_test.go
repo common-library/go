@@ -26,18 +26,15 @@ func TestInitialize(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, 0)
-	if err != nil {
+	if err := client.Initialize(address, 0); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -45,8 +42,7 @@ func TestInitialize(t *testing.T) {
 func TestFinalize(t *testing.T) {
 	client := mongodb.Client{}
 
-	err := client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -61,38 +57,28 @@ func TestFindOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
 	insertData := TestStruct{Value1: 1, Value2: "abc"}
-	err = client.InsertOne(database_name, collection_name, insertData)
-	if err != nil {
+	if err := client.InsertOne(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
 	}
 
-	result_interface, err := client.FindOne(database_name, collection_name, filter, TestStruct{})
-	if err != nil {
+	if result_interface, err := client.FindOne(database_name, collection_name, filter, TestStruct{}); err != nil {
 		t.Error(err)
-	}
-
-	result, ok := result_interface.(TestStruct)
-	if ok == false {
+	} else if result, ok := result_interface.(TestStruct); ok == false {
 		t.Error("Type Assertions error")
-	}
-
-	if result.Value1 != 1 || result.Value2 != "abc" {
+	} else if result.Value1 != 1 || result.Value2 != "abc" {
 		t.Errorf("invalid data - result : (%#v)", result)
 	}
 
-	err = client.DeleteOne(database_name, collection_name, filter)
-	if err != nil {
+	if err := client.DeleteOne(database_name, collection_name, filter); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -107,30 +93,21 @@ func TestFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err = client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
-
-	err = client.InsertMany(database_name, collection_name, insertData)
-	if err != nil {
+	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
 	}
 
-	results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{})
-	if err != nil {
+	if results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{}); err != nil {
 		t.Error(err)
-	}
-
-	results, ok := results_interface.([]TestStruct)
-	if ok == false {
+	} else if results, ok := results_interface.([]TestStruct); ok == false {
 		t.Error("Type Assertions error")
-	}
-
-	if results != nil &&
+	} else if results != nil &&
 		(results[0].Value1 != 1 ||
 			results[0].Value2 != "abc" ||
 			results[1].Value1 != 2 ||
@@ -138,13 +115,11 @@ func TestFind(t *testing.T) {
 		t.Errorf("invalid data - results : (%#v)", results)
 	}
 
-	err = client.DeleteMany(database_name, collection_name, filter)
-	if err != nil {
+	if err := client.DeleteMany(database_name, collection_name, filter); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -157,24 +132,20 @@ func TestInsertOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
 	insertData := TestStruct{Value1: 1, Value2: "abc"}
-	err = client.InsertOne(database_name, collection_name, insertData)
-	if err != nil {
+	if err := client.InsertOne(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
 	}
 
-	err = client.DeleteMany(database_name, collection_name, bson.M{})
-	if err != nil {
+	if err := client.DeleteMany(database_name, collection_name, bson.M{}); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -190,23 +161,19 @@ func TestInsertMany(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
-	err = client.InsertMany(database_name, collection_name, insertData)
-	if err != nil {
+	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
 	}
 
-	err = client.DeleteMany(database_name, collection_name, bson.M{})
-	if err != nil {
+	if err := client.DeleteMany(database_name, collection_name, bson.M{}); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -222,13 +189,11 @@ func TestUpdateOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
-	err = client.UpdateOne(database_name, collection_name, filter, update)
-	if err != nil {
+	if err := client.UpdateOne(database_name, collection_name, filter, update); err != nil {
 		t.Error(err)
 	}
 
@@ -239,28 +204,19 @@ func TestUpdateOne(t *testing.T) {
 
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 1, Value2: "abc"})
-
-	err = client.InsertMany(database_name, collection_name, insertData)
-	if err != nil {
+	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
 	}
 
-	err = client.UpdateOne(database_name, collection_name, filter, update)
-	if err != nil {
+	if err := client.UpdateOne(database_name, collection_name, filter, update); err != nil {
 		t.Error(err)
 	}
 
-	results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{})
-	if err != nil {
+	if results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{}); err != nil {
 		t.Error(err)
-	}
-
-	results, ok := results_interface.([]TestStruct)
-	if ok == false {
+	} else if results, ok := results_interface.([]TestStruct); ok == false {
 		t.Error("Type Assertions error")
-	}
-
-	if results != nil &&
+	} else if results != nil &&
 		(results[0].Value1 != 1 ||
 			results[0].Value2 != "update_value" ||
 			results[1].Value1 != 1 ||
@@ -268,13 +224,11 @@ func TestUpdateOne(t *testing.T) {
 		t.Errorf("invalid data - results : (%#v)", results)
 	}
 
-	err = client.DeleteMany(database_name, collection_name, bson.M{})
-	if err != nil {
+	if err := client.DeleteMany(database_name, collection_name, bson.M{}); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -284,19 +238,16 @@ func TestUpdateMany(t *testing.T) {
 
 	filter := bson.M{"value1": 1}
 	update := bson.D{{"$set", bson.D{{"value2", "update_value"}}}}
-
 	err := client.UpdateMany(database_name, collection_name, filter, update)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
-	err = client.UpdateMany(database_name, collection_name, filter, update)
-	if err != nil {
+	if err := client.UpdateMany(database_name, collection_name, filter, update); err != nil {
 		t.Error(err)
 	}
 
@@ -307,28 +258,19 @@ func TestUpdateMany(t *testing.T) {
 
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 1, Value2: "abc"})
-
-	err = client.InsertMany(database_name, collection_name, insertData)
-	if err != nil {
+	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
 	}
 
-	err = client.UpdateMany(database_name, collection_name, filter, update)
-	if err != nil {
+	if err := client.UpdateMany(database_name, collection_name, filter, update); err != nil {
 		t.Error(err)
 	}
 
-	results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{})
-	if err != nil {
+	if results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{}); err != nil {
 		t.Error(err)
-	}
-
-	results, ok := results_interface.([]TestStruct)
-	if ok == false {
+	} else if results, ok := results_interface.([]TestStruct); ok == false {
 		t.Error("Type Assertions error")
-	}
-
-	if results != nil &&
+	} else if results != nil &&
 		(results[0].Value1 != 1 ||
 			results[0].Value2 != "update_value" ||
 			results[1].Value1 != 1 ||
@@ -336,13 +278,11 @@ func TestUpdateMany(t *testing.T) {
 		t.Errorf("invalid data - results : (%#v)", results)
 	}
 
-	err = client.DeleteMany(database_name, collection_name, bson.M{})
-	if err != nil {
+	if err := client.DeleteMany(database_name, collection_name, bson.M{}); err != nil {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -357,13 +297,11 @@ func TestDeleteOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err := client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
-	err = client.DeleteOne(database_name, collection_name, filter)
-	if err != nil {
+	if err := client.DeleteOne(database_name, collection_name, filter); err != nil {
 		t.Error(err)
 	}
 
@@ -372,8 +310,7 @@ func TestDeleteOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
@@ -388,13 +325,11 @@ func TestDeleteMany(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Initialize(address, timeout)
-	if err != nil {
+	if err = client.Initialize(address, timeout); err != nil {
 		t.Error(err)
 	}
 
-	err = client.DeleteMany(database_name, collection_name, filter)
-	if err != nil {
+	if err = client.DeleteMany(database_name, collection_name, filter); err != nil {
 		t.Error(err)
 	}
 
@@ -403,8 +338,7 @@ func TestDeleteMany(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = client.Finalize()
-	if err != nil {
+	if err := client.Finalize(); err != nil {
 		t.Error(err)
 	}
 }
