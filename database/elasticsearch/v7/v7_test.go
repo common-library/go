@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	v7 "github.com/heaven-chp/common-library-go/db/elasticsearch/v7"
+	v7 "github.com/heaven-chp/common-library-go/database/elasticsearch/v7"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 

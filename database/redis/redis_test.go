@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/db/redis"
+	"github.com/heaven-chp/common-library-go/database/redis"
 )
 
 func TestInitialize(t *testing.T) {

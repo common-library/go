@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/db/mysql"
+	"github.com/heaven-chp/common-library-go/database/mysql"
 )
 
 var database string = strings.ReplaceAll(uuid.NewString(), "-", "")

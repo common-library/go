@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/db/mongodb"
+	"github.com/heaven-chp/common-library-go/database/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
