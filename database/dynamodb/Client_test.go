@@ -53,9 +53,9 @@ func (this *TestItem) GetKey() (map[string]types.AttributeValue, error) {
 	return map[string]types.AttributeValue{"primary-key": pk, "sort-key": sk}, nil
 }
 
-func initialize(dynamoDB *dynamodb.DynamoDB, putItems bool, t *testing.T) {
+func initialize(client *dynamodb.Client, putItems bool, t *testing.T) {
 	func() {
-		err := dynamoDB.CreateClient(context.TODO(),
+		err := client.CreateClient(context.TODO(),
 			config.WithRegion("dummy"),
 			config.WithEndpointResolver(aws.EndpointResolverFunc(
 				func(service, region string) (aws.Endpoint, error) {
@@ -72,7 +72,7 @@ func initialize(dynamoDB *dynamodb.DynamoDB, putItems bool, t *testing.T) {
 	}()
 
 	func() {
-		response, err := dynamoDB.CreateTable(&aws_dynamodb.CreateTableInput{
+		response, err := client.CreateTable(&aws_dynamodb.CreateTableInput{
 			TableName: aws.String(TABLE_NAME),
 			AttributeDefinitions: []types.AttributeDefinition{{
 				AttributeName: aws.String("primary-key"),
@@ -151,7 +151,7 @@ func initialize(dynamoDB *dynamodb.DynamoDB, putItems bool, t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = dynamoDB.PutItem(&aws_dynamodb.PutItemInput{
+			_, err = client.PutItem(&aws_dynamodb.PutItemInput{
 				TableName: aws.String(TABLE_NAME), Item: item,
 			})
 			if err != nil {
@@ -161,8 +161,8 @@ func initialize(dynamoDB *dynamodb.DynamoDB, putItems bool, t *testing.T) {
 	}()
 }
 
-func finalize(dynamoDB *dynamodb.DynamoDB, t *testing.T) {
-	response, err := dynamoDB.DeleteTable(TABLE_NAME, true, 10)
+func finalize(client *dynamodb.Client, t *testing.T) {
+	response, err := client.DeleteTable(TABLE_NAME, true, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,26 +177,26 @@ func finalize(dynamoDB *dynamodb.DynamoDB, t *testing.T) {
 }
 
 func TestCreateClient(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 }
 
 func TestCreateTable(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 }
 
 func TestListTables(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
-	response, err := dynamoDB.ListTables(&aws_dynamodb.ListTablesInput{Limit: aws.Int32(10)})
+	response, err := client.ListTables(&aws_dynamodb.ListTablesInput{Limit: aws.Int32(10)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,12 +214,12 @@ func TestListTables(t *testing.T) {
 }
 
 func TestDescribeTable(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
-	response, err := dynamoDB.DescribeTable(TABLE_NAME)
+	response, err := client.DescribeTable(TABLE_NAME)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,13 +234,13 @@ func TestDescribeTable(t *testing.T) {
 }
 
 func TestUpdateTable(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
 	func() {
-		response, err := dynamoDB.DescribeTable(TABLE_NAME)
+		response, err := client.DescribeTable(TABLE_NAME)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -254,7 +254,7 @@ func TestUpdateTable(t *testing.T) {
 	}()
 
 	func() {
-		response, err := dynamoDB.UpdateTable(&aws_dynamodb.UpdateTableInput{
+		response, err := client.UpdateTable(&aws_dynamodb.UpdateTableInput{
 			TableName: aws.String(TABLE_NAME),
 			AttributeDefinitions: []types.AttributeDefinition{{
 				AttributeName: aws.String("field1"),
@@ -293,17 +293,17 @@ func TestUpdateTable(t *testing.T) {
 }
 
 func TestDeleteTable(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 }
 
 func TestGetItem(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
 	testItemForPut := TestItem{PrimaryKey: 1, SortKey: "a", Field1: false, Field2: 1,
 		Field3: "value_for_1", Field4: []struct {
@@ -320,7 +320,7 @@ func TestGetItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = dynamoDB.PutItem(&aws_dynamodb.PutItemInput{
+		_, err = client.PutItem(&aws_dynamodb.PutItemInput{
 			TableName: aws.String(TABLE_NAME), Item: item,
 		})
 		if err != nil {
@@ -335,7 +335,7 @@ func TestGetItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		response, err := dynamoDB.GetItem(&aws_dynamodb.GetItemInput{
+		response, err := client.GetItem(&aws_dynamodb.GetItemInput{
 			TableName: aws.String(TABLE_NAME), Key: key})
 		if err != nil {
 			t.Fatal(err)
@@ -361,10 +361,10 @@ func TestGetItem(t *testing.T) {
 }
 
 func TestPutItem(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
 	testItemForPut := TestItem{PrimaryKey: 1, SortKey: "a", Field1: false, Field2: 1, Field3: "value_for_1", Field4: []struct {
 		SubField1 string `dynamodbav:"sub-field1"`
@@ -377,7 +377,7 @@ func TestPutItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = dynamoDB.PutItem(&aws_dynamodb.PutItemInput{
+		_, err = client.PutItem(&aws_dynamodb.PutItemInput{
 			TableName: aws.String(TABLE_NAME), Item: item,
 		})
 		if err != nil {
@@ -392,7 +392,7 @@ func TestPutItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		response, err := dynamoDB.GetItem(&aws_dynamodb.GetItemInput{
+		response, err := client.GetItem(&aws_dynamodb.GetItemInput{
 			TableName: aws.String(TABLE_NAME), Key: key})
 		if err != nil {
 			t.Fatal(err)
@@ -420,10 +420,10 @@ func TestPutItem(t *testing.T) {
 func TestUpdateItem(t *testing.T) {
 	const updateValue = 10
 
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
 	func() {
 		testItem := TestItem{PrimaryKey: 1, SortKey: "a", Field1: false, Field2: 1, Field3: "value_for_1", Field4: []struct {
@@ -436,7 +436,7 @@ func TestUpdateItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = dynamoDB.PutItem(&aws_dynamodb.PutItemInput{
+		_, err = client.PutItem(&aws_dynamodb.PutItemInput{
 			TableName: aws.String(TABLE_NAME), Item: item,
 		})
 		if err != nil {
@@ -457,7 +457,7 @@ func TestUpdateItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = dynamoDB.UpdateItem(&aws_dynamodb.UpdateItemInput{
+		_, err = client.UpdateItem(&aws_dynamodb.UpdateItemInput{
 			TableName:                 aws.String(TABLE_NAME),
 			Key:                       key,
 			ExpressionAttributeNames:  expr.Names(),
@@ -477,7 +477,7 @@ func TestUpdateItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		response, err := dynamoDB.GetItem(&aws_dynamodb.GetItemInput{
+		response, err := client.GetItem(&aws_dynamodb.GetItemInput{
 			TableName: aws.String(TABLE_NAME), Key: key})
 		if err != nil {
 			t.Fatal(err)
@@ -495,10 +495,10 @@ func TestUpdateItem(t *testing.T) {
 }
 
 func TestDeleteItem(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, false, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, false, t)
+	defer finalize(&client, t)
 
 	func() {
 		testItem := TestItem{PrimaryKey: 1, SortKey: "a", Field1: false, Field2: 1, Field3: "value_for_1", Field4: []struct {
@@ -511,7 +511,7 @@ func TestDeleteItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = dynamoDB.PutItem(&aws_dynamodb.PutItemInput{
+		_, err = client.PutItem(&aws_dynamodb.PutItemInput{
 			TableName: aws.String(TABLE_NAME), Item: item,
 		})
 		if err != nil {
@@ -526,14 +526,14 @@ func TestDeleteItem(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = dynamoDB.DeleteItem(&aws_dynamodb.DeleteItemInput{TableName: aws.String(TABLE_NAME), Key: key})
+		_, err = client.DeleteItem(&aws_dynamodb.DeleteItemInput{TableName: aws.String(TABLE_NAME), Key: key})
 		if err != nil {
 			t.Fatal(err)
 		}
 	}()
 
 	func() {
-		response, err := dynamoDB.DescribeTable(TABLE_NAME)
+		response, err := client.DescribeTable(TABLE_NAME)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -545,10 +545,10 @@ func TestDeleteItem(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, true, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, true, t)
+	defer finalize(&client, t)
 
 	keyEx := expression.Key("primary-key").Equal(expression.Value(3)).And(expression.Key("sort-key").Equal(expression.Value("c-1")))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
@@ -556,7 +556,7 @@ func TestQuery(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	response, err := dynamoDB.Query(&aws_dynamodb.QueryInput{
+	response, err := client.Query(&aws_dynamodb.QueryInput{
 		TableName:                 aws.String(TABLE_NAME),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
@@ -585,16 +585,16 @@ func TestQuery(t *testing.T) {
 }
 
 func TestScan(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, true, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, true, t)
+	defer finalize(&client, t)
 
 	filtEx := expression.Name("primary-key").Between(expression.Value(2), expression.Value(3))
 	projEx := expression.NamesList(expression.Name("primary-key"), expression.Name("sort-key"), expression.Name("field2"))
 	expr, err := expression.NewBuilder().WithFilter(filtEx).WithProjection(projEx).Build()
 
-	response, err := dynamoDB.Scan(&aws_dynamodb.ScanInput{
+	response, err := client.Scan(&aws_dynamodb.ScanInput{
 		TableName:                 aws.String(TABLE_NAME),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
@@ -620,13 +620,13 @@ func TestScan(t *testing.T) {
 }
 
 func TestDescribeTimeToLive(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, true, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, true, t)
+	defer finalize(&client, t)
 
 	func() {
-		response, err := dynamoDB.DescribeTimeToLive(TABLE_NAME)
+		response, err := client.DescribeTimeToLive(TABLE_NAME)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -636,7 +636,7 @@ func TestDescribeTimeToLive(t *testing.T) {
 	}()
 
 	func() {
-		response, err := dynamoDB.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true)
+		response, err := client.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -650,7 +650,7 @@ func TestDescribeTimeToLive(t *testing.T) {
 	}()
 
 	func() {
-		response, err := dynamoDB.DescribeTimeToLive(TABLE_NAME)
+		response, err := client.DescribeTimeToLive(TABLE_NAME)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -665,13 +665,13 @@ func TestDescribeTimeToLive(t *testing.T) {
 }
 
 func TestUpdateTimeToLive(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, true, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, true, t)
+	defer finalize(&client, t)
 
 	func() {
-		response, err := dynamoDB.DescribeTimeToLive(TABLE_NAME)
+		response, err := client.DescribeTimeToLive(TABLE_NAME)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -681,7 +681,7 @@ func TestUpdateTimeToLive(t *testing.T) {
 	}()
 
 	func() {
-		response, err := dynamoDB.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true)
+		response, err := client.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -695,7 +695,7 @@ func TestUpdateTimeToLive(t *testing.T) {
 	}()
 
 	func() {
-		response, err := dynamoDB.DescribeTimeToLive(TABLE_NAME)
+		response, err := client.DescribeTimeToLive(TABLE_NAME)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -710,10 +710,10 @@ func TestUpdateTimeToLive(t *testing.T) {
 }
 
 func TestQueryPaginatorNextPage(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, true, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, true, t)
+	defer finalize(&client, t)
 
 	keyEx := expression.Key("primary-key").Equal(expression.Value(3))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
@@ -721,7 +721,7 @@ func TestQueryPaginatorNextPage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	response, err := dynamoDB.QueryPaginatorNextPage(&aws_dynamodb.QueryInput{
+	response, err := client.QueryPaginatorNextPage(&aws_dynamodb.QueryInput{
 		TableName:                 aws.String(TABLE_NAME),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
@@ -740,12 +740,12 @@ func TestQueryPaginatorNextPage(t *testing.T) {
 }
 
 func TestScanPaginatorNextPage(t *testing.T) {
-	dynamoDB := dynamodb.DynamoDB{}
+	client := dynamodb.Client{}
 
-	initialize(&dynamoDB, true, t)
-	defer finalize(&dynamoDB, t)
+	initialize(&client, true, t)
+	defer finalize(&client, t)
 
-	response, err := dynamoDB.ScanPaginatorNextPage(&aws_dynamodb.ScanInput{
+	response, err := client.ScanPaginatorNextPage(&aws_dynamodb.ScanInput{
 		TableName:         aws.String(TABLE_NAME),
 		Limit:             aws.Int32(2),
 		ExclusiveStartKey: nil,

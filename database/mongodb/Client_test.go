@@ -19,60 +19,60 @@ const database_name string = "testDatabase"
 const collection_name string = "testCollection"
 
 func TestInitialize(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
-	err := mongodb.Initialize("invalid_address", timeout)
+	err := client.Initialize("invalid_address", timeout)
 	if strings.HasPrefix(err.Error(), "server selection error:") == false {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, 0)
+	err = client.Initialize(address, 0)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestFinalize(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
-	err := mongodb.Finalize()
+	err := client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestFindOne(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	filter := bson.M{"value1": 1}
 
-	_, err := mongodb.FindOne(database_name, collection_name, filter, TestStruct{})
+	_, err := client.FindOne(database_name, collection_name, filter, TestStruct{})
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
 	insertData := TestStruct{Value1: 1, Value2: "abc"}
-	err = mongodb.InsertOne(database_name, collection_name, insertData)
+	err = client.InsertOne(database_name, collection_name, insertData)
 	if err != nil {
 		t.Error(err)
 	}
 
-	result_interface, err := mongodb.FindOne(database_name, collection_name, filter, TestStruct{})
+	result_interface, err := client.FindOne(database_name, collection_name, filter, TestStruct{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,28 +86,28 @@ func TestFindOne(t *testing.T) {
 		t.Errorf("invalid data - result : (%#v)", result)
 	}
 
-	err = mongodb.DeleteOne(database_name, collection_name, filter)
+	err = client.DeleteOne(database_name, collection_name, filter)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestFind(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	filter := bson.M{}
 
-	_, err := mongodb.Find(database_name, collection_name, filter, TestStruct{})
+	_, err := client.Find(database_name, collection_name, filter, TestStruct{})
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,12 +115,12 @@ func TestFind(t *testing.T) {
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
 
-	err = mongodb.InsertMany(database_name, collection_name, insertData)
+	err = client.InsertMany(database_name, collection_name, insertData)
 	if err != nil {
 		t.Error(err)
 	}
 
-	results_interface, err := mongodb.Find(database_name, collection_name, filter, TestStruct{})
+	results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -138,101 +138,101 @@ func TestFind(t *testing.T) {
 		t.Errorf("invalid data - results : (%#v)", results)
 	}
 
-	err = mongodb.DeleteMany(database_name, collection_name, filter)
+	err = client.DeleteMany(database_name, collection_name, filter)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestInsertOne(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
-	err := mongodb.InsertOne(database_name, collection_name, TestStruct{})
+	err := client.InsertOne(database_name, collection_name, TestStruct{})
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
 	insertData := TestStruct{Value1: 1, Value2: "abc"}
-	err = mongodb.InsertOne(database_name, collection_name, insertData)
+	err = client.InsertOne(database_name, collection_name, insertData)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.DeleteMany(database_name, collection_name, bson.M{})
+	err = client.DeleteMany(database_name, collection_name, bson.M{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestInsertMany(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
 
-	err := mongodb.InsertMany(database_name, collection_name, insertData)
+	err := client.InsertMany(database_name, collection_name, insertData)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.InsertMany(database_name, collection_name, insertData)
+	err = client.InsertMany(database_name, collection_name, insertData)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.DeleteMany(database_name, collection_name, bson.M{})
+	err = client.DeleteMany(database_name, collection_name, bson.M{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestUpdateOne(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	filter := bson.M{"value1": 1}
 	update := bson.D{{"$set", bson.D{{"value2", "update_value"}}}}
 
-	err := mongodb.UpdateOne(database_name, collection_name, filter, update)
+	err := client.UpdateOne(database_name, collection_name, filter, update)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.UpdateOne(database_name, collection_name, filter, update)
+	err = client.UpdateOne(database_name, collection_name, filter, update)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = mongodb.FindOne(database_name, collection_name, filter, TestStruct{})
+	_, err = client.FindOne(database_name, collection_name, filter, TestStruct{})
 	if err.Error() != "mongo: no documents in result" {
 		t.Error(err)
 	}
@@ -240,17 +240,17 @@ func TestUpdateOne(t *testing.T) {
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 1, Value2: "abc"})
 
-	err = mongodb.InsertMany(database_name, collection_name, insertData)
+	err = client.InsertMany(database_name, collection_name, insertData)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.UpdateOne(database_name, collection_name, filter, update)
+	err = client.UpdateOne(database_name, collection_name, filter, update)
 	if err != nil {
 		t.Error(err)
 	}
 
-	results_interface, err := mongodb.Find(database_name, collection_name, filter, TestStruct{})
+	results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -268,39 +268,39 @@ func TestUpdateOne(t *testing.T) {
 		t.Errorf("invalid data - results : (%#v)", results)
 	}
 
-	err = mongodb.DeleteMany(database_name, collection_name, bson.M{})
+	err = client.DeleteMany(database_name, collection_name, bson.M{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestUpdateMany(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	filter := bson.M{"value1": 1}
 	update := bson.D{{"$set", bson.D{{"value2", "update_value"}}}}
 
-	err := mongodb.UpdateMany(database_name, collection_name, filter, update)
+	err := client.UpdateMany(database_name, collection_name, filter, update)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.UpdateMany(database_name, collection_name, filter, update)
+	err = client.UpdateMany(database_name, collection_name, filter, update)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = mongodb.FindOne(database_name, collection_name, filter, TestStruct{})
+	_, err = client.FindOne(database_name, collection_name, filter, TestStruct{})
 	if err.Error() != "mongo: no documents in result" {
 		t.Error(err)
 	}
@@ -308,17 +308,17 @@ func TestUpdateMany(t *testing.T) {
 	insertData := make([]interface{}, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 1, Value2: "abc"})
 
-	err = mongodb.InsertMany(database_name, collection_name, insertData)
+	err = client.InsertMany(database_name, collection_name, insertData)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.UpdateMany(database_name, collection_name, filter, update)
+	err = client.UpdateMany(database_name, collection_name, filter, update)
 	if err != nil {
 		t.Error(err)
 	}
 
-	results_interface, err := mongodb.Find(database_name, collection_name, filter, TestStruct{})
+	results_interface, err := client.Find(database_name, collection_name, filter, TestStruct{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -336,74 +336,74 @@ func TestUpdateMany(t *testing.T) {
 		t.Errorf("invalid data - results : (%#v)", results)
 	}
 
-	err = mongodb.DeleteMany(database_name, collection_name, bson.M{})
+	err = client.DeleteMany(database_name, collection_name, bson.M{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestDeleteOne(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	filter := bson.M{}
 
-	err := mongodb.DeleteOne(database_name, collection_name, filter)
+	err := client.DeleteOne(database_name, collection_name, filter)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.DeleteOne(database_name, collection_name, filter)
+	err = client.DeleteOne(database_name, collection_name, filter)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = mongodb.FindOne(database_name, collection_name, filter, TestStruct{})
+	_, err = client.FindOne(database_name, collection_name, filter, TestStruct{})
 	if err.Error() != "mongo: no documents in result" {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestDeleteMany(t *testing.T) {
-	var mongodb mongodb.Mongodb
+	client := mongodb.Client{}
 
 	filter := bson.M{}
 
-	err := mongodb.DeleteMany(database_name, collection_name, filter)
+	err := client.DeleteMany(database_name, collection_name, filter)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = mongodb.Initialize(address, timeout)
+	err = client.Initialize(address, timeout)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mongodb.DeleteMany(database_name, collection_name, filter)
+	err = client.DeleteMany(database_name, collection_name, filter)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = mongodb.FindOne(database_name, collection_name, filter, TestStruct{})
+	_, err = client.FindOne(database_name, collection_name, filter, TestStruct{})
 	if err.Error() != "mongo: no documents in result" {
 		t.Error(err)
 	}
 
-	err = mongodb.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}

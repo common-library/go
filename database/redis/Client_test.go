@@ -8,134 +8,134 @@ import (
 )
 
 func TestInitialize(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Initialize("", "127.0.0.1:6378", 3, 240)
+	err := client.Initialize("", "127.0.0.1:6378", 3, 240)
 	if err.Error() != "dial tcp 127.0.0.1:6378: connect: connection refused" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestFinalize(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Finalize()
+	err := client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestPing(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Ping()
+	err := client.Ping()
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Ping()
+	err = client.Ping()
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestSelect(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Select(0)
+	err := client.Select(0)
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Select(0)
+	err = client.Select(0)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Select(1024)
+	err = client.Select(1024)
 	if err.Error() != "ERR DB index is out of range" {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestGet(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	_, err := redis.Get("key")
+	_, err := client.Get("key")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.FlushDB()
+	err = client.FlushDB()
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = redis.Get("key")
+	_, err = client.Get("key")
 	if err.Error() != "redigo: nil returned" {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestSet(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Set("key", "value")
+	err := client.Set("key", "value")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Set("key", "value")
+	err = client.Set("key", "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	data, err := redis.Get("key")
+	data, err := client.Get("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -143,31 +143,31 @@ func TestSet(t *testing.T) {
 		t.Errorf("invalid data - data : (%s)", data)
 	}
 
-	err = redis.Del("key")
+	err = client.Del("key")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestSetex(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Setex("key", 2, "value")
+	err := client.Setex("key", 2, "value")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	existsKey, err := redis.Exists("key")
+	existsKey, err := client.Exists("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -175,12 +175,12 @@ func TestSetex(t *testing.T) {
 		t.Errorf("invalid data - existsKey : (%d)", existsKey)
 	}
 
-	err = redis.Setex("key", 2, "value")
+	err = client.Setex("key", 2, "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	existsKey, err = redis.Exists("key")
+	existsKey, err = client.Exists("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -190,7 +190,7 @@ func TestSetex(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	existsKey, err = redis.Exists("key")
+	existsKey, err = client.Exists("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -198,53 +198,53 @@ func TestSetex(t *testing.T) {
 		t.Errorf("invalid data - existsKey : (%d)", existsKey)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 func TestMGet(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	_, err := redis.MGet("key1", "key2")
+	_, err := client.MGet("key1", "key2")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = redis.MGet("key1", "key2")
+	_, err = client.MGet("key1", "key2")
 	if err != nil {
 		t.Error(err)
 	}
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestMSet(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.MSet("key1", "value1", "key2", "value2")
+	err := client.MSet("key1", "value1", "key2", "value2")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.MSet("key1", "value1", "key2", "value2")
+	err = client.MSet("key1", "value1", "key2", "value2")
 	if err != nil {
 		t.Error(err)
 	}
 
-	data, err := redis.MGet("key1", "key2")
+	data, err := client.MGet("key1", "key2")
 	if err != nil {
 		t.Error(err)
 	}
@@ -255,75 +255,75 @@ func TestMSet(t *testing.T) {
 		t.Errorf("invalid data - data : (%s)", data[0])
 	}
 
-	err = redis.Del("key1")
+	err = client.Del("key1")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Del("key2")
+	err = client.Del("key2")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestDel(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Del("key")
+	err := client.Del("key")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Del("key")
+	err = client.Del("key")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Del("key1")
+	err = client.Del("key1")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Del("key2")
+	err = client.Del("key2")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestFlushDB(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.FlushDB()
+	err := client.FlushDB()
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Set("key", "value")
+	err = client.Set("key", "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	keyCount, err := redis.DBsize()
+	keyCount, err := client.DBsize()
 	if err != nil {
 		t.Error(err)
 	}
@@ -331,12 +331,12 @@ func TestFlushDB(t *testing.T) {
 		t.Errorf("invalid data - keyCount : (%d)", keyCount)
 	}
 
-	err = redis.FlushDB()
+	err = client.FlushDB()
 	if err != nil {
 		t.Error(err)
 	}
 
-	keyCount, err = redis.DBsize()
+	keyCount, err = client.DBsize()
 	if err != nil {
 		t.Error(err)
 	}
@@ -344,31 +344,31 @@ func TestFlushDB(t *testing.T) {
 		t.Errorf("invalid data - keyCount : (%d)", keyCount)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestFlushAll(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.FlushAll()
+	err := client.FlushAll()
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Set("key", "value")
+	err = client.Set("key", "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	result, err := redis.Info("Keyspace")
+	result, err := client.Info("Keyspace")
 	if err != nil {
 		t.Error(err)
 	}
@@ -376,12 +376,12 @@ func TestFlushAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = redis.FlushAll()
+	err = client.FlushAll()
 	if err != nil {
 		t.Error(err)
 	}
 
-	result, err = redis.Info("Keyspace")
+	result, err = client.Info("Keyspace")
 	if err != nil {
 		t.Error(err)
 	}
@@ -389,31 +389,31 @@ func TestFlushAll(t *testing.T) {
 		t.Errorf("invalid data : %s", result)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestTtl(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	ttl, err := redis.Ttl("key")
+	ttl, err := client.Ttl("key")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Set("key", "value")
+	err = client.Set("key", "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	ttl, err = redis.Ttl("key")
+	ttl, err = client.Ttl("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -421,12 +421,12 @@ func TestTtl(t *testing.T) {
 		t.Errorf("invalid data - ttl : (%d)", ttl)
 	}
 
-	err = redis.Del("key")
+	err = client.Del("key")
 	if err != nil {
 		t.Error(err)
 	}
 
-	ttl, err = redis.Ttl("key")
+	ttl, err = client.Ttl("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -434,12 +434,12 @@ func TestTtl(t *testing.T) {
 		t.Errorf("invalid data - ttl : (%d)", ttl)
 	}
 
-	err = redis.Setex("keyex", 2, "value")
+	err = client.Setex("keyex", 2, "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	ttl, err = redis.Ttl("keyex")
+	ttl, err = client.Ttl("keyex")
 	if err != nil {
 		t.Error(err)
 	}
@@ -447,31 +447,31 @@ func TestTtl(t *testing.T) {
 		t.Errorf("invalid data - ttl : (%d)", ttl)
 	}
 
-	err = redis.Del("keyex")
+	err = client.Del("keyex")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestInfo(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	_, err := redis.Info("ALL")
+	_, err := client.Info("ALL")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	result, err := redis.Info("ALL")
+	result, err := client.Info("ALL")
 	if err != nil {
 		t.Error(err)
 	}
@@ -480,36 +480,36 @@ func TestInfo(t *testing.T) {
 		t.Errorf("invalid data - result : (%s)", result)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestDBsize(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	keyCount, err := redis.DBsize()
+	keyCount, err := client.DBsize()
 	if keyCount != -1 || err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	keyCount1, err := redis.DBsize()
+	keyCount1, err := client.DBsize()
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Set("key", "value")
+	err = client.Set("key", "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	keyCount2, err := redis.DBsize()
+	keyCount2, err := client.DBsize()
 	if err != nil {
 		t.Error(err)
 	}
@@ -517,65 +517,31 @@ func TestDBsize(t *testing.T) {
 		t.Errorf("invalid data - keyCount1 : (%d), keyCount2 : (%d)", keyCount1, keyCount2)
 	}
 
-	err = redis.Del("key")
+	err = client.Del("key")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestExists(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	existsKey, err := redis.Exists("key")
+	existsKey, err := client.Exists("key")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	existsKey, err = redis.Exists("key")
-	if err != nil {
-		t.Error(err)
-	}
-	if existsKey != 0 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
-	}
-
-	err = redis.Set("key", "value")
-	if err != nil {
-		t.Error(err)
-	}
-
-	existsKey, err = redis.Exists("key")
-	if err != nil {
-		t.Error(err)
-	}
-	if existsKey != 1 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
-	}
-
-	existsKey, err = redis.Exists("key", 1, 2, "3")
-	if err != nil {
-		t.Error(err)
-	}
-	if existsKey != 1 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
-	}
-
-	err = redis.Del("key")
-	if err != nil {
-		t.Error(err)
-	}
-
-	existsKey, err = redis.Exists("key")
+	existsKey, err = client.Exists("key")
 	if err != nil {
 		t.Error(err)
 	}
@@ -583,35 +549,69 @@ func TestExists(t *testing.T) {
 		t.Errorf("invalid data - existsKey : (%d)", existsKey)
 	}
 
-	err = redis.Finalize()
+	err = client.Set("key", "value")
+	if err != nil {
+		t.Error(err)
+	}
+
+	existsKey, err = client.Exists("key")
+	if err != nil {
+		t.Error(err)
+	}
+	if existsKey != 1 {
+		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	}
+
+	existsKey, err = client.Exists("key", 1, 2, "3")
+	if err != nil {
+		t.Error(err)
+	}
+	if existsKey != 1 {
+		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	}
+
+	err = client.Del("key")
+	if err != nil {
+		t.Error(err)
+	}
+
+	existsKey, err = client.Exists("key")
+	if err != nil {
+		t.Error(err)
+	}
+	if existsKey != 0 {
+		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	}
+
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 func TestRename(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	err := redis.Rename("key", "key_rename")
+	err := client.Rename("key", "key_rename")
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Set("key", "value")
+	err = client.Set("key", "value")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Rename("key", "key_rename")
+	err = client.Rename("key", "key_rename")
 	if err != nil {
 		t.Error(err)
 	}
 
-	data, err := redis.Get("key_rename")
+	data, err := client.Get("key_rename")
 	if err != nil {
 		t.Error(err)
 	}
@@ -619,36 +619,36 @@ func TestRename(t *testing.T) {
 		t.Errorf("invalid data - data : (%s)", data)
 	}
 
-	err = redis.Del("key_rename")
+	err = client.Del("key_rename")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestRandomKey(t *testing.T) {
-	var redis redis.Redis
+	client := redis.Client{}
 
-	key, err := redis.RandomKey()
+	key, err := client.RandomKey()
 	if err.Error() != "please call Initialize first" {
 		t.Error(err)
 	}
 
-	err = redis.Initialize("", "127.0.0.1:6379", 3, 240)
+	err = client.Initialize("", "127.0.0.1:6379", 3, 240)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.MSet("key1", "value1", "key2", "value2")
+	err = client.MSet("key1", "value1", "key2", "value2")
 	if err != nil {
 		t.Error(err)
 	}
 
-	key, err = redis.RandomKey()
+	key, err = client.RandomKey()
 	if err != nil {
 		t.Error(err)
 	}
@@ -657,12 +657,12 @@ func TestRandomKey(t *testing.T) {
 		t.Errorf("invalid data - key : (%s)", key)
 	}
 
-	err = redis.FlushDB()
+	err = client.FlushDB()
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = redis.Finalize()
+	err = client.Finalize()
 	if err != nil {
 		t.Error(err)
 	}

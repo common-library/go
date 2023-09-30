@@ -16,17 +16,17 @@ var index string = uuid.NewString()
 var documentId string = uuid.NewString()
 var template string = uuid.NewString()
 
-func initialize(elasticsearch *v7.Elasticsearch, addresses []string) error {
-	return elasticsearch.Initialize(addresses, timeout, "", "", "", "", "", []byte(""))
+func initialize(client *v7.Client, addresses []string) error {
+	return client.Initialize(addresses, timeout, "", "", "", "", "", []byte(""))
 }
 
-func exists(elasticsearch *v7.Elasticsearch) error {
-	err := initialize(elasticsearch, addresses)
+func exists(client *v7.Client) error {
+	err := initialize(client, addresses)
 	if err != nil {
 		return err
 	}
 
-	exist, err := elasticsearch.IndicesExists([]string{index})
+	exist, err := client.IndicesExists([]string{index})
 	if err != nil {
 		return err
 	}
@@ -34,24 +34,7 @@ func exists(elasticsearch *v7.Elasticsearch) error {
 		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
 	}
 
-	exist, err = elasticsearch.Exists(index, documentId)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
-	}
-
-	return nil
-}
-
-func deletes(elasticsearch *v7.Elasticsearch) error {
-	err := elasticsearch.IndicesDelete([]string{index})
-	if err != nil {
-		return err
-	}
-
-	exist, err := elasticsearch.IndicesExists([]string{index})
+	exist, err = client.Exists(index, documentId)
 	if err != nil {
 		return err
 	}
@@ -62,13 +45,13 @@ func deletes(elasticsearch *v7.Elasticsearch) error {
 	return nil
 }
 
-func existsTemplate(elasticsearch *v7.Elasticsearch) error {
-	err := initialize(elasticsearch, addresses)
+func deletes(client *v7.Client) error {
+	err := client.IndicesDelete([]string{index})
 	if err != nil {
 		return err
 	}
 
-	exist, err := elasticsearch.IndicesExistsTemplate([]string{template})
+	exist, err := client.IndicesExists([]string{index})
 	if err != nil {
 		return err
 	}
@@ -79,13 +62,30 @@ func existsTemplate(elasticsearch *v7.Elasticsearch) error {
 	return nil
 }
 
-func deletesTemplate(elasticsearch *v7.Elasticsearch) error {
-	err := elasticsearch.IndicesDeleteTemplate(template)
+func existsTemplate(client *v7.Client) error {
+	err := initialize(client, addresses)
 	if err != nil {
 		return err
 	}
 
-	exist, err := elasticsearch.IndicesExistsTemplate([]string{template})
+	exist, err := client.IndicesExistsTemplate([]string{template})
+	if err != nil {
+		return err
+	}
+	if exist {
+		return errors.New(fmt.Sprintf("invalid exist - exist : (%t)", exist))
+	}
+
+	return nil
+}
+
+func deletesTemplate(client *v7.Client) error {
+	err := client.IndicesDeleteTemplate(template)
+	if err != nil {
+		return err
+	}
+
+	exist, err := client.IndicesExistsTemplate([]string{template})
 	if err != nil {
 		return err
 	}
@@ -97,67 +97,67 @@ func deletesTemplate(elasticsearch *v7.Elasticsearch) error {
 }
 
 func TestInitialize(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.Initialize(addresses, timeout, "", "", "", "", "", []byte("invalid"))
+	err := client.Initialize(addresses, timeout, "", "", "", "", "", []byte("invalid"))
 	if err.Error() != "error creating transport: unable to add CA certificate" {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Initialize(addresses, 0, "", "", "", "", "", []byte(""))
+	err = client.Initialize(addresses, 0, "", "", "", "", "", []byte(""))
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, addresses)
+	err = initialize(&client, addresses)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestExists(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	_, err := elasticsearch.Exists("", "")
+	_, err := client.Exists("", "")
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = elasticsearch.Exists(index, documentId)
+	_, err = client.Exists(index, documentId)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = elasticsearch.Exists("", "")
+	_, err = client.Exists("", "")
 	if err.Error() != `response error - status : (400 Bad Request)` {
 		t.Error(err)
 	}
 
-	_, err = elasticsearch.Exists("*", "")
+	_, err = client.Exists("*", "")
 	if err.Error() != `response error - status : (405 Method Not Allowed)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, `{"field":"value"}`)
+	err = client.Index(index, documentId, `{"field":"value"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.Exists(index, documentId)
+	exist, err := client.Exists(index, documentId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -165,45 +165,45 @@ func TestExists(t *testing.T) {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndex(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.Index(index, documentId, "")
+	err := client.Index(index, documentId, "")
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.Index(index, documentId, `{"field":"value"}`)
+	err = client.Index(index, documentId, `{"field":"value"}`)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, "")
+	err = client.Index(index, documentId, "")
 	if err.Error() != `response error - status : (400 Bad Request), type : (parse_exception), reason : (request body is required)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, `{"field":"value"}`)
+	err = client.Index(index, documentId, `{"field":"value"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.Exists(index, documentId)
+	exist, err := client.Exists(index, documentId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -211,50 +211,50 @@ func TestIndex(t *testing.T) {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestDelete(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.Delete(index, documentId)
+	err := client.Delete(index, documentId)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.Delete(index, documentId)
+	err = client.Delete(index, documentId)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.Delete(index, documentId)
+	err = client.Delete(index, documentId)
 	if err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, `{"field":"value"}`)
+	err = client.Index(index, documentId, `{"field":"value"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Delete(index, documentId)
+	err = client.Delete(index, documentId)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.Exists(index, documentId)
+	exist, err := client.Exists(index, documentId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -262,55 +262,55 @@ func TestDelete(t *testing.T) {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestDeleteByQuery(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.DeleteByQuery([]string{index}, ``)
+	err := client.DeleteByQuery([]string{index}, ``)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`)
+	err = client.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.DeleteByQuery([]string{index}, `{}`)
+	err = client.DeleteByQuery([]string{index}, `{}`)
 	if err.Error() != `response error - status : (400 Bad Request), type : (action_request_validation_exception), reason : (Validation Failed: 1: query is missing;)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, `{"field":"value_1"}`)
+	err = client.Index(index, documentId, `{"field":"value_1"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId+"_temp", `{"field":"value_2"}`)
+	err = client.Index(index, documentId+"_temp", `{"field":"value_2"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = elasticsearch.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`)
+	err = client.DeleteByQuery([]string{index}, `{"query":{"match":{"field":"value_1"}}}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.Exists(index, documentId)
+	exist, err := client.Exists(index, documentId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -318,45 +318,45 @@ func TestDeleteByQuery(t *testing.T) {
 		t.Errorf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesExists(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	_, err := elasticsearch.IndicesExists([]string{index})
+	_, err := client.IndicesExists([]string{index})
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = elasticsearch.IndicesExists([]string{index})
+	_, err = client.IndicesExists([]string{index})
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = elasticsearch.IndicesExists([]string{"<>"})
+	_, err = client.IndicesExists([]string{"<>"})
 	if err.Error() != `response error - status : (400 Bad Request)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.IndicesCreate(index, "")
+	err = client.IndicesCreate(index, "")
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.IndicesExists([]string{index})
+	exist, err := client.IndicesExists([]string{index})
 	if err != nil {
 		t.Error(err)
 	}
@@ -364,45 +364,45 @@ func TestIndicesExists(t *testing.T) {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesCreate(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.IndicesCreate(index, "")
+	err := client.IndicesCreate(index, "")
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.IndicesCreate(index, "")
+	err = client.IndicesCreate(index, "")
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.IndicesCreate(index, "~")
+	err = client.IndicesCreate(index, "~")
 	if err.Error() != `response error - status : (500 Internal Server Error), type : (not_x_content_exception), reason : (Compressor detection can only be called on some xcontent bytes or compressed xcontent bytes)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.IndicesCreate(index, "")
+	err = client.IndicesCreate(index, "")
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.IndicesExists([]string{index})
+	exist, err := client.IndicesExists([]string{index})
 	if err != nil {
 		t.Error(err)
 	}
@@ -410,83 +410,83 @@ func TestIndicesCreate(t *testing.T) {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesDelete(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.IndicesDelete([]string{""})
+	err := client.IndicesDelete([]string{""})
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.IndicesDelete([]string{""})
+	err = client.IndicesDelete([]string{""})
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.IndicesDelete([]string{""})
+	err = client.IndicesDelete([]string{""})
 	if err.Error() != `response error - status : (400 Bad Request), type : (action_request_validation_exception), reason : (Validation Failed: 1: index / indices is missing;)` {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.IndicesCreate(index, "")
+	err = client.IndicesCreate(index, "")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesExistsTemplate(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	_, err := elasticsearch.IndicesExistsTemplate([]string{template})
+	_, err := client.IndicesExistsTemplate([]string{template})
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = elasticsearch.IndicesExistsTemplate([]string{template})
+	_, err = client.IndicesExistsTemplate([]string{template})
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = existsTemplate(&elasticsearch)
+	err = existsTemplate(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = elasticsearch.IndicesExistsTemplate([]string{""})
+	_, err = client.IndicesExistsTemplate([]string{""})
 	if err.Error() != `response error - status : (405 Method Not Allowed)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
+	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.IndicesExistsTemplate([]string{template})
+	exist, err := client.IndicesExistsTemplate([]string{template})
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,45 +494,45 @@ func TestIndicesExistsTemplate(t *testing.T) {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletesTemplate(&elasticsearch)
+	err = deletesTemplate(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesPutTemplate(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.IndicesPutTemplate(template, ``)
+	err := client.IndicesPutTemplate(template, ``)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
+	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = existsTemplate(&elasticsearch)
+	err = existsTemplate(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.IndicesPutTemplate(template, "")
+	err = client.IndicesPutTemplate(template, "")
 	if err.Error() != `response error - status : (400 Bad Request), type : (parse_exception), reason : (request body is required)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
+	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.IndicesExistsTemplate([]string{template})
+	exist, err := client.IndicesExistsTemplate([]string{template})
 	if err != nil {
 		t.Error(err)
 	}
@@ -540,45 +540,45 @@ func TestIndicesPutTemplate(t *testing.T) {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletesTemplate(&elasticsearch)
+	err = deletesTemplate(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesDeleteTemplate(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.IndicesDeleteTemplate(template)
+	err := client.IndicesDeleteTemplate(template)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.IndicesDeleteTemplate(template)
+	err = client.IndicesDeleteTemplate(template)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = existsTemplate(&elasticsearch)
+	err = existsTemplate(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.IndicesDeleteTemplate(template)
+	err = client.IndicesDeleteTemplate(template)
 	if err.Error() != `response error - status : (404 Not Found), type : (index_template_missing_exception), reason : (index_template [`+template+`] missing)` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
+	err = client.IndicesPutTemplate(template, `{"index_patterns": ["*"]}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	exist, err := elasticsearch.IndicesExistsTemplate([]string{template})
+	exist, err := client.IndicesExistsTemplate([]string{template})
 	if err != nil {
 		t.Error(err)
 	}
@@ -586,45 +586,45 @@ func TestIndicesDeleteTemplate(t *testing.T) {
 		t.Fatalf("invalid exist - exist : (%t)", exist)
 	}
 
-	err = deletesTemplate(&elasticsearch)
+	err = deletesTemplate(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestSearch(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	_, err := elasticsearch.Search(index, ``)
+	_, err := client.Search(index, ``)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = elasticsearch.Search(index, `{"query":{"match_all":{}}}`)
+	_, err = client.Search(index, `{"query":{"match_all":{}}}`)
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = elasticsearch.Search(index, `{}`)
+	_, err = client.Search(index, `{}`)
 	if err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, `{"field":"value"}`)
+	err = client.Index(index, documentId, `{"field":"value"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	result, err := elasticsearch.Search(index, `{"query":{"match_all":{}}}`)
+	result, err := client.Search(index, `{"query":{"match_all":{}}}`)
 	if err != nil {
 		t.Error(err)
 	}
@@ -632,50 +632,50 @@ func TestSearch(t *testing.T) {
 		t.Errorf("invalid result - result : (\n%s)", result)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIndicesForcemerge(t *testing.T) {
-	elasticsearch := v7.Elasticsearch{}
+	client := v7.Client{}
 
-	err := elasticsearch.IndicesForcemerge([]string{index})
+	err := client.IndicesForcemerge([]string{index})
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = initialize(&elasticsearch, []string{"invalid_address"})
+	err = initialize(&client, []string{"invalid_address"})
 	if err != nil {
 		t.Error(err)
 	}
-	err = elasticsearch.IndicesForcemerge([]string{index})
+	err = client.IndicesForcemerge([]string{index})
 	if err.Error() != `unsupported protocol scheme ""` {
 		t.Error(err)
 	}
 
-	err = exists(&elasticsearch)
+	err = exists(&client)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = elasticsearch.IndicesForcemerge([]string{index})
+	err = client.IndicesForcemerge([]string{index})
 	if err.Error() != `response error - status : (404 Not Found), type : (index_not_found_exception), reason : (no such index [`+index+`])` {
 		t.Error(err)
 	}
 
-	err = elasticsearch.Index(index, documentId, `{"field":"value"}`)
+	err = client.Index(index, documentId, `{"field":"value"}`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = elasticsearch.IndicesForcemerge([]string{index})
+	err = client.IndicesForcemerge([]string{index})
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = deletes(&elasticsearch)
+	err = deletes(&client)
 	if err != nil {
 		t.Error(err)
 	}

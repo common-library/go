@@ -21,8 +21,8 @@ import (
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
-// Elasticsearch is object that provides elasticsearch interface.
-type Elasticsearch struct {
+// Client is object that provides elasticsearch interface.
+type Client struct {
 	addresses []string
 	timeout   uint64
 
@@ -31,8 +31,8 @@ type Elasticsearch struct {
 
 // Initialize is initialize.
 //
-// ex) err := elasticsearch.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
-func (this *Elasticsearch) Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
+// ex) err := client.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
+func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
 	this.addresses = addresses
 	this.timeout = timeout
 
@@ -61,8 +61,8 @@ func (this *Elasticsearch) Initialize(addresses []string, timeout uint64, cloudI
 
 // Exists is checks if a document exists in the index.
 //
-// ex) exist, err := elasticsearch.Exists("index", "document_id")
-func (this *Elasticsearch) Exists(index, documentID string) (bool, error) {
+// ex) exist, err := client.Exists("index", "document_id")
+func (this *Client) Exists(index, documentID string) (bool, error) {
 	if this.client == nil {
 		return false, errors.New("please call Initialize first")
 	}
@@ -96,8 +96,8 @@ func (this *Elasticsearch) Exists(index, documentID string) (bool, error) {
 
 // Index is stores document.
 //
-// ex) err := elasticsearch.Index("index", "document_id", "{...}")
-func (this *Elasticsearch) Index(index, documentID, body string) error {
+// ex) err := client.Index("index", "document_id", "{...}")
+func (this *Client) Index(index, documentID, body string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -129,8 +129,8 @@ func (this *Elasticsearch) Index(index, documentID, body string) error {
 
 // Delete is deletes document.
 //
-// ex) err := elasticsearch.Delete("index", "document_id")
-func (this *Elasticsearch) Delete(index, documentID string) error {
+// ex) err := client.Delete("index", "document_id")
+func (this *Client) Delete(index, documentID string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -158,8 +158,8 @@ func (this *Elasticsearch) Delete(index, documentID string) error {
 
 // DeleteByQuery is perform a delete query on index.
 //
-// ex) err := elasticsearch.DeleteByQuery([]string{"index"},"{...}")
-func (this *Elasticsearch) DeleteByQuery(indices []string, body string) error {
+// ex) err := client.DeleteByQuery([]string{"index"},"{...}")
+func (this *Client) DeleteByQuery(indices []string, body string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -192,8 +192,8 @@ func (this *Elasticsearch) DeleteByQuery(indices []string, body string) error {
 
 // IndicesExists is checks if an index exists within indices.
 //
-// ex) exist, err := elasticsearch.IndicesExists([]string{"index"})
-func (this *Elasticsearch) IndicesExists(indices []string) (bool, error) {
+// ex) exist, err := client.IndicesExists([]string{"index"})
+func (this *Client) IndicesExists(indices []string) (bool, error) {
 	if this.client == nil {
 		return false, errors.New("please call Initialize first")
 	}
@@ -223,8 +223,8 @@ func (this *Elasticsearch) IndicesExists(indices []string) (bool, error) {
 
 // IndicesCreate is create an index.
 //
-// ex) err := elasticsearch.IndicesCreate("index", "{...}")
-func (this *Elasticsearch) IndicesCreate(index, body string) error {
+// ex) err := client.IndicesCreate("index", "{...}")
+func (this *Client) IndicesCreate(index, body string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -254,8 +254,8 @@ func (this *Elasticsearch) IndicesCreate(index, body string) error {
 
 // IndicesDelete is delete an index.
 //
-// ex) err := elasticsearch.IndicesDelete([]string{"Index"})
-func (this *Elasticsearch) IndicesDelete(indices []string) error {
+// ex) err := client.IndicesDelete([]string{"Index"})
+func (this *Client) IndicesDelete(indices []string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -281,8 +281,8 @@ func (this *Elasticsearch) IndicesDelete(indices []string) error {
 
 // IndicesExistsTemplate is checks if a template exists.
 //
-// ex) exist, err := elasticsearch.IndicesExistsTemplate([]string{"template"})
-func (this *Elasticsearch) IndicesExistsTemplate(name []string) (bool, error) {
+// ex) exist, err := client.IndicesExistsTemplate([]string{"template"})
+func (this *Client) IndicesExistsTemplate(name []string) (bool, error) {
 	if this.client == nil {
 		return false, errors.New("please call Initialize first")
 	}
@@ -312,8 +312,8 @@ func (this *Elasticsearch) IndicesExistsTemplate(name []string) (bool, error) {
 
 // IndicesPutTemplate is stores templates.
 //
-// ex) err := elasticsearch.IndicesPutTemplate("template", "{...}")
-func (this *Elasticsearch) IndicesPutTemplate(name, body string) error {
+// ex) err := client.IndicesPutTemplate("template", "{...}")
+func (this *Client) IndicesPutTemplate(name, body string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -343,8 +343,8 @@ func (this *Elasticsearch) IndicesPutTemplate(name, body string) error {
 
 // IndicesDeleteTemplate is delete an template.
 //
-// ex) err := elasticsearch.IndicesDeleteTemplate("template")
-func (this *Elasticsearch) IndicesDeleteTemplate(name string) error {
+// ex) err := client.IndicesDeleteTemplate("template")
+func (this *Client) IndicesDeleteTemplate(name string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -370,8 +370,8 @@ func (this *Elasticsearch) IndicesDeleteTemplate(name string) error {
 
 // IndicesForcemerge is perform a force merge on index.
 //
-// ex) err := elasticsearch.IndicesForcemerge([]string{"index"})
-func (this *Elasticsearch) IndicesForcemerge(indices []string) error {
+// ex) err := client.IndicesForcemerge([]string{"index"})
+func (this *Client) IndicesForcemerge(indices []string) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -400,8 +400,8 @@ func (this *Elasticsearch) IndicesForcemerge(indices []string) error {
 
 // Search is search
 //
-// ex) result, err := elasticsearch.Search("index", "{...}")
-func (this *Elasticsearch) Search(index, body string) (string, error) {
+// ex) result, err := client.Search("index", "{...}")
+func (this *Client) Search(index, body string) (string, error) {
 	if this.client == nil {
 		return "", errors.New("please call Initialize first")
 	}
@@ -429,7 +429,7 @@ func (this *Elasticsearch) Search(index, body string) (string, error) {
 	return string(result), err
 }
 
-func (this *Elasticsearch) responseErrorToError(status string, reader io.Reader) error {
+func (this *Client) responseErrorToError(status string, reader io.Reader) error {
 	buffer := new(bytes.Buffer)
 	buffer.ReadFrom(reader)
 

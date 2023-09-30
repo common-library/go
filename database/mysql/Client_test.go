@@ -28,30 +28,30 @@ func createTable() error {
 		}
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err := mysql.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
+	err := client.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
 	if err != nil {
 		return err
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.Execute(`CREATE DATABASE ` + database + `;`)
-	if err != nil {
-		return err
-	}
-
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Execute(`CREATE DATABASE ` + database + `;`)
 	if err != nil {
 		return err
 	}
 
-	err = mysql.Execute(`CREATE TABLE ` + table + `(field int);`)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		return err
 	}
 
-	err = mysql.Execute(`INSERT INTO ` + table + `(field) VALUE(1);`)
+	err = client.Execute(`CREATE TABLE ` + table + `(field int);`)
+	if err != nil {
+		return err
+	}
+
+	err = client.Execute(`INSERT INTO ` + table + `(field) VALUE(1);`)
 	if err != nil {
 		return err
 	}
@@ -60,15 +60,15 @@ func createTable() error {
 }
 
 func deleteDatabase() error {
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err := mysql.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
+	err := client.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
 	if err != nil {
 		return err
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.Execute(`DROP DATABASE ` + database + `;`)
+	err = client.Execute(`DROP DATABASE ` + database + `;`)
 	if err != nil {
 		return err
 	}
@@ -77,30 +77,30 @@ func deleteDatabase() error {
 }
 
 func TestInitialize(t *testing.T) {
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err := mysql.Initialize(`root:root@tcp(127.0.0.1)`, 1)
+	err := client.Initialize(`root:root@tcp(127.0.0.1)`, 1)
 	if err.Error() != `invalid DSN: missing the slash separating the database name` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 }
 
 func TestFinalize(t *testing.T) {
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	mysql.Finalize()
+	client.Finalize()
 
-	err := mysql.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
+	err := client.Initialize(`root:root@tcp(127.0.0.1)/`, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 }
 
 func TestQuery(t *testing.T) {
@@ -109,20 +109,20 @@ func TestQuery(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	_, err = mysql.Query(`SELECT field FROM ` + table + `;`)
+	_, err = client.Query(`SELECT field FROM ` + table + `;`)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	rows, err := mysql.Query(`SELECT field FROM ` + table + `;`)
+	rows, err := client.Query(`SELECT field FROM ` + table + `;`)
 	if err != nil {
 		t.Error(err)
 	}
@@ -139,7 +139,7 @@ func TestQuery(t *testing.T) {
 		}
 	}
 
-	rows2, err := mysql.Query(`SELECT field FROM `+table+` WHERE field=?;`, 1)
+	rows2, err := client.Query(`SELECT field FROM `+table+` WHERE field=?;`, 1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -168,21 +168,21 @@ func TestQueryRow(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.QueryRow(``)
+	err = client.QueryRow(``)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	field := 0
-	err = mysql.QueryRow(`SELECT field FROM `+table+`;`, &field)
+	err = client.QueryRow(`SELECT field FROM `+table+`;`, &field)
 	if err != nil {
 		t.Error(err)
 	}
@@ -202,31 +202,31 @@ func TestExecute(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.Execute(`UPDATE ` + table + ` SET field=2`)
+	err = client.Execute(`UPDATE ` + table + ` SET field=2`)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.Execute(``)
+	err = client.Execute(``)
 	if err.Error() != `Error 1065 (42000): Query was empty` {
 		t.Error(err)
 	}
 
-	err = mysql.Execute(`UPDATE ` + table + ` SET field=2`)
+	err = client.Execute(`UPDATE ` + table + ` SET field=2`)
 	if err != nil {
 		t.Error(err)
 	}
 
 	field := 0
-	err = mysql.QueryRow(`SELECT field FROM `+table+`;`, &field)
+	err = client.QueryRow(`SELECT field FROM `+table+`;`, &field)
 	if err != nil {
 		t.Error(err)
 	}
@@ -234,13 +234,13 @@ func TestExecute(t *testing.T) {
 		t.Errorf("invalid field : (%d)", field)
 	}
 
-	err = mysql.Execute(`INSERT INTO `+table+` VALUE(field=?);`, 1)
+	err = client.Execute(`INSERT INTO `+table+` VALUE(field=?);`, 1)
 	if err != nil {
 		t.Error(err)
 	}
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -260,31 +260,31 @@ func TestSetPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
+	err = client.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
+	err = client.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mysql.ExecutePrepare(2)
+	err = client.ExecutePrepare(2)
 	if err != nil {
 		t.Error(err)
 	}
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -304,25 +304,25 @@ func TestQueryPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	_, err = mysql.QueryPrepare(1)
+	_, err = client.QueryPrepare(1)
 	if err.Error() != `please call SetPrepare first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.SetPrepare(`SELECT field FROM ` + table + ` WHERE field=?;`)
+	err = client.SetPrepare(`SELECT field FROM ` + table + ` WHERE field=?;`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	rows, err := mysql.QueryPrepare(1)
+	rows, err := client.QueryPrepare(1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -352,30 +352,30 @@ func TestQueryRowPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	_, err = mysql.QueryRowPrepare(1)
+	_, err = client.QueryRowPrepare(1)
 	if err.Error() != `please call SetPrepare first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.SetPrepare(`SELECT field FROM ` + table + ` WHERE field=?;`)
+	err = client.SetPrepare(`SELECT field FROM ` + table + ` WHERE field=?;`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	row, err := mysql.QueryRowPrepare()
+	row, err := client.QueryRowPrepare()
 	if err.Error() != `sql: expected 1 arguments, got 0` {
 		t.Error(err)
 	}
 
-	row, err = mysql.QueryRowPrepare(1)
+	row, err = client.QueryRowPrepare(1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -401,36 +401,36 @@ func TestExecutePrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.ExecutePrepare(2)
+	err = client.ExecutePrepare(2)
 	if err.Error() != `please call SetPrepare first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mysql.ExecutePrepare(2)
+	err = client.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = mysql.ExecutePrepare(3)
+	err = client.ExecutePrepare(2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = client.ExecutePrepare(3)
 	if err != nil {
 		t.Error(err)
 	}
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -450,35 +450,35 @@ func TestBeginTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.BeginTransaction()
+	err = client.BeginTransaction()
 	if err.Error() != `please call Initialize first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		err = mysql.BeginTransaction()
+		err = client.BeginTransaction()
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.ExecuteTransaction(`INSERT INTO `+table+` VALUE(field=?);`, 1)
+		err = client.ExecuteTransaction(`INSERT INTO `+table+` VALUE(field=?);`, 1)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.EndTransaction(err)
+		err = client.EndTransaction(err)
 		if err != nil {
 			t.Error(err)
 		}
@@ -486,7 +486,7 @@ func TestBeginTransaction(t *testing.T) {
 	wg.Wait()
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -506,40 +506,40 @@ func TestEndTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.EndTransaction(nil)
+	err = client.EndTransaction(nil)
 	if err.Error() != `please call BeginTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		err = mysql.BeginTransaction()
+		err = client.BeginTransaction()
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.ExecuteTransaction(`INSERT INTO `+table+` VALUE(field=?);`, 1)
+		err = client.ExecuteTransaction(`INSERT INTO `+table+` VALUE(field=?);`, 1)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.ExecuteTransaction(``)
+		err = client.ExecuteTransaction(``)
 		if err.Error() != `Error 1065 (42000): Query was empty` {
 			t.Error(err)
 		}
 
-		err = mysql.EndTransaction(err)
+		err = client.EndTransaction(err)
 		if err != nil {
 			t.Error(err)
 		}
@@ -547,7 +547,7 @@ func TestEndTransaction(t *testing.T) {
 	wg.Wait()
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -567,25 +567,25 @@ func TestQueryTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	_, err = mysql.QueryTransaction(``)
+	_, err = client.QueryTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.BeginTransaction()
+	err = client.BeginTransaction()
 	if err != nil {
 		t.Error(err)
 	}
 
-	rows, err := mysql.QueryTransaction(`SELECT field FROM ` + table + `;`)
+	rows, err := client.QueryTransaction(`SELECT field FROM ` + table + `;`)
 	if err != nil {
 		t.Error(err)
 	}
@@ -602,7 +602,7 @@ func TestQueryTransaction(t *testing.T) {
 		}
 	}
 
-	err = mysql.EndTransaction(err)
+	err = client.EndTransaction(err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -619,31 +619,31 @@ func TestQueryRowTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.QueryRowTransaction(``)
+	err = client.QueryRowTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		err = mysql.BeginTransaction()
+		err = client.BeginTransaction()
 		if err != nil {
 			t.Error(err)
 		}
 
 		field := 0
-		err = mysql.QueryRowTransaction(`SELECT field FROM `+table+`;`, &field)
+		err = client.QueryRowTransaction(`SELECT field FROM `+table+`;`, &field)
 		if err != nil {
 			t.Error(err)
 		}
@@ -651,7 +651,7 @@ func TestQueryRowTransaction(t *testing.T) {
 			t.Errorf("invalid field : (%d)", field)
 		}
 
-		err = mysql.EndTransaction(err)
+		err = client.EndTransaction(err)
 		if err != nil {
 			t.Error(err)
 		}
@@ -670,35 +670,35 @@ func TestExecuteTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.ExecuteTransaction(``)
+	err = client.ExecuteTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		err = mysql.BeginTransaction()
+		err = client.BeginTransaction()
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.ExecuteTransaction(`INSERT INTO `+table+` VALUE(field=?);`, 1)
+		err = client.ExecuteTransaction(`INSERT INTO `+table+` VALUE(field=?);`, 1)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.EndTransaction(err)
+		err = client.EndTransaction(err)
 		if err != nil {
 			t.Error(err)
 		}
@@ -706,7 +706,7 @@ func TestExecuteTransaction(t *testing.T) {
 	wg.Wait()
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -726,40 +726,40 @@ func TestSetPrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.SetPrepareTransaction(``)
+	err = client.SetPrepareTransaction(``)
 	if err.Error() != `please call BeginTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		err = mysql.BeginTransaction()
+		err = client.BeginTransaction()
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
+		err = client.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.ExecutePrepareTransaction(2)
+		err = client.ExecutePrepareTransaction(2)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.EndTransaction(err)
+		err = client.EndTransaction(err)
 		if err != nil {
 			t.Error(err)
 		}
@@ -767,7 +767,7 @@ func TestSetPrepareTransaction(t *testing.T) {
 	wg.Wait()
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
@@ -787,30 +787,30 @@ func TestQueryPrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	_, err = mysql.QueryPrepareTransaction(``)
+	_, err = client.QueryPrepareTransaction(``)
 	if err.Error() != `please call SetPrepareTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.BeginTransaction()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mysql.SetPrepareTransaction(`SELECT field FROM ` + table + ` WHERE field=?;`)
+	err = client.BeginTransaction()
 	if err != nil {
 		t.Error(err)
 	}
 
-	rows, err := mysql.QueryPrepareTransaction(1)
+	err = client.SetPrepareTransaction(`SELECT field FROM ` + table + ` WHERE field=?;`)
+	if err != nil {
+		t.Error(err)
+	}
+
+	rows, err := client.QueryPrepareTransaction(1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -828,7 +828,7 @@ func TestQueryPrepareTransaction(t *testing.T) {
 		}
 	}
 
-	err = mysql.EndTransaction(err)
+	err = client.EndTransaction(err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -845,35 +845,35 @@ func TestQueryRowPrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	_, err = mysql.QueryRowPrepareTransaction()
+	_, err = client.QueryRowPrepareTransaction()
 	if err.Error() != `please call SetPrepareTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
-	err = mysql.BeginTransaction()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mysql.SetPrepareTransaction(`SELECT field FROM ` + table + ` WHERE field=?;`)
+	err = client.BeginTransaction()
 	if err != nil {
 		t.Error(err)
 	}
 
-	row, err := mysql.QueryRowPrepareTransaction()
+	err = client.SetPrepareTransaction(`SELECT field FROM ` + table + ` WHERE field=?;`)
+	if err != nil {
+		t.Error(err)
+	}
+
+	row, err := client.QueryRowPrepareTransaction()
 	if err.Error() != `sql: expected 1 arguments, got 0` {
 		t.Error(err)
 	}
 
-	row, err = mysql.QueryRowPrepareTransaction(1)
+	row, err = client.QueryRowPrepareTransaction(1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -887,7 +887,7 @@ func TestQueryRowPrepareTransaction(t *testing.T) {
 		t.Errorf("invalid field : (%d)", field)
 	}
 
-	err = mysql.EndTransaction(err)
+	err = client.EndTransaction(err)
 	if err != nil {
 		t.Error(err)
 	}
@@ -904,40 +904,40 @@ func TestExecutePrepareTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	mysql := mysql.MySQL{}
+	client := mysql.Client{}
 
-	err = mysql.ExecutePrepareTransaction()
+	err = client.ExecutePrepareTransaction()
 	if err.Error() != `please call SetPrepareTransaction first` {
 		t.Error(err)
 	}
 
-	err = mysql.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
+	err = client.Initialize(`root:root@tcp(127.0.0.1)/`+database, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	defer mysql.Finalize()
+	defer client.Finalize()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		err = mysql.BeginTransaction()
+		err = client.BeginTransaction()
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
+		err = client.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.ExecutePrepareTransaction(2)
+		err = client.ExecutePrepareTransaction(2)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = mysql.EndTransaction(err)
+		err = client.EndTransaction(err)
 		if err != nil {
 			t.Error(err)
 		}
@@ -945,7 +945,7 @@ func TestExecutePrepareTransaction(t *testing.T) {
 	wg.Wait()
 
 	count := 0
-	err = mysql.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
+	err = client.QueryRow(`SELECT COUNT(*) FROM `+table+`;`, &count)
 	if err != nil {
 		t.Error(err)
 	}
