@@ -8,25 +8,31 @@ go get -u github.com/heaven-chp/common-library-go
 <br/>
 
 ## Features
- - aws interface
+ - aws
    - Amazon DynamoDB
    - Amazon S3
- - command-line-argument interface
- - database interface
+ - command-line-argument
+ - database
    - Elasticsearch v7/v8
    - MongoDB
    - MySQL
    - Redis
- - file interface
- - grpc interface
- - http interface
- - json interface
- - log interface
- - long-polling interface
- - socket interface
- - storage interface
+ - file
+ - grpc
+ - http
+ - json
+ - log
+ - long-polling
+ - security
+   - crypto
+     - dsa
+     - ecdsa
+     - ed25519
+     - rsa
+ - socket
+ - storage
    - MinIO
- - utility interface
+ - utility
 
 <br/>
 
