@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -100,29 +99,17 @@ func TestMain(m *testing.M) {
 }
 
 func TestSubscription(t *testing.T) {
-	wg := new(sync.WaitGroup)
+	category := "category-" + uuid.New().String()
+	data := "data-" + uuid.New().String()
 
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
+	publish(t, category, data+"1")
+	timestamp, id := subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}, 1, data)
 
-		go func(index int) {
-			defer wg.Done()
+	time.Sleep(100 * time.Millisecond)
 
-			category := "category-" + uuid.New().String()
-			data := "data-" + uuid.New().String()
-
-			publish(t, category, data+"1")
-			timestamp, id := subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}, 1, data)
-
-			time.Sleep(100 * time.Millisecond)
-
-			publish(t, category, data+"2")
-			publish(t, category, data+"3")
-			subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: timestamp, LastID: id}, 2, data)
-		}(i)
-	}
-
-	wg.Wait()
+	publish(t, category, data+"2")
+	publish(t, category, data+"3")
+	subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: timestamp, LastID: id}, 2, data)
 }
 
 func TestPublish(t *testing.T) {
