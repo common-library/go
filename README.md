@@ -21,6 +21,11 @@ go get -u github.com/heaven-chp/common-library-go
  - grpc
  - http
  - json
+ - kubernetes
+   - resource
+     - client
+     - custom-resource
+     - custom-resource-definition
  - log
  - long-polling
  - security
