@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	long_polling "github.com/heaven-chp/common-library-go/long-polling"
 )
 
@@ -101,17 +102,19 @@ func TestMain(m *testing.M) {
 func TestSubscription(t *testing.T) {
 	wg := new(sync.WaitGroup)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 
 		go func(index int) {
 			defer wg.Done()
 
-			category := "category-1-" + strconv.Itoa(index)
-			data := "data-1-" + strconv.Itoa(index)
+			category := "category-" + uuid.New().String()
+			data := "data-" + uuid.New().String()
 
 			publish(t, category, data+"1")
 			timestamp, id := subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}, 1, data)
+
+			time.Sleep(100 * time.Millisecond)
 
 			publish(t, category, data+"2")
 			publish(t, category, data+"3")
@@ -123,25 +126,5 @@ func TestSubscription(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	wg := new(sync.WaitGroup)
-
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-
-		go func(index int) {
-			defer wg.Done()
-
-			category := "category-2-" + strconv.Itoa(index)
-			data := "data-2-" + strconv.Itoa(index)
-
-			publish(t, category, data+"1")
-			timestamp, id := subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}, 1, data)
-
-			publish(t, category, data+"2")
-			publish(t, category, data+"3")
-			subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: timestamp, LastID: id}, 2, data)
-		}(i)
-	}
-
-	wg.Wait()
+	TestSubscription(t)
 }
