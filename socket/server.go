@@ -1,4 +1,4 @@
-// Package socket provides a socket server interface.
+// Package socket provides socket client and server implementations.
 package socket
 
 import (
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Server is object that provides server infomation.
+// Server is a struct that provides server related methods.
 type Server struct {
 	condition atomic.Bool
 

@@ -1,6 +1,4 @@
-// Package elasticsearch provides elasticsearch interface.
-//
-// used "github.com/elastic/go-elasticsearch/v7".
+// Package v7 provides Elasticsearch version 7 client implementations.
 package v7
 
 import (
@@ -15,13 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"github.com/elastic/go-elasticsearch/v7/estransport"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
-// Client is object that provides elasticsearch interface.
+// Client is a struct that provides client related methods.
 type Client struct {
 	client *elasticsearch.Client
 }
@@ -39,7 +37,7 @@ func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiK
 
 		Addresses:         addresses,
 		EnableDebugLogger: true,
-		Logger:            &elastictransport.ColorLogger{Output: os.Stdout},
+		Logger:            &estransport.ColorLogger{Output: os.Stdout},
 		Transport: &http.Transport{
 			ResponseHeaderTimeout: time.Second * time.Duration(timeout),
 		},

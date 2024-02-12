@@ -1,6 +1,4 @@
-// Package grpc provides grpc server interface.
-//
-// Used "google.golang.org/grpc".
+// Package grpc provides grpc client and server implementations.
 package grpc
 
 import (
@@ -13,7 +11,7 @@ type implementServer interface {
 	RegisterServer(server *grpc.Server)
 }
 
-// Server is object that provides server common infomation.
+// Server is struct that provides server common infomation.
 type Server struct {
 	listener net.Listener
 

@@ -1,6 +1,5 @@
 // Package dynamodb provides DynamoDB interface.
-//
-// used "github.com/aws/aws-sdk-go-v2".
+// Package dynamodb provides DynamoDB client implementations.
 package dynamodb
 
 import (
@@ -14,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-// Client is object that provides DynamoDB interface.
+// Client is a struct that provides client related methods.
 type Client struct {
 	ctx    context.Context
 	client *dynamodb.Client

@@ -1,4 +1,4 @@
-// Package sample provides grpc client interface.
+// Package grpc provides grpc client and server implementations.
 package grpc
 
 import (

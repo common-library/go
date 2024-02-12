@@ -1,3 +1,4 @@
+// Package utility provides utility implementations.
 package utility
 
 import "reflect"

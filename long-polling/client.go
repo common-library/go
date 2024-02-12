@@ -1,3 +1,4 @@
+// Package long_polling provides long polling client and server implementations.
 package long_polling
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/heaven-chp/common-library-go/json"
 )
 
+// SubscriptionRequest is subscription request information.
 type SubscriptionRequest struct {
 	Category  string `url:"category"`
 	Timeout   int    `url:"timeout"`
@@ -17,6 +19,7 @@ type SubscriptionRequest struct {
 	LastID    string `url:"last_id,omitempty"`
 }
 
+// SubscriptionResponse is subscription response information.
 type SubscriptionResponse struct {
 	Header     net_http.Header
 	StatusCode int
@@ -28,11 +31,15 @@ type SubscriptionResponse struct {
 	} `json:"events"`
 }
 
+// PublishRequest is publish request information.
 type PublishRequest struct {
 	Category string `json:"category"`
 	Data     string `json:"data"`
 }
 
+// Subscription is subscribes to event.
+//
+// ex) response, err := long_polling.Subscription("http://127.0.0.1:10000/subscription", nil, request, "", "")
 func Subscription(url string, header map[string][]string, request SubscriptionRequest, username, password string) (SubscriptionResponse, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {
@@ -62,6 +69,9 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 	return subscriptionResponse, nil
 }
 
+// Publish is publish an event.
+//
+// ex) response, err := long_polling.Publish("http://127.0.0.1:10000/publish", 10, nil, request, "", "")
 func Publish(url string, timeout int, header map[string][]string, publishRequest PublishRequest, username, password string) (http.Response, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {

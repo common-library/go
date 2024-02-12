@@ -6,7 +6,7 @@ import (
 	"github.com/heaven-chp/common-library-go/utility"
 )
 
-func TestTypeName(t *testing.T) {
+func TestGetTypeName(t *testing.T) {
 	{
 		typeName := utility.GetTypeName(int(1))
 		if typeName != "int" {

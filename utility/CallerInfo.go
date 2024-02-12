@@ -1,3 +1,4 @@
+// Package utility provides utility implementations.
 package utility
 
 import (
@@ -8,7 +9,7 @@ import (
 	"strings"
 )
 
-// CallerInfo is a structure that has caller information.
+// CallerInfo is a GetCallerInfo that has caller information.
 type CallerInfo struct {
 	PackageName  string
 	FileName     string

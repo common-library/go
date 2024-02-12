@@ -1,3 +1,4 @@
+// Package http provides http client and server implementations.
 package http
 
 import (
@@ -7,12 +8,16 @@ import (
 	"time"
 )
 
+// Response is response information.
 type Response struct {
 	Header     net_http.Header
 	Body       string
 	StatusCode int
 }
 
+// Request is request.
+//
+// ex) response, err := http.Request("http://127.0.0.1:10000/test/id-01", net_http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 3, "", "")
 func Request(url, method string, header map[string][]string, body string, timeout int, username, password string) (Response, error) {
 	client := &net_http.Client{
 		Transport: &net_http.Transport{},

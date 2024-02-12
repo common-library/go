@@ -1,6 +1,4 @@
-// Package mongodb provides mongodb interface.
-//
-// used "go.mongodb.org/mongo-driver/mongo".
+// Package mongodb provides MongoDB client implementations.
 package mongodb
 
 import (
@@ -14,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// Client is object that provides mongodb interface.
+// Client is a struct that provides client related methods.
 type Client struct {
 	address string
 	timeout uint64
