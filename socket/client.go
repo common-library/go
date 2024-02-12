@@ -1,4 +1,4 @@
-// Package socket provides a socket clent interface.
+// Package socket provides socket client and server implementations.
 package socket
 
 import (
@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-// Client is object that provides client infomation.
+// Client is a struct that provides client related methods.
 type Client struct {
 	connnetion net.Conn
 }

@@ -1,4 +1,4 @@
-// Package http provides a http server interface.
+// Package http provides http client and server implementations.
 package http
 
 import (
@@ -9,13 +9,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Server is object that provides server infomation.
+// Server is a struct that provides server related methods.
 type Server struct {
 	server *http.Server
 	router *mux.Router
 }
 
-// AddHandler is add handler
+// AddHandler is add handler.
 //
 // ex) server.AddHandler("/v1/test", http.MethodPost, handler)
 func (this *Server) AddHandler(path, method string, handler func(http.ResponseWriter, *http.Request)) {
@@ -26,7 +26,7 @@ func (this *Server) AddHandler(path, method string, handler func(http.ResponseWr
 	this.router.HandleFunc(path, handler).Methods(method)
 }
 
-// AddPathPrefixHandler is add path prefix handler
+// AddPathPrefixHandler is add path prefix handler.
 //
 // ex) server.AddPathPrefixHandler("/swagger/", httpSwagger.WrapHandler)
 func (this *Server) AddPathPrefixHandler(prefix string, handler http.Handler) {
@@ -37,7 +37,7 @@ func (this *Server) AddPathPrefixHandler(prefix string, handler http.Handler) {
 	this.router.PathPrefix(prefix).Handler(handler)
 }
 
-// Start is start the server
+// Start is start the server.
 //
 // ex) err := server.Start("127.0.0.1")
 func (this *Server) Start(address string, ListenAndServeFailureFunc func(err error), middlewareFunc ...mux.MiddlewareFunc) error {
@@ -69,7 +69,7 @@ func (this *Server) Start(address string, ListenAndServeFailureFunc func(err err
 	return nil
 }
 
-// Stop is stop the server
+// Stop is stop the server.
 //
 // ex) err := server.Stop(10)
 func (this *Server) Stop(shutdownTimeout uint64) error {
@@ -84,7 +84,7 @@ func (this *Server) Stop(shutdownTimeout uint64) error {
 	return this.server.Shutdown(ctx)
 }
 
-// SetRouter is set the router
+// SetRouter is set the router.
 //
 // ex) server.SetRouter(router)
 func (this *Server) SetRouter(router *mux.Router) {

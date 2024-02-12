@@ -1,6 +1,4 @@
-// Package elasticsearch provides elasticsearch interface.
-//
-// used "github.com/elastic/go-elasticsearch/v8".
+// Package v8 provides Elasticsearch version 8 client implementations.
 package v8
 
 import (
@@ -21,7 +19,7 @@ import (
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
-// Client is object that provides elasticsearch interface.
+// Client is a struct that provides client related methods.
 type Client struct {
 	client *elasticsearch.Client
 }

@@ -1,6 +1,4 @@
-// Package redis provides redis interface.
-//
-// used "github.com/gomodule/redigo/redis".
+// Package redis provides Redis client implementations.
 package redis
 
 import (
@@ -11,7 +9,7 @@ import (
 	redigo_redis "github.com/gomodule/redigo/redis"
 )
 
-// Client is object that provides redis interface.
+// Client is a struct that provides client related methods.
 type Client struct {
 	address  string
 	password string

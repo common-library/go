@@ -22,14 +22,14 @@ func singleton() *commandLineArgument {
 	return instance
 }
 
-// Get is get the command line argument
+// Get is get the command line argument.
 //
 // ex) value := command_line_argument.Get("int").(int)
 func Get(flagName string) interface{} {
 	return singleton().get(flagName)
 }
 
-// Set is set the command line arguments
+// Set is set the command line arguments.
 //
 //	ex) err := command_line_argument.Set([]command_line_argument.CommandLineArgumentInfo{
 //			{FlagName: "bool", Usage: "bool usage", DefaultValue: true},

@@ -1,6 +1,4 @@
-// Package mysql provides MySQL interface.
-//
-// used "github.com/go-sql-driver/mysql".
+// Package mysql provides MySQL client implementations.
 package mysql
 
 import (
@@ -11,7 +9,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// Client is object that provides MySQL interface.
+// Client is a struct that provides client related methods.
 type Client struct {
 	tx     *sql.Tx
 	txStmt *sql.Stmt

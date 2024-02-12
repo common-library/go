@@ -42,7 +42,7 @@ type Setting struct {
 	ChannelSize     int
 }
 
-// FileLog is object that provides file log interface.
+// FileLog is struct that provides file log related methods.
 type FileLog struct {
 	condition    atomic.Bool
 	conditionJob atomic.Bool

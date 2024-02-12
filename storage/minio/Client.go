@@ -1,3 +1,4 @@
+// Package minio provides MinIO client implementations.
 package minio
 
 import (

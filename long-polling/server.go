@@ -1,3 +1,4 @@
+// Package long_polling provides long polling client and server implementations.
 package long_polling
 
 import (
@@ -8,13 +9,34 @@ import (
 	"github.com/jcuga/golongpoll"
 )
 
+// ServerInfo is server information.
+type ServerInfo struct {
+	Address string
+	Timeout int
+
+	SubscriptionURI                string
+	HandlerToRunBeforeSubscription func(w net_http.ResponseWriter, r *net_http.Request) bool
+
+	PublishURI                string
+	HandlerToRunBeforePublish func(w net_http.ResponseWriter, r *net_http.Request) bool
+}
+
+// FilePersistorInfo is file persistor information.
+type FilePersistorInfo struct {
+	Use                     bool
+	FileName                string
+	WriteBufferSize         int
+	WriteFlushPeriodSeconds int
+}
+
+// Server is a struct that provides server related methods.
 type Server struct {
 	server http.Server
 
 	longpollManager *golongpoll.LongpollManager
 }
 
-// Start is start the server
+// Start is start the server.
 //
 // ex) err := server.Start(ServerInfo{...}, FilePersistorInfo{...}, nil)
 func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInfo, ListenAndServeFailureFunc func(err error)) error {
@@ -78,7 +100,7 @@ func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistor
 	return this.server.Start(serverInfo.Address, ListenAndServeFailureFunc)
 }
 
-// Stop is stop the server
+// Stop is stop the server.
 //
 // ex) err := server.Stop(10)
 func (this *Server) Stop(shutdownTimeout uint64) error {

@@ -1,4 +1,5 @@
 // Package file provides a file interface.
+// Package file provides file related implementations.
 package file
 
 import (
