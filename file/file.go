@@ -48,7 +48,7 @@ func Write(fileName string, data []string, flag int, mode uint32) error {
 	return nil
 }
 
-// List is get file list
+// List is get file list.
 //
 // ex) list, err := file.List(dir, true)
 func List(path string, recursive bool) ([]string, error) {
