@@ -1,3 +1,4 @@
+// Package tar provides tar implementations.
 package tar
 
 import (

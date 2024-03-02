@@ -1,3 +1,4 @@
+// Package gzip provides gzip implementations.
 package gzip
 
 import (

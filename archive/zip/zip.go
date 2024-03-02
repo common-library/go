@@ -1,3 +1,4 @@
+// Package zip provides zip implementations.
 package zip
 
 import (
