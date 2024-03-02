@@ -1,3 +1,4 @@
+// Package lock provides lock implementations.
 package lock
 
 import "sync"
