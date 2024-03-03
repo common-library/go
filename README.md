@@ -17,7 +17,9 @@ go get -u github.com/heaven-chp/common-library-go
  - aws
    - Amazon DynamoDB
    - Amazon S3
- - command-line-argument
+ - command-line
+   - arguments
+   - flag
  - database
    - Elasticsearch v7/v8
    - MongoDB
