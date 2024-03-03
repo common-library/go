@@ -10,6 +10,10 @@ go get -u github.com/heaven-chp/common-library-go
 ## Features
  - ai
    - gemini
+ - archive
+   - gzip
+   - tar
+   - zip
  - aws
    - Amazon DynamoDB
    - Amazon S3
