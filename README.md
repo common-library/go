@@ -32,6 +32,7 @@ go get -u github.com/heaven-chp/common-library-go
      - client
      - custom-resource
      - custom-resource-definition
+ - lock
  - log
  - long-polling
  - security
