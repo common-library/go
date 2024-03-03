@@ -8,6 +8,8 @@ go get -u github.com/heaven-chp/common-library-go
 <br/>
 
 ## Features
+ - ai
+   - gemini
  - aws
    - Amazon DynamoDB
    - Amazon S3
