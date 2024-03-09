@@ -24,16 +24,14 @@ func TestCompress(t *testing.T) {
 	defer os.RemoveAll(output)
 
 	path01 := input + uuid.New().String() + ".txt"
-	data01 := []string{"aaa"}
-	flag01 := int(os.O_WRONLY | os.O_APPEND | os.O_CREATE)
-	if err := file.Write(path01, data01, flag01, 0600); err != nil {
+	data01 := "aaa"
+	if err := file.Write(path01, data01, 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	path02 := input + uuid.New().String() + ".txt"
-	data02 := []string{"bbb"}
-	flag02 := int(os.O_WRONLY | os.O_APPEND | os.O_CREATE)
-	if err := file.Write(path02, data02, flag02, 0600); err != nil {
+	data02 := "bbb"
+	if err := file.Write(path02, data02, 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -46,11 +44,11 @@ func TestCompress(t *testing.T) {
 		t.Fatal(err)
 	} else if data, err := file.Read(output + path01); err != nil {
 		t.Fatal(err)
-	} else if data[0] != data01[0] {
+	} else if data != data01 {
 		t.Fatal("invalid data - ", data, ", ", data01)
 	} else if data, err := file.Read(output + path02); err != nil {
 		t.Fatal(err)
-	} else if data[0] != data02[0] {
+	} else if data != data02 {
 		t.Fatal("invalid data - ", data, ", ", data02)
 	}
 }

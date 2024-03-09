@@ -3,7 +3,6 @@ package json
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/heaven-chp/common-library-go/file"
 )
@@ -40,5 +39,5 @@ func ToStructFromFile(fileName string, result interface{}) error {
 		return err
 	}
 
-	return ToStructFromString(strings.Join(data, ""), result)
+	return ToStructFromString(data, result)
 }

@@ -100,9 +100,9 @@ func TestToString(t *testing.T) {
 		t.Error(err)
 	}
 
-	compare := strings.Join(jsonData, "")
-	compare = strings.Replace(compare, " ", "", -1)
+	compare := strings.Replace(jsonData, " ", "", -1)
 	compare = strings.Replace(compare, "\t", "", -1)
+	compare = strings.Replace(compare, "\n", "", -1)
 
 	if output != compare {
 		t.Errorf("invalid data - output : (%s), jsonData : (%s)", output, compare)
@@ -122,9 +122,8 @@ func TestToStringIndent(t *testing.T) {
 		t.Error(err)
 	}
 
-	compare := strings.Join(jsonData, "\n")
-	if output != compare {
-		t.Errorf("invalid data - output : (%s), jsonData : (%s)", output, compare)
+	if output+"\n" != jsonData {
+		t.Errorf("invalid data - output : (%s), jsonData : (%s)", output, jsonData)
 	}
 }
 
@@ -135,7 +134,7 @@ func TestToStructFromString(t *testing.T) {
 	}
 
 	var sampleStruct sampleStruct
-	err = json.ToStructFromString(strings.Join(jsonData, ""), &sampleStruct)
+	err = json.ToStructFromString(jsonData, &sampleStruct)
 	if err != nil {
 		t.Error(err)
 	}

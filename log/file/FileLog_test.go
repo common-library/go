@@ -131,10 +131,14 @@ func resultCheck(t *testing.T, sequential bool, numberOfIterations int) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		split := strings.Split(temp, "\n")
 
 		sequentialResult := []string{}
 		parallelResult := make(map[string]int)
-		for _, value := range temp {
+		for _, value := range split {
+			if len(value) == 0 {
+				continue
+			}
 			split1 := strings.SplitN(value, "]", 2)[1]
 			split2 := split1
 			if strings.Contains(split2, "FileLog_test.go") {

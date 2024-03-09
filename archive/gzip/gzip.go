@@ -59,6 +59,6 @@ func Decompress(gzipName, fileName, outputPath string) error {
 	} else if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
 		return err
 	} else {
-		return file.Write(outputPath+string(filepath.Separator)+fileName, []string{string(data)}, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
+		return file.Write(outputPath+string(filepath.Separator)+fileName, string(data), 0600)
 	}
 }
