@@ -60,9 +60,10 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 	subscriptionResponse := SubscriptionResponse{Header: response.Header, StatusCode: response.StatusCode}
 
 	if response.StatusCode == net_http.StatusOK {
-		err = json.ToStructFromString(response.Body, &subscriptionResponse)
-		if err != nil {
+		if result, err := json.ConvertFromString[SubscriptionResponse](response.Body); err != nil {
 			return SubscriptionResponse{}, err
+		} else {
+			subscriptionResponse.Events = result.Events
 		}
 	}
 

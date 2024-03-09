@@ -3,9 +3,11 @@ package json_test
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/heaven-chp/common-library-go/file"
 	"github.com/heaven-chp/common-library-go/json"
 )
@@ -28,7 +30,7 @@ type sampleStruct struct {
 	Test2Struct test2Struct `json:"test2"`
 }
 
-func getTestData() sampleStruct {
+func getSampleStruct() sampleStruct {
 	var sampleStruct sampleStruct
 
 	sampleStruct.Test1Struct.Bool = true
@@ -89,77 +91,78 @@ func checkTestData(sampleStruct sampleStruct) error {
 }
 
 func TestToString(t *testing.T) {
-	sampleStruct := getTestData()
-	output, err := json.ToString(sampleStruct)
-	if err != nil {
-		t.Error(err)
-	}
+	answer := `{"test1":{"bool":true,"int":111,"string":"aaa"},"test2":{"test1Struct":{"bool":true,"int":222,"string":"bbb"},"arrayString":["abc","def","ghi"],"arrayTest1Struct":[{"bool":true,"int":333,"string":"ccc"},{"bool":false,"int":444,"string":"ddd"}]}}`
 
-	jsonData, err := file.Read("./sample.json")
-	if err != nil {
-		t.Error(err)
-	}
-
-	compare := strings.Replace(jsonData, " ", "", -1)
-	compare = strings.Replace(compare, "\t", "", -1)
-	compare = strings.Replace(compare, "\n", "", -1)
-
-	if output != compare {
-		t.Errorf("invalid data - output : (%s), jsonData : (%s)", output, compare)
+	if data, err := json.ToString(getSampleStruct()); err != nil {
+		t.Fatal(err)
+	} else if data != answer {
+		t.Fatalf("invalid data - output : (%s), jsonData : (%s)", data, answer)
 	}
 }
 
 func TestToStringIndent(t *testing.T) {
-	sampleStruct := getTestData()
+	answer := `{
+    "test1": {
+        "bool": true,
+        "int": 111,
+        "string": "aaa"
+    },
+    "test2": {
+        "test1Struct": {
+            "bool": true,
+            "int": 222,
+            "string": "bbb"
+        },
+        "arrayString": [
+            "abc",
+            "def",
+            "ghi"
+        ],
+        "arrayTest1Struct": [
+            {
+                "bool": true,
+                "int": 333,
+                "string": "ccc"
+            },
+            {
+                "bool": false,
+                "int": 444,
+                "string": "ddd"
+            }
+        ]
+    }
+}`
 
-	output, err := json.ToStringIndent(sampleStruct, "", "\t")
-	if err != nil {
-		t.Error(err)
-	}
-
-	jsonData, err := file.Read("./sample.json")
-	if err != nil {
-		t.Error(err)
-	}
-
-	if output+"\n" != jsonData {
-		t.Errorf("invalid data - output : (%s), jsonData : (%s)", output, jsonData)
+	if data, err := json.ToStringIndent(getSampleStruct(), "", "    "); err != nil {
+		t.Fatal(err)
+	} else if data != answer {
+		t.Fatalf("invalid data - output : (%s), jsonData : (%s)", data, answer)
 	}
 }
 
-func TestToStructFromString(t *testing.T) {
-	jsonData, err := file.Read("./sample.json")
-	if err != nil {
-		t.Error(err)
-	}
+func TestConvertFromFile(t *testing.T) {
+	jsonFile := uuid.New().String() + ".json"
+	defer os.Remove(jsonFile)
 
-	var sampleStruct sampleStruct
-	err = json.ToStructFromString(jsonData, &sampleStruct)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = checkTestData(sampleStruct)
-	if err != nil {
-		t.Error(err)
+	if data, err := json.ToString(getSampleStruct()); err != nil {
+		t.Fatal(err)
+	} else if err := file.Write(jsonFile, data, 0600); err != nil {
+		t.Fatal(err)
+	} else if _, err := json.ConvertFromFile[sampleStruct]("./no_such_file"); err.Error() != "open ./no_such_file: no such file or directory" {
+		t.Fatal(err)
+	} else if sampleStruct, err := json.ConvertFromFile[sampleStruct](jsonFile); err != nil {
+		t.Fatal(err)
+	} else if err := checkTestData(sampleStruct); err != nil {
+		t.Fatal(err)
 	}
 }
 
-func TestToStructFromFile(t *testing.T) {
-	var sampleStruct sampleStruct
-
-	err := json.ToStructFromFile("./no_such_file", &sampleStruct)
-	if err.Error() != "open ./no_such_file: no such file or directory" {
-		t.Error(err)
-	}
-
-	err = json.ToStructFromFile("./sample.json", &sampleStruct)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = checkTestData(sampleStruct)
-	if err != nil {
-		t.Error(err)
+func TestConvertFromString(t *testing.T) {
+	if data, err := json.ToString(getSampleStruct()); err != nil {
+		t.Fatal(err)
+	} else if sampleStruct, err := json.ConvertFromString[sampleStruct](strings.Join([]string{data}, "")); err != nil {
+		t.Fatal(err)
+	} else if err := checkTestData(sampleStruct); err != nil {
+		t.Fatal(err)
 	}
 }
