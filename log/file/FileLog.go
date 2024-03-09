@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/heaven-chp/common-library-go/file"
 	"github.com/heaven-chp/common-library-go/utility"
 )
 
@@ -386,7 +387,7 @@ func (this *FileLog) job() {
 	}
 
 	getFile := func(contentsInfo contentsInfo) (*os.File, error) {
-		if err := os.MkdirAll(contentsInfo.setting.OutputPath, 0777); err != nil {
+		if err := file.CreateDirectoryAll(contentsInfo.setting.OutputPath, 0777); err != nil {
 			return nil, err
 		}
 

@@ -72,3 +72,33 @@ func List(path string, recursive bool) ([]string, error) {
 		return result, nil
 	}
 }
+
+// CreateDirectory creates a directory.
+//
+// ex 1) err := file.CreateDirectory(name, 0777)
+// ex 2) err := file.CreateDirectory(name, os.ModePerm)
+func CreateDirectory(name string, fileMode os.FileMode) error {
+	return os.Mkdir(name, fileMode)
+}
+
+// CreateDirectoryAll creates a directory (including subdirectories).
+//
+// ex 1) err := file.CreateDirectoryAll(path, 0777)
+// ex 2) err := file.CreateDirectoryAll(path, os.ModePerm)
+func CreateDirectoryAll(path string, fileMode os.FileMode) error {
+	return os.MkdirAll(path, fileMode)
+}
+
+// Remove removes a file or empty directory.
+//
+// ex) err := file.Remove(name)
+func Remove(name string) error {
+	return os.Remove(name)
+}
+
+// RemoveAll removes a path(including subpaths).
+//
+// ex) err := file.RemoveAll(path)
+func RemoveAll(path string) error {
+	return os.RemoveAll(path)
+}

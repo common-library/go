@@ -11,7 +11,7 @@ import (
 
 func TestRead(t *testing.T) {
 	fileName := uuid.New().String()
-	defer os.Remove(fileName)
+	defer file.Remove(fileName)
 
 	if _, err := file.Read(fileName); os.IsExist(err) {
 		t.Fatal(err)
@@ -35,16 +35,20 @@ func TestWrite(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
+	if _, err := file.List(uuid.New().String(), false); os.IsExist(err) {
+		t.Fatal(err)
+	}
+
 	dir01 := uuid.New().String() + string(filepath.Separator)
-	defer os.RemoveAll(dir01)
+	defer file.RemoveAll(dir01)
 
 	dir02 := dir01 + uuid.New().String() + string(filepath.Separator)
-	if err := os.MkdirAll(dir02, os.ModePerm); err != nil {
+	if err := file.CreateDirectoryAll(dir02, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}
 
 	dir03 := dir01 + uuid.New().String() + string(filepath.Separator)
-	if err := os.MkdirAll(dir03, os.ModePerm); err != nil {
+	if err := file.CreateDirectoryAll(dir03, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}
 
@@ -88,5 +92,58 @@ func TestList(t *testing.T) {
 				t.Fatal("invalid name :", name, list)
 			}
 		}
+	}
+}
+
+func TestCreateDirectory(t *testing.T) {
+	name := uuid.New().String() + string(filepath.Separator)
+
+	if err := file.CreateDirectory(name, os.ModePerm); err != nil {
+		t.Fatal(err)
+	} else if err := file.Write(name+"test.txt", "test", 0600); err != nil {
+		t.Fatal(err)
+	} else if err := file.RemoveAll(name); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCreateDirectoryAll(t *testing.T) {
+	dir01 := uuid.New().String() + string(filepath.Separator)
+
+	dir02 := dir01 + uuid.New().String() + string(filepath.Separator)
+	if err := file.CreateDirectoryAll(dir02, os.ModePerm); err != nil {
+		t.Fatal(err)
+	} else if err := file.Write(dir02+"test.txt", "test", 0600); err != nil {
+		t.Fatal(err)
+	} else if err := file.RemoveAll(dir01); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRemove(t *testing.T) {
+	name := uuid.New().String()
+	if err := file.Remove(name); os.IsExist(err) {
+		t.Fatal(err)
+	} else if err := file.Write(name, "test", 0600); err != nil {
+		t.Fatal(err)
+	} else if err := file.Remove(name); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := file.CreateDirectory(name, 0600); err != nil {
+		t.Fatal(err)
+	} else if err := file.Remove(name); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRemoveAll(t *testing.T) {
+	dir01 := uuid.New().String() + string(filepath.Separator)
+
+	dir02 := dir01 + uuid.New().String() + string(filepath.Separator)
+	if err := file.CreateDirectoryAll(dir02, os.ModePerm); err != nil {
+		t.Fatal(err)
+	} else if err := file.RemoveAll(dir01); err != nil {
+		t.Fatal(err)
 	}
 }

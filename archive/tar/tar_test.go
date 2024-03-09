@@ -12,23 +12,23 @@ import (
 
 func TestCompress(t *testing.T) {
 	name := uuid.New().String() + string(filepath.Separator) + uuid.New().String() + ".tar.gz"
-	defer os.RemoveAll(filepath.Dir(name))
+	defer file.RemoveAll(filepath.Dir(name))
 
 	input1 := uuid.New().String() + string(filepath.Separator)
-	if err := os.Mkdir(input1, os.ModePerm); err != nil {
+	if err := file.CreateDirectory(input1, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(input1)
+	defer file.RemoveAll(input1)
 
 	input2 := uuid.New().String() + string(filepath.Separator)
-	defer os.RemoveAll(input2)
+	defer file.RemoveAll(input2)
 	input2 += input2
-	if err := os.MkdirAll(input2, os.ModePerm); err != nil {
+	if err := file.CreateDirectoryAll(input2, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}
 
 	output := uuid.New().String() + string(filepath.Separator)
-	defer os.RemoveAll(output)
+	defer file.RemoveAll(output)
 
 	path01 := input1 + uuid.New().String() + ".txt"
 	data01 := "aaa"

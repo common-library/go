@@ -25,7 +25,7 @@ func Compress(name string, paths []string) error {
 		}
 	}
 
-	if err := os.MkdirAll(filepath.Dir(name), os.ModePerm); err != nil {
+	if err := file.CreateDirectoryAll(filepath.Dir(name), os.ModePerm); err != nil {
 		return err
 	}
 
@@ -67,27 +67,27 @@ func Compress(name string, paths []string) error {
 //
 // ex) err := zip.Decompress("test.zip", "./output")
 func Decompress(name, outputPath string) error {
-	write := func(file *zip.File) error {
-		filePath := filepath.Join(outputPath, file.Name)
+	write := func(zipFile *zip.File) error {
+		filePath := filepath.Join(outputPath, zipFile.Name)
 
-		if file.FileInfo().IsDir() {
-			if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
+		if zipFile.FileInfo().IsDir() {
+			if err := file.CreateDirectoryAll(filePath, os.ModePerm); err != nil {
 				return err
 			} else {
 				return nil
 			}
-		} else if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+		} else if err := file.CreateDirectoryAll(filepath.Dir(filePath), os.ModePerm); err != nil {
 			return err
 		}
 
-		source, err := file.Open()
+		source, err := zipFile.Open()
 		if err != nil {
 			return err
 		}
 		defer source.Close()
 
 		flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-		destination, err := os.OpenFile(filePath, flag, file.Mode())
+		destination, err := os.OpenFile(filePath, flag, zipFile.Mode())
 		if err != nil {
 			return err
 		}

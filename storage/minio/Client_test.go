@@ -347,7 +347,7 @@ func TestFGetObject(t *testing.T) {
 	getFilePath := "./" + uuid.New().String()
 
 	defer removeBucket(t, client, bucketName)
-	defer os.Remove(getFilePath)
+	defer file.Remove(getFilePath)
 
 	if err := client.MakeBucket(bucketName, "", true); err != nil {
 		t.Fatal(err)
