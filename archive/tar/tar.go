@@ -26,7 +26,7 @@ func Compress(name string, paths []string) error {
 		}
 	}
 
-	if err := os.MkdirAll(filepath.Dir(name), os.ModePerm); err != nil {
+	if err := file.CreateDirectoryAll(filepath.Dir(name), os.ModePerm); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ func Decompress(name, outputPath string) error {
 
 		switch header.Typeflag {
 		case tar.TypeReg:
-			if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+			if err := file.CreateDirectoryAll(filepath.Dir(filePath), os.ModePerm); err != nil {
 				return err
 			}
 
@@ -99,7 +99,7 @@ func Decompress(name, outputPath string) error {
 				return err
 			}
 		case tar.TypeDir:
-			if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
+			if err := file.CreateDirectoryAll(filePath, os.ModePerm); err != nil {
 				return err
 			}
 		}

@@ -15,7 +15,7 @@ import (
 //
 // ex) err := gzip.Compress("test.gz", "test.txt")
 func Compress(name string, path string) error {
-	if err := os.MkdirAll(filepath.Dir(name), os.ModePerm); err != nil {
+	if err := file.CreateDirectoryAll(filepath.Dir(name), os.ModePerm); err != nil {
 		return err
 	}
 
@@ -56,9 +56,9 @@ func Decompress(gzipName, fileName, outputPath string) error {
 
 	if data, err := ioutil.ReadAll(gzipReader); err != nil {
 		return err
-	} else if err := os.MkdirAll(outputPath, os.ModePerm); err != nil {
+	} else if err := file.CreateDirectoryAll(outputPath, os.ModePerm); err != nil {
 		return err
 	} else {
-		return file.Write(outputPath+string(filepath.Separator)+fileName, []string{string(data)}, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
+		return file.Write(outputPath+string(filepath.Separator)+fileName, string(data), 0600)
 	}
 }

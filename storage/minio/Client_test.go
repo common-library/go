@@ -345,7 +345,9 @@ func TestFGetObject(t *testing.T) {
 	filePath := "./test.txt"
 	contentType := "text/plain"
 	getFilePath := "./" + uuid.New().String()
+
 	defer removeBucket(t, client, bucketName)
+	defer file.Remove(getFilePath)
 
 	if err := client.MakeBucket(bucketName, "", true); err != nil {
 		t.Fatal(err)
@@ -353,18 +355,11 @@ func TestFGetObject(t *testing.T) {
 		t.Fatal(err)
 	} else if err := client.FGetObject(bucketName, objectName, getFilePath); err != nil {
 		t.Fatal(err)
-	} else if readData, err := file.Read(getFilePath); err != nil {
+	} else if data, err := file.Read(getFilePath); err != nil {
 		t.Fatal(err)
-	} else {
-		compareData := []string{"aaa", "bbb", "ccc"}
-		for index, value := range compareData {
-			if value != readData[index] {
-				t.Errorf("different data - (%s)(%s)", value, readData[index])
-			}
-		}
-	}
-
-	if err := os.Remove(getFilePath); err != nil {
+	} else if answer, err := file.Read(filePath); err != nil {
 		t.Fatal(err)
+	} else if data != answer {
+		t.Fatal("invalid -", data)
 	}
 }

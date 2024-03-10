@@ -1,10 +1,7 @@
-// Package file provides a file interface.
 // Package file provides file related implementations.
 package file
 
 import (
-	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -12,40 +9,20 @@ import (
 // Read is get the data of a file.
 //
 // ex) data, err := file.Read(fileName)
-func Read(fileName string) ([]string, error) {
-	var lines []string
-
-	file, err := os.Open(fileName)
-	defer file.Close()
-	if err != nil {
-		return nil, err
+func Read(fileName string) (string, error) {
+	if data, err := os.ReadFile(fileName); err != nil {
+		return "", err
+	} else {
+		return string(data), nil
 	}
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
 }
 
 // Write is write data to file.
 //
-// ex) err := file.Write(fileName, data, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0600)
-func Write(fileName string, data []string, flag int, mode uint32) error {
-	file, err := os.OpenFile(fileName, flag, os.FileMode(mode))
-	defer file.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, value := range data {
-		_, err = fmt.Fprintln(file, value)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+// ex 1) err := file.Write(fileName, data, 0600)
+// ex 2) err := file.Write(fileName, data, os.ModePerm)
+func Write(fileName string, data string, fileMode os.FileMode) error {
+	return os.WriteFile(fileName, []byte(data), fileMode)
 }
 
 // List is get file list.
@@ -94,4 +71,34 @@ func List(path string, recursive bool) ([]string, error) {
 	} else {
 		return result, nil
 	}
+}
+
+// CreateDirectory creates a directory.
+//
+// ex 1) err := file.CreateDirectory(name, 0777)
+// ex 2) err := file.CreateDirectory(name, os.ModePerm)
+func CreateDirectory(name string, fileMode os.FileMode) error {
+	return os.Mkdir(name, fileMode)
+}
+
+// CreateDirectoryAll creates a directory (including subdirectories).
+//
+// ex 1) err := file.CreateDirectoryAll(path, 0777)
+// ex 2) err := file.CreateDirectoryAll(path, os.ModePerm)
+func CreateDirectoryAll(path string, fileMode os.FileMode) error {
+	return os.MkdirAll(path, fileMode)
+}
+
+// Remove removes a file or empty directory.
+//
+// ex) err := file.Remove(name)
+func Remove(name string) error {
+	return os.Remove(name)
+}
+
+// RemoveAll removes a path(including subpaths).
+//
+// ex) err := file.RemoveAll(path)
+func RemoveAll(path string) error {
+	return os.RemoveAll(path)
 }
