@@ -20,6 +20,9 @@ go get -u github.com/heaven-chp/common-library-go
  - command-line
    - arguments
    - flag
+ - data-structure
+   - Deque
+   - Queue
  - database
    - Elasticsearch v7/v8
    - MongoDB
