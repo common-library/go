@@ -1,13 +1,13 @@
-package data_structure_test
+package collection_test
 
 import (
 	"testing"
 
-	data_structure "github.com/heaven-chp/common-library-go/data-structure"
+	"github.com/heaven-chp/common-library-go/collection"
 )
 
 func TestFrontOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PushFront(1)
 	deque.PushBack(2)
@@ -18,7 +18,7 @@ func TestFrontOfDeque(t *testing.T) {
 }
 
 func TestBackOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PushFront(1)
 	deque.PushBack(2)
@@ -29,7 +29,7 @@ func TestBackOfDeque(t *testing.T) {
 }
 
 func TestEmptyOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	if deque.Empty() == false {
 		t.Fatal("invalid -", deque.Empty())
@@ -43,7 +43,7 @@ func TestEmptyOfDeque(t *testing.T) {
 }
 
 func TestSizeOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PushFront(1)
 	if deque.Size() != 1 {
@@ -57,7 +57,7 @@ func TestSizeOfDeque(t *testing.T) {
 }
 
 func TestClearOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PushFront(1)
 	deque.PushFront(2)
@@ -72,7 +72,7 @@ func TestClearOfDeque(t *testing.T) {
 }
 
 func TestPushFrontOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PushFront(1)
 	deque.PushFront(2)
@@ -86,7 +86,7 @@ func TestPushFrontOfDeque(t *testing.T) {
 }
 
 func TestPopFrontOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PopFront()
 
@@ -116,7 +116,7 @@ func TestPopFrontOfDeque(t *testing.T) {
 }
 
 func TestPushBackOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PushBack(1)
 	deque.PushBack(2)
@@ -130,7 +130,7 @@ func TestPushBackOfDeque(t *testing.T) {
 }
 
 func TestPopBackOfDeque(t *testing.T) {
-	deque := data_structure.Deque[int]{}
+	deque := collection.Deque[int]{}
 
 	deque.PopBack()
 

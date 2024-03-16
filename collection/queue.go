@@ -1,4 +1,5 @@
-package data_structure
+// Package collection provides data structure related implementations.
+package collection
 
 import "github.com/heaven-chp/common-library-go/lock"
 

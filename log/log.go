@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	data_structure "github.com/heaven-chp/common-library-go/data-structure"
+	"github.com/heaven-chp/common-library-go/collection"
 	"github.com/heaven-chp/common-library-go/lock"
 	"github.com/heaven-chp/common-library-go/utility"
 )
@@ -54,8 +54,8 @@ type Log struct {
 	mutexForLogger  lock.Mutex
 	mutexForLogging lock.Mutex
 
-	queueForTime    data_structure.Queue[time.Time]
-	queueForLogging data_structure.Queue[func()]
+	queueForTime    collection.Queue[time.Time]
+	queueForLogging collection.Queue[func()]
 }
 
 // Trace means recording trace level logs.
