@@ -1,7 +1,7 @@
 package long_polling_test
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"strconv"
 	"testing"
@@ -16,7 +16,7 @@ func TestStart(t *testing.T) {
 	const count = 10
 
 	server := long_polling.Server{}
-	address := ":" + strconv.Itoa(10000+rand.Intn(1000))
+	address := ":" + strconv.Itoa(10000+rand.IntN(1000))
 	dir := t.TempDir()
 
 	start := func() {

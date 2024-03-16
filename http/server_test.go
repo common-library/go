@@ -1,7 +1,7 @@
 package http_test
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	net_http "net/http"
 	"os"
 	"strconv"
@@ -16,7 +16,7 @@ import (
 var address string
 
 func setUp(server *http.Server) {
-	address = ":" + strconv.Itoa(10000+rand.Intn(1000))
+	address = ":" + strconv.Itoa(10000+rand.IntN(1000))
 
 	server.AddPathPrefixHandler("/swagger/", httpSwagger.WrapHandler)
 
