@@ -1,4 +1,3 @@
-// Package dynamodb provides DynamoDB interface.
 // Package dynamodb provides DynamoDB client implementations.
 package dynamodb
 

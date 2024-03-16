@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heaven-chp/common-library-go/http"
-	httpSwagger "github.com/swaggo/http-swagger"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 var address string
@@ -78,14 +78,14 @@ func TestAddPathPrefixHandler(t *testing.T) {
 }
 
 func TestStart1(t *testing.T) {
-	ListenAndServeFailureFunc := func(err error) {
+	listenAndServeFailureFunc := func(err error) {
 		if err.Error() != "listen tcp "+address+": bind: address already in use" {
 			t.Fatal(err)
 		}
 	}
 
 	server := http.Server{}
-	err := server.Start(address, ListenAndServeFailureFunc)
+	err := server.Start(address, listenAndServeFailureFunc)
 	if err != nil {
 		t.Fatal(err)
 	}
