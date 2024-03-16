@@ -1,5 +1,5 @@
-// Package log provides logging.
-package log
+// Package slog provides slog logging.
+package slog
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package log_test
+package slog_test
 
 import (
 	"strings"
@@ -8,26 +8,26 @@ import (
 	"github.com/google/uuid"
 	"github.com/heaven-chp/common-library-go/file"
 	"github.com/heaven-chp/common-library-go/json"
-	"github.com/heaven-chp/common-library-go/log"
+	"github.com/heaven-chp/common-library-go/log/slog"
 )
 
-func test(t *testing.T, level log.Level) {
+func test(t *testing.T, level slog.Level) {
 	repeat := 1000
-	count := map[log.Level]int{
-		log.LevelTrace: 6,
-		log.LevelDebug: 5,
-		log.LevelInfo:  4,
-		log.LevelWarn:  3,
-		log.LevelError: 2,
-		log.LevelFatal: 1,
+	count := map[slog.Level]int{
+		slog.LevelTrace: 6,
+		slog.LevelDebug: 5,
+		slog.LevelInfo:  4,
+		slog.LevelWarn:  3,
+		slog.LevelError: 2,
+		slog.LevelFatal: 1,
 	}
 	answer := map[string]map[string]any{
-		"TRACE": map[string]any{"msg": "message-01", "key-01": "value-01", "key-02": float64(1), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log_test.test", "FileName": "log_test.go", "FunctionName": "func1", "Line": float64(52)}},
-		"DEBUG": map[string]any{"msg": "message-02", "key-01": "value-02", "key-02": float64(2), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log_test.test", "FileName": "log_test.go", "FunctionName": "func1", "Line": float64(53)}},
-		"INFO":  map[string]any{"msg": "message-03", "key-01": "value-03", "key-02": float64(3), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log_test.test", "FileName": "log_test.go", "FunctionName": "func1", "Line": float64(54)}},
-		"WARN":  map[string]any{"msg": "message-04", "key-01": "value-04", "key-02": float64(4), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log_test.test", "FileName": "log_test.go", "FunctionName": "func1", "Line": float64(55)}},
-		"ERROR": map[string]any{"msg": "message-05", "key-01": "value-05", "key-02": float64(5), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log_test.test", "FileName": "log_test.go", "FunctionName": "func1", "Line": float64(56)}},
-		"FATAL": map[string]any{"msg": "message-06", "key-01": "value-06", "key-02": float64(6), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log_test.test", "FileName": "log_test.go", "FunctionName": "func1", "Line": float64(57)}},
+		"TRACE": map[string]any{"msg": "message-01", "key-01": "value-01", "key-02": float64(1), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(52)}},
+		"DEBUG": map[string]any{"msg": "message-02", "key-01": "value-02", "key-02": float64(2), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(53)}},
+		"INFO":  map[string]any{"msg": "message-03", "key-01": "value-03", "key-02": float64(3), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(54)}},
+		"WARN":  map[string]any{"msg": "message-04", "key-01": "value-04", "key-02": float64(4), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(55)}},
+		"ERROR": map[string]any{"msg": "message-05", "key-01": "value-05", "key-02": float64(5), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(56)}},
+		"FATAL": map[string]any{"msg": "message-06", "key-01": "value-06", "key-02": float64(6), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(57)}},
 	}
 
 	fileName := uuid.New().String()
@@ -35,7 +35,7 @@ func test(t *testing.T, level log.Level) {
 	fullName := fileName + "." + fileExtensionName
 	defer file.Remove(fullName)
 
-	testLog := log.Log{}
+	testLog := slog.Log{}
 	defer testLog.Flush()
 
 	testLog.SetOutputToFile(fileName, fileExtensionName, false)
@@ -93,56 +93,56 @@ func test(t *testing.T, level log.Level) {
 }
 
 func TestTrace(t *testing.T) {
-	test(t, log.LevelTrace)
+	test(t, slog.LevelTrace)
 }
 
 func TestDebug(t *testing.T) {
-	test(t, log.LevelDebug)
+	test(t, slog.LevelDebug)
 }
 
 func TestInfo(t *testing.T) {
-	test(t, log.LevelInfo)
+	test(t, slog.LevelInfo)
 }
 
 func TestWarn(t *testing.T) {
-	test(t, log.LevelWarn)
+	test(t, slog.LevelWarn)
 }
 
 func TestError(t *testing.T) {
-	test(t, log.LevelError)
+	test(t, slog.LevelError)
 }
 
 func TestFatal(t *testing.T) {
-	test(t, log.LevelFatal)
+	test(t, slog.LevelFatal)
 }
 
 func TestFlush(t *testing.T) {
-	testLog := log.Log{}
+	testLog := slog.Log{}
 	defer testLog.Flush()
 }
 
 func TestGetLevel(t *testing.T) {
-	testLog := log.Log{}
+	testLog := slog.Log{}
 
-	testLog.SetLevel(log.LevelTrace)
+	testLog.SetLevel(slog.LevelTrace)
 	testLog.Flush()
-	if testLog.GetLevel() != log.LevelTrace {
+	if testLog.GetLevel() != slog.LevelTrace {
 		t.Fatal("invalid -", testLog.GetLevel())
 	}
 }
 
 func TestSetLevel(t *testing.T) {
-	testLog := log.Log{}
+	testLog := slog.Log{}
 
-	testLog.SetLevel(log.LevelTrace)
+	testLog.SetLevel(slog.LevelTrace)
 	testLog.Flush()
-	if testLog.GetLevel() != log.LevelTrace {
+	if testLog.GetLevel() != slog.LevelTrace {
 		t.Fatal("invalid -", testLog.GetLevel())
 	}
 }
 
 func TestSetOutputToStdout(t *testing.T) {
-	testLog := log.Log{}
+	testLog := slog.Log{}
 	defer testLog.Flush()
 
 	testLog.SetOutputToStdout()
@@ -152,7 +152,7 @@ func TestSetOutputToStdout(t *testing.T) {
 }
 
 func TestSetOutputToStderr(t *testing.T) {
-	testLog := log.Log{}
+	testLog := slog.Log{}
 	defer testLog.Flush()
 
 	testLog.SetOutputToStderr()
@@ -166,7 +166,7 @@ func TestSetOutputToFile(t *testing.T) {
 }
 
 func TestSetWithCallerInfo(t *testing.T) {
-	testLog := log.Log{}
+	testLog := slog.Log{}
 	defer testLog.Flush()
 
 	testLog.SetWithCallerInfo(true)
