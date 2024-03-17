@@ -1,7 +1,7 @@
 package http_test
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	net_http "net/http"
 	"strconv"
 	"testing"
@@ -18,7 +18,7 @@ func TestRequest1(t *testing.T) {
 }
 
 func TestRequest2(t *testing.T) {
-	address := ":" + strconv.Itoa(10000+rand.Intn(10000))
+	address := ":" + strconv.Itoa(10000+rand.IntN(10000))
 
 	server := http.Server{}
 

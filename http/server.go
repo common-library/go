@@ -40,7 +40,7 @@ func (this *Server) AddPathPrefixHandler(prefix string, handler http.Handler) {
 // Start is start the server.
 //
 // ex) err := server.Start("127.0.0.1")
-func (this *Server) Start(address string, ListenAndServeFailureFunc func(err error), middlewareFunc ...mux.MiddlewareFunc) error {
+func (this *Server) Start(address string, listenAndServeFailureFunc func(err error), middlewareFunc ...mux.MiddlewareFunc) error {
 	if this.router == nil {
 		this.router = mux.NewRouter()
 	}
@@ -61,8 +61,8 @@ func (this *Server) Start(address string, ListenAndServeFailureFunc func(err err
 
 	go func() {
 		err := this.server.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed && ListenAndServeFailureFunc != nil {
-			ListenAndServeFailureFunc(err)
+		if err != nil && err != http.ErrServerClosed && listenAndServeFailureFunc != nil {
+			listenAndServeFailureFunc(err)
 		}
 	}()
 

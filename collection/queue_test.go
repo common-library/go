@@ -1,13 +1,13 @@
-package data_structure_test
+package collection_test
 
 import (
 	"testing"
 
-	data_structure "github.com/heaven-chp/common-library-go/data-structure"
+	"github.com/heaven-chp/common-library-go/collection"
 )
 
 func TestFrontOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	queue.Push(1)
 	queue.Push(2)
@@ -18,7 +18,7 @@ func TestFrontOfQueue(t *testing.T) {
 }
 
 func TestBackOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	queue.Push(1)
 	queue.Push(2)
@@ -29,7 +29,7 @@ func TestBackOfQueue(t *testing.T) {
 }
 
 func TestEmptyOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	if queue.Empty() == false {
 		t.Fatal("invalid -", queue.Empty())
@@ -43,7 +43,7 @@ func TestEmptyOfQueue(t *testing.T) {
 }
 
 func TestSizeOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	queue.Push(1)
 	if queue.Size() != 1 {
@@ -57,7 +57,7 @@ func TestSizeOfQueue(t *testing.T) {
 }
 
 func TestClearOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	queue.Push(1)
 	queue.Push(2)
@@ -72,7 +72,7 @@ func TestClearOfQueue(t *testing.T) {
 }
 
 func TestPushOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	queue.Push(1)
 	queue.Push(2)
@@ -86,7 +86,7 @@ func TestPushOfQueue(t *testing.T) {
 }
 
 func TestPopOfQueue(t *testing.T) {
-	queue := data_structure.Queue[int]{}
+	queue := collection.Queue[int]{}
 
 	queue.Pop()
 

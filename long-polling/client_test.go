@@ -1,7 +1,7 @@
 package long_polling_test
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strconv"
@@ -59,7 +59,7 @@ func publish(t *testing.T, category, data string) {
 }
 
 func setUp(server *long_polling.Server) {
-	address = ":" + strconv.Itoa(10000+rand.Intn(1000))
+	address = ":" + strconv.Itoa(10000+rand.IntN(1000))
 
 	serverInfo := long_polling.ServerInfo{
 		Address:                        address,

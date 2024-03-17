@@ -1,7 +1,7 @@
 package socket_test
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,7 +22,7 @@ type TestServer struct {
 
 func (this *TestServer) Start(t *testing.T) {
 	this.Network = "tcp"
-	this.Address = ":" + strconv.Itoa(10000+rand.Intn(100))
+	this.Address = ":" + strconv.Itoa(10000+rand.IntN(100))
 	this.Greeting = "greeting"
 	this.PrefixOfResponse = "[response] "
 

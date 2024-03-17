@@ -39,7 +39,7 @@ type Server struct {
 // Start is start the server.
 //
 // ex) err := server.Start(ServerInfo{...}, FilePersistorInfo{...}, nil)
-func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInfo, ListenAndServeFailureFunc func(err error)) error {
+func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInfo, listenAndServeFailureFunc func(err error)) error {
 	option := golongpoll.Options{
 		LoggingEnabled:            false,
 		MaxLongpollTimeoutSeconds: serverInfo.Timeout,
@@ -97,7 +97,7 @@ func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistor
 
 	this.server.SetRouter(router)
 
-	return this.server.Start(serverInfo.Address, ListenAndServeFailureFunc)
+	return this.server.Start(serverInfo.Address, listenAndServeFailureFunc)
 }
 
 // Stop is stop the server.

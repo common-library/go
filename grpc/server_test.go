@@ -1,7 +1,7 @@
 package grpc_test
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"testing"
 	"time"
@@ -20,7 +20,7 @@ func TestStart(t *testing.T) {
 	}
 
 	go func() {
-		err = server.Start(":"+strconv.Itoa(10000+rand.Intn(10000)), &sample.Server{})
+		err = server.Start(":"+strconv.Itoa(10000+rand.IntN(10000)), &sample.Server{})
 		if err != nil {
 			t.Error(err)
 		}
