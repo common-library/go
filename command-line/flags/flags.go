@@ -1,5 +1,5 @@
 // Package flag provides command line flag
-package flag
+package flags
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/heaven-chp/common-library-go/utility"
 )
 
-// FlagInfo is a struct that has command line flag information.
+// FlagInfo is a struct that has command line flags information.
 type FlagInfo struct {
 	FlagName     string
 	Usage        string
@@ -22,9 +22,9 @@ type FlagInfo struct {
 
 var result map[string]*FlagInfo
 
-// Parse is parse the command line flag.
+// Parse is parse the command line flags.
 //
-//	ex) err := flag.Parse([]flag.FlagInfo{
+//	ex) err := flags.Parse([]flags.FlagInfo{
 //			{FlagName: "bool", Usage: "bool usage", DefaultValue: true},
 //			{FlagName: "time.Duration", Usage: "time.Duration usage (default 0h0m0s0ms0us0ns)", DefaultValue: time.Duration(0) * time.Second},
 //			{FlagName: "float64", Usage: "float64 usage (default 0)", DefaultValue: float64(0)},
@@ -89,9 +89,9 @@ func Parse(flagInfos []FlagInfo) error {
 
 }
 
-// Get is get the command line flag value.
+// Get is get the command line flags value.
 //
-// ex) value := flag.Get[int]("int")
+// ex) value := flags.Get[int]("int")
 func Get[T any](flagName string) T {
 	return result[flagName].value.(T)
 }
