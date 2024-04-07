@@ -1,4 +1,4 @@
-module github.com/heaven-chp/common-library-go
+module github.com/common-library/go
 
 go 1.22.1
 

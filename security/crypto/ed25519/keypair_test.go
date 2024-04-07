@@ -3,7 +3,7 @@ package ed25519_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/security/crypto/ed25519"
+	"github.com/common-library/go/security/crypto/ed25519"
 )
 
 func keypair_instance(t *testing.T) ed25519.KeyPair {

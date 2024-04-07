@@ -5,12 +5,12 @@ import (
 	"io"
 	"os"
 	"strconv"
-	sync "sync"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/grpc"
-	"github.com/heaven-chp/common-library-go/grpc/sample"
+	"github.com/common-library/go/grpc"
+	"github.com/common-library/go/grpc/sample"
 )
 
 func setUp(server *grpc.Server) {

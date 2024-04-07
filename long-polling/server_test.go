@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	long_polling "github.com/heaven-chp/common-library-go/long-polling"
+	long_polling "github.com/common-library/go/long-polling"
 )
 
 func TestStart(t *testing.T) {

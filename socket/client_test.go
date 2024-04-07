@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/socket"
+	"github.com/common-library/go/socket"
 )
 
 type TestServer struct {

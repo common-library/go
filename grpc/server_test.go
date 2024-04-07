@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/grpc"
-	"github.com/heaven-chp/common-library-go/grpc/sample"
+	"github.com/common-library/go/grpc"
+	"github.com/common-library/go/grpc/sample"
 )
 
 func TestStart(t *testing.T) {

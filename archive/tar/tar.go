@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/heaven-chp/common-library-go/file"
+	"github.com/common-library/go/file"
 )
 
 // Compress is compression.

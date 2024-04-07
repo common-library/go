@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	v7 "github.com/common-library/go/database/elasticsearch/v7"
 	"github.com/google/uuid"
-	v7 "github.com/heaven-chp/common-library-go/database/elasticsearch/v7"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 

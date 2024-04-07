@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/lock"
+	"github.com/common-library/go/lock"
 )
 
 func TestMutex(t *testing.T) {

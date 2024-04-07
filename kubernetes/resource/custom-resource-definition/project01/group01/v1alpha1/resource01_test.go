@@ -3,8 +3,8 @@ package v1alpha1_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/kubernetes/resource/client"
-	"github.com/heaven-chp/common-library-go/kubernetes/resource/custom-resource-definition/project01/group01/v1alpha1"
+	"github.com/common-library/go/kubernetes/resource/client"
+	"github.com/common-library/go/kubernetes/resource/custom-resource-definition/project01/group01/v1alpha1"
 )
 
 func TestResource01(t *testing.T) {

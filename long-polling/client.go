@@ -6,9 +6,9 @@ import (
 	net_http "net/http"
 	net_url "net/url"
 
+	"github.com/common-library/go/http"
+	"github.com/common-library/go/json"
 	"github.com/google/go-querystring/query"
-	"github.com/heaven-chp/common-library-go/http"
-	"github.com/heaven-chp/common-library-go/json"
 )
 
 // SubscriptionRequest is subscription request information.

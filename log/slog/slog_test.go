@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/common-library/go/file"
+	"github.com/common-library/go/json"
+	"github.com/common-library/go/log/slog"
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/file"
-	"github.com/heaven-chp/common-library-go/json"
-	"github.com/heaven-chp/common-library-go/log/slog"
 )
 
 func test(t *testing.T, level slog.Level) {
@@ -22,12 +22,12 @@ func test(t *testing.T, level slog.Level) {
 		slog.LevelFatal: 1,
 	}
 	answer := map[string]map[string]any{
-		"TRACE": map[string]any{"msg": "message-01", "key-01": "value-01", "key-02": float64(1), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(52)}},
-		"DEBUG": map[string]any{"msg": "message-02", "key-01": "value-02", "key-02": float64(2), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(53)}},
-		"INFO":  map[string]any{"msg": "message-03", "key-01": "value-03", "key-02": float64(3), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(54)}},
-		"WARN":  map[string]any{"msg": "message-04", "key-01": "value-04", "key-02": float64(4), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(55)}},
-		"ERROR": map[string]any{"msg": "message-05", "key-01": "value-05", "key-02": float64(5), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(56)}},
-		"FATAL": map[string]any{"msg": "message-06", "key-01": "value-06", "key-02": float64(6), "CallerInfo": map[string]any{"PackageName": "github.com/heaven-chp/common-library-go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(57)}},
+		"TRACE": map[string]any{"msg": "message-01", "key-01": "value-01", "key-02": float64(1), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(52)}},
+		"DEBUG": map[string]any{"msg": "message-02", "key-01": "value-02", "key-02": float64(2), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(53)}},
+		"INFO":  map[string]any{"msg": "message-03", "key-01": "value-03", "key-02": float64(3), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(54)}},
+		"WARN":  map[string]any{"msg": "message-04", "key-01": "value-04", "key-02": float64(4), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(55)}},
+		"ERROR": map[string]any{"msg": "message-05", "key-01": "value-05", "key-02": float64(5), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(56)}},
+		"FATAL": map[string]any{"msg": "message-06", "key-01": "value-06", "key-02": float64(6), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(57)}},
 	}
 
 	fileName := uuid.New().String()

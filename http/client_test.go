@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/http"
+	"github.com/common-library/go/http"
 )
 
 func TestRequest1(t *testing.T) {

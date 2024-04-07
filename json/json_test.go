@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/common-library/go/file"
+	"github.com/common-library/go/json"
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/file"
-	"github.com/heaven-chp/common-library-go/json"
 )
 
 type test1Struct struct {

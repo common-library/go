@@ -3,8 +3,8 @@ package gemini_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/ai/gemini"
-	"github.com/heaven-chp/common-library-go/ai/gemini/test-data"
+	"github.com/common-library/go/ai/gemini"
+	"github.com/common-library/go/ai/gemini/test-data"
 )
 
 func TestChat(t *testing.T) {

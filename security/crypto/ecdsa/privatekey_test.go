@@ -4,7 +4,7 @@ import (
 	"crypto/elliptic"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/security/crypto/ecdsa"
+	"github.com/common-library/go/security/crypto/ecdsa"
 )
 
 func privatekey_instance(t *testing.T) ecdsa.PrivateKey {

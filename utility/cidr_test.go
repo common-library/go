@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/utility"
+	"github.com/common-library/go/utility"
 )
 
 func TestWhetherCidrContainsIp(t *testing.T) {

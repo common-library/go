@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/grpc"
+	"github.com/common-library/go/grpc"
 )
 
 func TestGetConnection(t *testing.T) {

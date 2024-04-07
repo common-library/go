@@ -4,8 +4,8 @@ package long_polling
 import (
 	net_http "net/http"
 
+	"github.com/common-library/go/http"
 	"github.com/gorilla/mux"
-	"github.com/heaven-chp/common-library-go/http"
 	"github.com/jcuga/golongpoll"
 )
 

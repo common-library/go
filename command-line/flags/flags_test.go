@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/command-line/flags"
+	"github.com/common-library/go/command-line/flags"
 )
 
 func set() error {

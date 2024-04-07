@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/common-library/go/file"
+	"github.com/common-library/go/storage/minio"
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/file"
-	"github.com/heaven-chp/common-library-go/storage/minio"
 )
 
 func getClient(t *testing.T) minio.Client {

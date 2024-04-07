@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/common-library/go/http"
 	"github.com/gorilla/mux"
-	"github.com/heaven-chp/common-library-go/http"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 

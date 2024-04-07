@@ -3,7 +3,7 @@ package collection_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/collection"
+	"github.com/common-library/go/collection"
 )
 
 func TestFrontOfDeque(t *testing.T) {

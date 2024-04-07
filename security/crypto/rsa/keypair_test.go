@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/security/crypto/rsa"
+	"github.com/common-library/go/security/crypto/rsa"
 )
 
 var onceForKeyPair sync.Once
