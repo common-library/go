@@ -3,7 +3,7 @@ package ecdsa_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/security/crypto/ecdsa"
+	"github.com/common-library/go/security/crypto/ecdsa"
 )
 
 func publickey_instance(t *testing.T) (ecdsa.PrivateKey, ecdsa.PublicKey) {

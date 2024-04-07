@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/socket"
+	"github.com/common-library/go/socket"
 )
 
 func TestStart1(t *testing.T) {

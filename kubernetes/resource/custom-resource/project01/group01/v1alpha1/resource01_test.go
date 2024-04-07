@@ -3,9 +3,9 @@ package v1alpha1_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/kubernetes/resource/client"
-	crd "github.com/heaven-chp/common-library-go/kubernetes/resource/custom-resource-definition/project01/group01/v1alpha1"
-	"github.com/heaven-chp/common-library-go/kubernetes/resource/custom-resource/project01/group01/v1alpha1"
+	"github.com/common-library/go/kubernetes/resource/client"
+	crd "github.com/common-library/go/kubernetes/resource/custom-resource-definition/project01/group01/v1alpha1"
+	"github.com/common-library/go/kubernetes/resource/custom-resource/project01/group01/v1alpha1"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"

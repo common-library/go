@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/heaven-chp/common-library-go/collection"
-	"github.com/heaven-chp/common-library-go/lock"
-	"github.com/heaven-chp/common-library-go/utility"
+	"github.com/common-library/go/collection"
+	"github.com/common-library/go/lock"
+	"github.com/common-library/go/utility"
 )
 
 type Level int

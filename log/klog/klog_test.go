@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/log/klog"
+	"github.com/common-library/go/log/klog"
 )
 
 func TestInfo(t *testing.T) {

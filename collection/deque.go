@@ -1,7 +1,7 @@
 // Package collection provides data structure related implementations.
 package collection
 
-import "github.com/heaven-chp/common-library-go/lock"
+import "github.com/common-library/go/lock"
 
 // Deque is struct that provides deque related methods.
 type Deque[T any] struct {

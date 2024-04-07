@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	long_polling "github.com/common-library/go/long-polling"
 	"github.com/google/uuid"
-	long_polling "github.com/heaven-chp/common-library-go/long-polling"
 )
 
 var address string

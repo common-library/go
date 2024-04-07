@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/command-line/arguments"
+	"github.com/common-library/go/command-line/arguments"
 )
 
 func setUp() {

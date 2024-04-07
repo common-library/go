@@ -3,8 +3,8 @@ package client_test
 import (
 	"testing"
 
+	"github.com/common-library/go/kubernetes/resource/client"
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/kubernetes/resource/client"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"

@@ -3,7 +3,7 @@ package dsa_test
 import (
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/security/crypto/dsa"
+	"github.com/common-library/go/security/crypto/dsa"
 )
 
 func publickey_instance(t *testing.T) (dsa.PrivateKey, dsa.PublicKey) {

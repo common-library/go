@@ -4,7 +4,7 @@ import (
 	crypto_dsa "crypto/dsa"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/security/crypto/dsa"
+	"github.com/common-library/go/security/crypto/dsa"
 )
 
 func privatekey_instance(t *testing.T) dsa.PrivateKey {

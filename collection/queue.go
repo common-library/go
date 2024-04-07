@@ -1,7 +1,7 @@
 // Package collection provides data structure related implementations.
 package collection
 
-import "github.com/heaven-chp/common-library-go/lock"
+import "github.com/common-library/go/lock"
 
 // Queue is struct that provides queue related methods.
 type Queue[T any] struct {

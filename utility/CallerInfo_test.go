@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/heaven-chp/common-library-go/utility"
+	"github.com/common-library/go/utility"
 )
 
 func TestGetCallerInfo(t *testing.T) {
@@ -13,7 +13,7 @@ func TestGetCallerInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if callerInfo.PackageName != "github.com/heaven-chp/common-library-go/utility_test" {
+	if callerInfo.PackageName != "github.com/common-library/go/utility_test" {
 		t.Errorf("invalid package name - (%s)", callerInfo.PackageName)
 	}
 

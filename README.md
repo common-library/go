@@ -1,8 +1,8 @@
-# common-library-go
+# Common Library for Go
 
 ## Installation
 ```bash
-go get -u github.com/heaven-chp/common-library-go
+go get -u github.com/common-library/go
 ```
 
 <br/>
@@ -82,7 +82,7 @@ go get -u github.com/heaven-chp/common-library-go
 
 ## How to add grpc
  - create protobuf IDL(Interface Definition Language) file
-   - see [grpc/sample/sample.proto](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/sample.proto)
+   - see [grpc/sample/sample.proto](https://github.com/common-library/go/blob/main/grpc/sample/sample.proto)
  - convert IDL file to code
    - `go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0`
    - `go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0`
@@ -90,6 +90,6 @@ go get -u github.com/heaven-chp/common-library-go
    - `unzip protoc-3.20.3-linux-x86_64.zip -d protoc/`
    - `protoc/bin/protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative grpc/sample/sample.proto`
   - implement functions defined in IDL file
-    - implement to satisfy [implementServer interface](https://github.com/heaven-chp/common-library-go/blob/main/grpc/server.go)
-    - see [grpc/sample/Server.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/Server.go)
-    - see [grpc/sample/Server_test.go](https://github.com/heaven-chp/common-library-go/blob/main/grpc/sample/Server_test.go)
+    - implement to satisfy [implementServer interface](https://github.com/common-library/go/blob/main/grpc/server.go)
+    - see [grpc/sample/Server.go](https://github.com/common-library/go/blob/main/grpc/sample/Server.go)
+    - see [grpc/sample/Server_test.go](https://github.com/common-library/go/blob/main/grpc/sample/Server_test.go)

@@ -8,8 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/common-library/go/aws/s3"
 	"github.com/google/uuid"
-	"github.com/heaven-chp/common-library-go/aws/s3"
 )
 
 func getClient(t *testing.T) s3.Client {
