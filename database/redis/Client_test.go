@@ -10,12 +10,12 @@ import (
 func TestInitialize(t *testing.T) {
 	client := redis.Client{}
 
-	err := client.Initialize("", "127.0.0.1:6378", 3, 240)
+	err := client.Initialize("127.0.0.1:6378", "", 10, 60)
 	if err.Error() != "dial tcp 127.0.0.1:6378: connect: connection refused" {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -39,7 +39,7 @@ func TestPing(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -59,7 +59,7 @@ func TestSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -83,7 +83,7 @@ func TestGet(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -107,7 +107,7 @@ func TestSet(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -137,14 +137,14 @@ func TestSetex(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
 	if existsKey, err := client.Exists("key"); err != nil {
 		t.Error(err)
-	} else if existsKey != 0 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != false {
+		t.Error("invalid")
 	}
 
 	if err := client.Setex("key", 2, "value"); err != nil {
@@ -153,16 +153,16 @@ func TestSetex(t *testing.T) {
 
 	if existsKey, err := client.Exists("key"); err != nil {
 		t.Error(err)
-	} else if existsKey != 1 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != true {
+		t.Error("invalid")
 	}
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	if existsKey, err := client.Exists("key"); err != nil {
 		t.Error(err)
-	} else if existsKey != 0 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != false {
+		t.Error("invalid")
 	}
 
 	if err := client.Finalize(); err != nil {
@@ -176,7 +176,7 @@ func TestMGet(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -196,7 +196,7 @@ func TestMSet(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -232,7 +232,7 @@ func TestDel(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -260,7 +260,7 @@ func TestFlushDB(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -296,7 +296,7 @@ func TestFlushAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -332,7 +332,7 @@ func TestTtl(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -382,7 +382,7 @@ func TestInfo(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -404,7 +404,7 @@ func TestDBsize(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -434,14 +434,14 @@ func TestExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
 	if existsKey, err := client.Exists("key"); err != nil {
 		t.Error(err)
-	} else if existsKey != 0 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != false {
+		t.Error("invalid")
 	}
 
 	if err := client.Set("key", "value"); err != nil {
@@ -450,14 +450,14 @@ func TestExists(t *testing.T) {
 
 	if existsKey, err := client.Exists("key"); err != nil {
 		t.Error(err)
-	} else if existsKey != 1 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != true {
+		t.Error("invalid")
 	}
 
 	if existsKey, err := client.Exists("key", 1, 2, "3"); err != nil {
 		t.Error(err)
-	} else if existsKey != 1 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != true {
+		t.Error("invalid")
 	}
 
 	if err := client.Del("key"); err != nil {
@@ -466,8 +466,8 @@ func TestExists(t *testing.T) {
 
 	if existsKey, err := client.Exists("key"); err != nil {
 		t.Error(err)
-	} else if existsKey != 0 {
-		t.Errorf("invalid data - existsKey : (%d)", existsKey)
+	} else if existsKey != false {
+		t.Error("invalid")
 	}
 
 	if err := client.Finalize(); err != nil {
@@ -482,7 +482,7 @@ func TestRename(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
@@ -516,7 +516,7 @@ func TestRandomKey(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := client.Initialize("", "127.0.0.1:6379", 3, 240); err != nil {
+	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
 		t.Error(err)
 	}
 
