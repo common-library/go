@@ -40,8 +40,8 @@ type PublishRequest struct {
 
 // Subscription is subscribes to event.
 //
-// ex) response, err := long_polling.Subscription("http://127.0.0.1:10000/subscription", nil, request, "", "")
-func Subscription(url string, header map[string][]string, request SubscriptionRequest, username, password string) (SubscriptionResponse, error) {
+// ex) response, err := long_polling.Subscription("http://127.0.0.1:10000/subscription", nil, request, "", "", nil)
+func Subscription(url string, header map[string][]string, request SubscriptionRequest, username, password string, transport *net_http.Transport) (SubscriptionResponse, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {
 		return SubscriptionResponse{}, err
@@ -53,7 +53,7 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 	}
 	u.RawQuery = values.Encode()
 
-	response, err := http.Request(fmt.Sprintf("%v", u), net_http.MethodGet, header, "", time.Duration(request.Timeout), username, password)
+	response, err := http.Request(fmt.Sprintf("%v", u), net_http.MethodGet, header, "", time.Duration(request.Timeout), username, password, transport)
 	if err != nil {
 		return SubscriptionResponse{}, err
 	}
@@ -73,8 +73,8 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 
 // Publish is publish an event.
 //
-// ex) response, err := long_polling.Publish("http://127.0.0.1:10000/publish", 10, nil, request, "", "")
-func Publish(url string, timeout time.Duration, header map[string][]string, publishRequest PublishRequest, username, password string) (http.Response, error) {
+// ex) response, err := long_polling.Publish("http://127.0.0.1:10000/publish", 10, nil, request, "", "", nil)
+func Publish(url string, timeout time.Duration, header map[string][]string, publishRequest PublishRequest, username, password string, transport *net_http.Transport) (http.Response, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {
 		return http.Response{}, err
@@ -85,5 +85,5 @@ func Publish(url string, timeout time.Duration, header map[string][]string, publ
 		return http.Response{}, err
 	}
 
-	return http.Request(fmt.Sprintf("%v", u), net_http.MethodPost, header, body, timeout, username, password)
+	return http.Request(fmt.Sprintf("%v", u), net_http.MethodPost, header, body, timeout, username, password, transport)
 }

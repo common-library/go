@@ -18,9 +18,9 @@ var address string
 func setUp(server *http.Server) {
 	address = ":" + strconv.Itoa(10000+rand.IntN(1000))
 
-	server.AddPathPrefixHandler("/swagger/", httpSwagger.WrapHandler)
+	server.RegisterPathPrefixHandler("/swagger/", httpSwagger.WrapHandler)
 
-	server.AddHandler("/test/{id}", net_http.MethodGet, func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
+	server.RegisterHandlerFunc("/test/{id}", net_http.MethodGet, func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
 		responseWriter.WriteHeader(net_http.StatusOK)
 		responseWriter.Write([]byte(`{"field_1":1}`))
 	})
@@ -31,16 +31,14 @@ func setUp(server *http.Server) {
 		})
 	}
 
-	err := server.Start(address, func(err error) { panic(err) }, middlewareFunction)
-	if err != nil {
+	if err := server.Start(address, func(err error) { panic(err) }, middlewareFunction); err != nil {
 		panic(err)
 	}
-	time.Sleep(time.Duration(500) * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 }
 
 func tearDown(server *http.Server) {
-	err := server.Stop(5)
-	if err != nil {
+	if err := server.Stop(10); err != nil {
 		panic(err)
 	}
 }
@@ -57,23 +55,21 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestAddHandler(t *testing.T) {
-	response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, nil, "", 3, "", "")
-	if err != nil {
-		t.Error(err)
+func TestRegisterHandlerFunc(t *testing.T) {
+	if response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
+		t.Fatal(err)
 	} else if response.StatusCode != 200 {
-		t.Errorf("invalid status code : (%d)", response.StatusCode)
+		t.Fatal("invalid -", response.StatusCode)
 	} else if response.Body != `{"field_1":1}` {
-		t.Errorf("invalid response body : (%s)", response.Body)
+		t.Fatal("invalid -", response.Body)
 	}
 }
 
-func TestAddPathPrefixHandler(t *testing.T) {
-	response, err := http.Request("http://"+address+"/swagger/index.html", net_http.MethodGet, nil, "", 3, "", "")
-	if err != nil {
-		t.Error(err)
+func TestRegisterPathPrefixHandler(t *testing.T) {
+	if response, err := http.Request("http://"+address+"/swagger/index.html", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
+		t.Fatal(err)
 	} else if response.StatusCode != net_http.StatusOK {
-		t.Errorf("invalid status code : (%d)", response.StatusCode)
+		t.Fatal("invalid -", response.StatusCode)
 	}
 }
 
@@ -85,29 +81,40 @@ func TestStart1(t *testing.T) {
 	}
 
 	server := http.Server{}
-	err := server.Start(address, listenAndServeFailureFunc)
-	if err != nil {
+	if err := server.Start(address, listenAndServeFailureFunc); err != nil {
 		t.Fatal(err)
+	}
+	time.Sleep(200 * time.Millisecond)
+
+	if err := server.Stop(10); err != nil {
+		panic(err)
 	}
 }
 
 func TestStart2(t *testing.T) {
-	response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, nil, "", 3, "", "")
-	if err != nil {
-		t.Error(err)
-	} else if response.StatusCode != net_http.StatusOK {
-		t.Errorf("invalid status code : (%d)", response.StatusCode)
-	} else if response.Body != `{"field_1":1}` {
-		t.Errorf("invalid response body : (%s)", response.Body)
+	listenAndServeFailureFunc := func(err error) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	server := http.Server{}
+	addressTemp := ":" + strconv.Itoa(11000+rand.IntN(1000))
+	if err := server.Start(addressTemp, listenAndServeFailureFunc); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(200 * time.Millisecond)
+
+	if err := server.Stop(10); err != nil {
+		panic(err)
 	}
 }
 
 func TestStop(t *testing.T) {
 	server := http.Server{}
 
-	err := server.Stop(5)
-	if err != nil {
-		t.Error(err)
+	if err := server.Stop(10); err != nil {
+		t.Fatal(err)
 	}
 }
 
