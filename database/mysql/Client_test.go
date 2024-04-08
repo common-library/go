@@ -111,7 +111,7 @@ func TestQuery(t *testing.T) {
 	}
 	defer client.Finalize()
 
-	check := func(query string, args ...interface{}) {
+	check := func(query string, args ...any) {
 		if rows, err := client.Query(query, args...); err != nil {
 			t.Error(err)
 		} else {

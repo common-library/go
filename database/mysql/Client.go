@@ -70,7 +70,7 @@ func (this *Client) Finalize() error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *Client) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (this *Client) Query(query string, args ...any) (*sql.Rows, error) {
 	if this.connection == nil {
 		return nil, errors.New(fmt.Sprintf("please call Initialize first"))
 	}
@@ -81,7 +81,7 @@ func (this *Client) Query(query string, args ...interface{}) (*sql.Rows, error) 
 // QueryRow is select row
 //
 // ex) err := client.QueryRow(`SELECT field ...;`, &field)
-func (this *Client) QueryRow(query string, result ...interface{}) error {
+func (this *Client) QueryRow(query string, result ...any) error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
@@ -94,7 +94,7 @@ func (this *Client) QueryRow(query string, result ...interface{}) error {
 // ex 1) err := client.Execute(`...`)
 //
 // ex 2) err := client.Execute(`... WHERE field=? ...;`, "value")
-func (this *Client) Execute(query string, args ...interface{}) error {
+func (this *Client) Execute(query string, args ...any) error {
 	if this.connection == nil {
 		return errors.New(fmt.Sprintf("please call Initialize first"))
 	}
@@ -139,7 +139,7 @@ func (this *Client) SetPrepare(query string) error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *Client) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
+func (this *Client) QueryPrepare(args ...any) (*sql.Rows, error) {
 	if this.stmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepare first"))
 	}
@@ -158,7 +158,7 @@ func (this *Client) QueryPrepare(args ...interface{}) (*sql.Rows, error) {
 //	field := 0
 //
 //	err := row.Scan(&field)
-func (this *Client) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
+func (this *Client) QueryRowPrepare(args ...any) (*sql.Row, error) {
 	if this.stmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepare first"))
 	}
@@ -175,7 +175,7 @@ func (this *Client) QueryRowPrepare(args ...interface{}) (*sql.Row, error) {
 //	err := client.SetPrepare(`INSERT INTO ` + table + ` VALUE(field=?);`)
 //
 //	err = client.ExecutePrepare(2)
-func (this *Client) ExecutePrepare(args ...interface{}) error {
+func (this *Client) ExecutePrepare(args ...any) error {
 	if this.stmt == nil {
 		return errors.New(fmt.Sprintf("please call SetPrepare first"))
 	}
@@ -246,7 +246,7 @@ func (this *Client) EndTransaction(err error) error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *Client) QueryTransaction(query string, args ...interface{}) (*sql.Rows, error) {
+func (this *Client) QueryTransaction(query string, args ...any) (*sql.Rows, error) {
 	if this.tx == nil {
 		return nil, errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
@@ -257,7 +257,7 @@ func (this *Client) QueryTransaction(query string, args ...interface{}) (*sql.Ro
 // QueryRowTransaction is select row
 //
 // ex) err := client.QueryRowTransaction(`SELECT field ...;`, &field)
-func (this *Client) QueryRowTransaction(query string, result ...interface{}) error {
+func (this *Client) QueryRowTransaction(query string, result ...any) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
@@ -270,7 +270,7 @@ func (this *Client) QueryRowTransaction(query string, result ...interface{}) err
 // ex 1) err := client.ExecuteTransaction(`...`)
 //
 // ex 2) err := client.ExecuteTransaction(`... WHERE field=? ...;`, "value")
-func (this *Client) ExecuteTransaction(query string, args ...interface{}) error {
+func (this *Client) ExecuteTransaction(query string, args ...any) error {
 	if this.tx == nil {
 		return errors.New(fmt.Sprintf("please call BeginTransaction first"))
 	}
@@ -315,7 +315,7 @@ func (this *Client) SetPrepareTransaction(query string) error {
 //	    field := 0
 //	    err := rows.Scan(&field)
 //	}
-func (this *Client) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, error) {
+func (this *Client) QueryPrepareTransaction(args ...any) (*sql.Rows, error) {
 	if this.txStmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
 	}
@@ -334,7 +334,7 @@ func (this *Client) QueryPrepareTransaction(args ...interface{}) (*sql.Rows, err
 //	field := 0
 //
 //	err := row.Scan(&field)
-func (this *Client) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, error) {
+func (this *Client) QueryRowPrepareTransaction(args ...any) (*sql.Row, error) {
 	if this.txStmt == nil {
 		return nil, errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
 	}
@@ -351,7 +351,7 @@ func (this *Client) QueryRowPrepareTransaction(args ...interface{}) (*sql.Row, e
 //	err := client.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
 //
 //	err = client.ExecutePrepareTransaction(2)
-func (this *Client) ExecutePrepareTransaction(args ...interface{}) error {
+func (this *Client) ExecutePrepareTransaction(args ...any) error {
 	if this.txStmt == nil {
 		return errors.New(fmt.Sprintf("please call SetPrepareTransaction first"))
 	}
