@@ -15,7 +15,7 @@ import (
 // Client is a struct that provides client related methods.
 type Client struct {
 	address string
-	timeout uint64
+	timeout time.Duration
 
 	ctx           context.Context
 	ctxCancelFunc context.CancelFunc
@@ -41,7 +41,7 @@ func (this *Client) connect() error {
 
 	this.ctx = context.TODO()
 	if this.timeout > 0 {
-		this.ctx, this.ctxCancelFunc = context.WithTimeout(context.Background(), time.Duration(this.timeout)*time.Second)
+		this.ctx, this.ctxCancelFunc = context.WithTimeout(context.Background(), this.timeout*time.Second)
 	}
 
 	if err := this.client.Connect(this.ctx); err != nil {
@@ -73,7 +73,7 @@ func (this *Client) disConnect() error {
 // Initialize is initialize.
 //
 // ex) err := client.Initialize("localhost:27017", 10)
-func (this *Client) Initialize(address string, timeout uint64) error {
+func (this *Client) Initialize(address string, timeout time.Duration) error {
 	this.address = address
 	this.timeout = timeout
 

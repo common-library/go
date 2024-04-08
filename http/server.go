@@ -72,13 +72,13 @@ func (this *Server) Start(address string, listenAndServeFailureFunc func(err err
 // Stop is stop the server.
 //
 // ex) err := server.Stop(10)
-func (this *Server) Stop(shutdownTimeout uint64) error {
+func (this *Server) Stop(shutdownTimeout time.Duration) error {
 	this.router = nil
 	if this.server == nil {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(shutdownTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout*time.Second)
 	defer cancel()
 
 	return this.server.Shutdown(ctx)

@@ -19,7 +19,7 @@ type Client struct {
 // Initialize is initialize.
 //
 // ex) err := client.Initialize("127.0.0.1:6379", "", 10, 60)
-func (this *Client) Initialize(address, password string, maxConnection int, timeout int64) error {
+func (this *Client) Initialize(address, password string, maxConnection int, timeout time.Duration) error {
 	this.pool = &redigo_redis.Pool{
 		Dial: func() (redigo_redis.Conn, error) {
 			dialOption := redigo_redis.DialPassword(password)
@@ -33,7 +33,7 @@ func (this *Client) Initialize(address, password string, maxConnection int, time
 
 		MaxIdle: maxConnection,
 
-		IdleTimeout: time.Duration(timeout) * time.Second,
+		IdleTimeout: timeout * time.Second,
 	}
 
 	return this.Ping()

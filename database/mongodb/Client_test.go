@@ -3,6 +3,7 @@ package mongodb_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/common-library/go/database/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,7 @@ type TestStruct struct {
 }
 
 const address string = "localhost:27017"
-const timeout uint64 = 3
+const timeout time.Duration = 10
 const database_name string = "testDatabase"
 const collection_name string = "testCollection"
 

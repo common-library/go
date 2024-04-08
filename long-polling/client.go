@@ -5,6 +5,7 @@ import (
 	"fmt"
 	net_http "net/http"
 	net_url "net/url"
+	"time"
 
 	"github.com/common-library/go/http"
 	"github.com/common-library/go/json"
@@ -52,7 +53,7 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 	}
 	u.RawQuery = values.Encode()
 
-	response, err := http.Request(fmt.Sprintf("%v", u), net_http.MethodGet, header, "", request.Timeout, username, password)
+	response, err := http.Request(fmt.Sprintf("%v", u), net_http.MethodGet, header, "", time.Duration(request.Timeout), username, password)
 	if err != nil {
 		return SubscriptionResponse{}, err
 	}
@@ -73,7 +74,7 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 // Publish is publish an event.
 //
 // ex) response, err := long_polling.Publish("http://127.0.0.1:10000/publish", 10, nil, request, "", "")
-func Publish(url string, timeout int, header map[string][]string, publishRequest PublishRequest, username, password string) (http.Response, error) {
+func Publish(url string, timeout time.Duration, header map[string][]string, publishRequest PublishRequest, username, password string) (http.Response, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {
 		return http.Response{}, err

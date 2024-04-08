@@ -27,7 +27,7 @@ type Client struct {
 // Initialize is initialize.
 //
 // ex) err := client.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
-func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
+func (this *Client) Initialize(addresses []string, timeout time.Duration, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
 	config := elasticsearch.Config{
 		CloudID:                cloudID,
 		APIKey:                 apiKey,
@@ -39,7 +39,7 @@ func (this *Client) Initialize(addresses []string, timeout uint64, cloudID, apiK
 		EnableDebugLogger: true,
 		Logger:            &estransport.ColorLogger{Output: os.Stdout},
 		Transport: &http.Transport{
-			ResponseHeaderTimeout: time.Second * time.Duration(timeout),
+			ResponseHeaderTimeout: timeout * time.Second,
 		},
 	}
 	if len(caCert) != 0 {

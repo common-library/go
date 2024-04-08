@@ -1,7 +1,9 @@
 package elasticsearch
 
+import "time"
+
 type ClientInterface interface {
-	Initialize(addresses []string, timeout uint64, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error
+	Initialize(addresses []string, timeout time.Duration, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error
 
 	Exists(index, documentID string) (bool, error)
 

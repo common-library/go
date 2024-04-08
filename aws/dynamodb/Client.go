@@ -43,7 +43,7 @@ func (this *Client) CreateClient(ctx context.Context, region, accessKey, secretA
 // See dynamodb_test.go for a detailed example.
 //
 // ex) response, err := client.CreateTable(&aws_dynamodb.CreateTableInput{...}, true, 10)
-func (this *Client) CreateTable(request *dynamodb.CreateTableInput, wait bool, waitTimeout uint64, optionFunctions ...func(*dynamodb.Options)) (*dynamodb.CreateTableOutput, error) {
+func (this *Client) CreateTable(request *dynamodb.CreateTableInput, wait bool, waitTimeout time.Duration, optionFunctions ...func(*dynamodb.Options)) (*dynamodb.CreateTableOutput, error) {
 	response, err := this.client.CreateTable(this.ctx, request, optionFunctions...)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (this *Client) CreateTable(request *dynamodb.CreateTableInput, wait bool, w
 		if err := waiter.Wait(
 			this.ctx,
 			&dynamodb.DescribeTableInput{TableName: request.TableName},
-			time.Duration(waitTimeout)*time.Second); err != nil {
+			waitTimeout*time.Second); err != nil {
 			return nil, err
 		}
 	}
@@ -94,7 +94,7 @@ func (this *Client) UpdateTable(request *dynamodb.UpdateTableInput, optionFuncti
 // See dynamodb_test.go for a detailed example.
 //
 // ex) response, err := client.DeleteTable("table_name", true, 10)
-func (this *Client) DeleteTable(tableName string, wait bool, waitTimeout uint64, optionFunctions ...func(*dynamodb.Options)) (*dynamodb.DeleteTableOutput, error) {
+func (this *Client) DeleteTable(tableName string, wait bool, waitTimeout time.Duration, optionFunctions ...func(*dynamodb.Options)) (*dynamodb.DeleteTableOutput, error) {
 	response, err := this.client.DeleteTable(this.ctx, &dynamodb.DeleteTableInput{TableName: aws.String(tableName)}, optionFunctions...)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (this *Client) DeleteTable(tableName string, wait bool, waitTimeout uint64,
 		if err := waiter.Wait(
 			this.ctx,
 			&dynamodb.DescribeTableInput{TableName: aws.String(tableName)},
-			time.Duration(waitTimeout)*time.Second); err != nil {
+			waitTimeout*time.Second); err != nil {
 			return nil, err
 		}
 	}
