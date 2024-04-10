@@ -3,50 +3,61 @@ package http
 
 import (
 	"io/ioutil"
-	net_http "net/http"
+	"net/http"
 	"strings"
 	"time"
 )
 
 // Response is response information.
 type Response struct {
-	Header     net_http.Header
+	Header     http.Header
 	Body       string
 	StatusCode int
 }
 
 // Request is request.
 //
-// ex) response, err := http.Request("http://127.0.0.1:10000/test/id-01", net_http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 3, "", "")
-func Request(url, method string, header map[string][]string, body string, timeout int, username, password string) (Response, error) {
-	client := &net_http.Client{
-		Transport: &net_http.Transport{},
-		Timeout:   time.Duration(timeout) * time.Second,
-	}
-
-	request, err := net_http.NewRequest(method, url, strings.NewReader(body))
-	if err != nil {
+// ex) response, err := http.Request("http://127.0.0.1:10000/test/id-01", http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 10, "", "", nil)
+func Request(url, method string, header map[string][]string, body string, timeout time.Duration, username, password string, transport *http.Transport) (Response, error) {
+	if request, err := getRequest(url, method, header, body, username, password); err != nil {
 		return Response{}, err
+	} else {
+		return getResponse(request, timeout, transport)
+	}
+}
+
+func getRequest(url, method string, header map[string][]string, body string, username, password string) (*http.Request, error) {
+	if request, err := http.NewRequest(method, url, strings.NewReader(body)); err != nil {
+		return nil, err
+	} else {
+		request.SetBasicAuth(username, password)
+
+		for key, array := range header {
+			for _, value := range array {
+				request.Header.Add(key, value)
+			}
+		}
+
+		return request, nil
+	}
+}
+
+func getResponse(request *http.Request, timeout time.Duration, transport *http.Transport) (Response, error) {
+	if transport == nil {
+		transport = &http.Transport{}
 	}
 
-	request.SetBasicAuth(username, password)
+	client := http.Client{Transport: transport, Timeout: timeout * time.Second}
 
-	for key, array := range header {
-		for _, value := range array {
-			request.Header.Add(key, value)
+	if response, err := client.Do(request); err != nil {
+		return Response{}, err
+	} else {
+		defer response.Body.Close()
+
+		if responseBody, err := ioutil.ReadAll(response.Body); err != nil {
+			return Response{}, err
+		} else {
+			return Response{Header: response.Header, Body: string(responseBody), StatusCode: response.StatusCode}, nil
 		}
 	}
-
-	response, err := client.Do(request)
-	if err != nil {
-		return Response{}, err
-	}
-	defer response.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return Response{}, err
-	}
-
-	return Response{Header: response.Header, Body: string(responseBody), StatusCode: response.StatusCode}, nil
 }

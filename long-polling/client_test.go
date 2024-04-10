@@ -16,7 +16,7 @@ import (
 var address string
 
 func subscription(t *testing.T, request long_polling.SubscriptionRequest, count int, data string) (int64, string) {
-	response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "")
+	response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func subscription(t *testing.T, request long_polling.SubscriptionRequest, count 
 
 func publish(t *testing.T, category, data string) {
 	request := long_polling.PublishRequest{Category: category, Data: data}
-	response, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "")
+	response, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func setUp(server *long_polling.Server) {
 		panic(err)
 	}
 
-	time.Sleep(time.Duration(200) * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 }
 
 func tearDown(server *long_polling.Server) {

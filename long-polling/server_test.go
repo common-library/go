@@ -34,7 +34,7 @@ func TestStart(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		time.Sleep(time.Duration(200) * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	stop := func() {
@@ -50,7 +50,7 @@ func TestStart(t *testing.T) {
 
 		for i := 0; i < count; i++ {
 			request := long_polling.PublishRequest{Category: category, Data: data}
-			_, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "")
+			_, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -62,7 +62,7 @@ func TestStart(t *testing.T) {
 		defer stop()
 
 		request := long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}
-		response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "")
+		response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}

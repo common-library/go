@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	v7 "github.com/common-library/go/database/elasticsearch/v7"
 	"github.com/google/uuid"
@@ -11,7 +12,7 @@ import (
 )
 
 var addresses []string = []string{"http://127.0.0.1:19200"}
-var timeout uint64 = 10
+var timeout time.Duration = 10
 var index string = uuid.NewString()
 var documentId string = uuid.NewString()
 var template string = uuid.NewString()

@@ -3,6 +3,7 @@ package long_polling
 
 import (
 	net_http "net/http"
+	"time"
 
 	"github.com/common-library/go/http"
 	"github.com/gorilla/mux"
@@ -103,7 +104,7 @@ func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistor
 // Stop is stop the server.
 //
 // ex) err := server.Stop(10)
-func (this *Server) Stop(shutdownTimeout uint64) error {
+func (this *Server) Stop(shutdownTimeout time.Duration) error {
 	if this.longpollManager != nil {
 		defer this.longpollManager.Shutdown()
 	}

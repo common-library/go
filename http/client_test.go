@@ -11,9 +11,9 @@ import (
 )
 
 func TestRequest1(t *testing.T) {
-	_, err := http.Request("invalid_url", net_http.MethodGet, nil, "", 1, "", "")
+	_, err := http.Request("invalid_url", net_http.MethodGet, nil, "", 1, "", "", nil)
 	if err.Error() != `Get "invalid_url": unsupported protocol scheme ""` {
-		t.Error(err)
+		t.Fatal(err)
 	}
 }
 
@@ -22,7 +22,7 @@ func TestRequest2(t *testing.T) {
 
 	server := http.Server{}
 
-	server.AddHandler("/test/{id}", net_http.MethodGet, func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
+	server.RegisterHandlerFunc("/test/{id}", net_http.MethodGet, func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
 		responseWriter.WriteHeader(net_http.StatusOK)
 		responseWriter.Write([]byte(`{"field_1":1}`))
 	})
@@ -33,25 +33,21 @@ func TestRequest2(t *testing.T) {
 		})
 	}
 
-	err := server.Start(address, func(err error) { t.Error(err) }, middlewareFunction)
-	if err != nil {
-		t.Error(err)
+	listenAndServeFailureFunc := func(err error) { t.Fatal(err) }
+	if err := server.Start(address, listenAndServeFailureFunc, middlewareFunction); err != nil {
+		t.Fatal(err)
 	}
-	time.Sleep(time.Duration(200) * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
-	{
-		response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 3, "", "")
-		if err != nil {
-			t.Error(err)
-		} else if response.StatusCode != 200 {
-			t.Errorf("invalid status code : (%d)", response.StatusCode)
-		} else if response.Body != `{"field_1":1}` {
-			t.Errorf("invalid response body : (%s)", response.Body)
-		}
+	if response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 10, "", "", nil); err != nil {
+		t.Fatal(err)
+	} else if response.StatusCode != 200 {
+		t.Fatal("invalid -", response.StatusCode)
+	} else if response.Body != `{"field_1":1}` {
+		t.Fatal("invalid -", response.Body)
 	}
 
-	err = server.Stop(5)
-	if err != nil {
-		t.Error(err)
+	if err := server.Stop(10); err != nil {
+		t.Fatal(err)
 	}
 }

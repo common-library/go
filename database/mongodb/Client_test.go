@@ -3,6 +3,7 @@ package mongodb_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/common-library/go/database/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,7 @@ type TestStruct struct {
 }
 
 const address string = "localhost:27017"
-const timeout uint64 = 3
+const timeout time.Duration = 10
 const database_name string = "testDatabase"
 const collection_name string = "testCollection"
 
@@ -97,7 +98,7 @@ func TestFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	insertData := make([]interface{}, 0)
+	insertData := make([]any, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
 	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
@@ -153,7 +154,7 @@ func TestInsertOne(t *testing.T) {
 func TestInsertMany(t *testing.T) {
 	client := mongodb.Client{}
 
-	insertData := make([]interface{}, 0)
+	insertData := make([]any, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
 
 	err := client.InsertMany(database_name, collection_name, insertData)
@@ -202,7 +203,7 @@ func TestUpdateOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	insertData := make([]interface{}, 0)
+	insertData := make([]any, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 1, Value2: "abc"})
 	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
@@ -256,7 +257,7 @@ func TestUpdateMany(t *testing.T) {
 		t.Error(err)
 	}
 
-	insertData := make([]interface{}, 0)
+	insertData := make([]any, 0)
 	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 1, Value2: "abc"})
 	if err := client.InsertMany(database_name, collection_name, insertData); err != nil {
 		t.Error(err)
