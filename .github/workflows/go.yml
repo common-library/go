@@ -39,8 +39,9 @@ jobs:
         docker network create elastic
         docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 -p 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:8.12.2
         docker run --name mongodb --detach --publish 27017:27017 mongo:7.0.7
-        docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:8.3.0
         docker run --name redis --detach --publish 6379:6379 redis:7.2.4
+        docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:8.3.0
+        docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:16.2-alpine
 
     - name: Sleep for 20 seconds
       run: sleep 20s
