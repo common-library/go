@@ -19,9 +19,17 @@ jobs:
 
     strategy:
       matrix:
-        go: [ '1.22.0', '1.22.1', '1.22.2' ]
+        go: [ '1.22.0', '1.22.2' ]
+        dynamodb-local: [ '2.3.0' ]
+        s3mock: [ '3.6.0' ]
+        elasticsearch-v7: [ '7.17.20' ]
+        elasticsearch-v8: [ '8.13.0' ]
+        mongo: [ '7.0.8' ]
+        redis: [ '7.2.4' ]
+        mysql: [ '5.7.44', '8.3.0' ]
+        postgres: [ '16.2-alpine' ]
 
-    name: Go ${{ matrix.go }}
+    name: golang:${{ matrix.go }}, amazon/dynamodb-local:${{ matrix.dynamodb-local }}, adobe/s3mock:${{ matrix.s3mock }}, elasticsearch:${{ matrix.elasticsearch-v7 }}, elasticsearch:${{ matrix.elasticsearch-v8 }}, mongo:${{ matrix.mongo }}, redis:${{ matrix.redis }}, mysql:${{ matrix.mysql }}, postgres:${{ matrix.postgres }}
 
     steps:
     - uses: actions/checkout@v4
@@ -36,15 +44,15 @@ jobs:
 
     - name: Run docker image
       run: |
-        docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.3.0
-        docker run --name s3mock --detach --publish 9090:9090 -p 9191:9191 adobe/s3mock:3.5.2
-        docker run --name elasticsearch-v7 --detach --publish 19200:9200 -p 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.18
+        docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:${{ matrix.dynamodb-local }}
+        docker run --name s3mock --detach --publish 9090:9090 -p 9191:9191 adobe/s3mock:${{ matrix.s3mock }}
+        docker run --name elasticsearch-v7 --detach --publish 19200:9200 -p 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:${{ matrix.elasticsearch-v7 }}
         docker network create elastic
-        docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 -p 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:8.12.2
-        docker run --name mongodb --detach --publish 27017:27017 mongo:7.0.7
-        docker run --name redis --detach --publish 6379:6379 redis:7.2.4
-        docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:8.3.0
-        docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:16.2-alpine
+        docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 -p 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:${{ matrix.elasticsearch-v8 }}
+        docker run --name mongodb --detach --publish 27017:27017 mongo:${{ matrix.mongo }}
+        docker run --name redis --detach --publish 6379:6379 redis:${{ matrix.redis }}
+        docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:${{ matrix.mysql }}
+        docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:${{ matrix.postgres }}
 
     - name: Sleep for 20 seconds
       run: sleep 20s
