@@ -8,7 +8,9 @@ import (
 )
 
 func TestQuestion(t *testing.T) {
-	return
+	if len(test.API_KEY) == 0 {
+		return
+	}
 
 	if answer, err := gemini.Question(test.API_KEY, "who are you?", nil); err != nil {
 		t.Fatal(err)
@@ -24,7 +26,9 @@ func TestQuestion(t *testing.T) {
 }
 
 func TestQuestionStream(t *testing.T) {
-	return
+	if len(test.API_KEY) == 0 {
+		return
+	}
 
 	if channel, err := gemini.QuestionStream(test.API_KEY, "please say something encouraging", nil); err != nil {
 		t.Fatal(err)

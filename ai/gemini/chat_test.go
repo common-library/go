@@ -8,7 +8,9 @@ import (
 )
 
 func TestChat(t *testing.T) {
-	return
+	if len(test.API_KEY) == 0 {
+		return
+	}
 
 	chat := gemini.Chat{}
 	if err := chat.Start(test.API_KEY); err != nil {
