@@ -66,14 +66,14 @@ go get -u github.com/common-library/go
      - DynamoDB
        - `docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.3.0`
      - S3
-       - `docker run --name s3mock --detach --publish 9090:9090 -p 9191:9191 adobe/s3mock:3.5.2`
+       - `docker run --name s3mock --detach --publish 9090:9090 -p 9191:9191 adobe/s3mock:3.6.0`
    - Elasticsearch v7
-     - `docker run --name elasticsearch-v7 --detach --publish 19200:9200 -p 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.18`
+     - `docker run --name elasticsearch-v7 --detach --publish 19200:9200 -p 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.20`
    - Elasticsearch v8
      - `docker network create elastic`
-     - `docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 -p 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:8.12.2`
+     - `docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 -p 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:8.13.0`
    - MongoDB
-     - `docker run --name mongodb --detach --publish 27017:27017 mongo:7.0.7`
+     - `docker run --name mongodb --detach --publish 27017:27017 mongo:7.0.8`
    - Redis
      - `docker run --name redis --detach --publish 6379:6379 redis:7.2.4`
    - SQL

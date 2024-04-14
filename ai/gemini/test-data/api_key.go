@@ -1,3 +1,5 @@
 package test
 
-const API_KEY = ""
+import "os"
+
+var API_KEY = os.Getenv("GEMINI_API_KEY")

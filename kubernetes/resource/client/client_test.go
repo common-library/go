@@ -1,13 +1,23 @@
 package client_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 
+	"github.com/common-library/go/json"
 	"github.com/common-library/go/kubernetes/resource/client"
+	"github.com/emicklei/go-restful/v3"
 	"github.com/google/uuid"
+	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
 func TestGetClientForInCluster(t *testing.T) {
@@ -25,17 +35,11 @@ func TestGetClientUsingConfig(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	return
-
-	restClient, err := client.GetClientForInCluster()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	name := uuid.New().String()
 	namespace := "default"
 	key := "key"
 	value := "value"
+
 	configMap := coreV1.ConfigMap{
 		TypeMeta: metaV1.TypeMeta{
 			APIVersion: "v1",
@@ -46,39 +50,57 @@ func TestGet(t *testing.T) {
 			Namespace: namespace,
 		},
 		Data: map[string]string{
-			"key": "value",
+			key: value,
 		},
 	}
 
-	if err := client.Post(restClient, "", "v1", namespace, "configmaps", &configMap); err != nil {
-		t.Fatal(err)
-	} else if configMap, err := client.Get[coreV1.ConfigMap](restClient, "", "v1", namespace, "configmaps", name); err != nil {
-		t.Fatal(err)
-	} else if configMap.Name != name || configMap.Data[key] != value {
-		t.Fatal("invalid name - ", configMap.Name, configMap.Data)
-	}
-
-	value2 := "value2"
-	configMap.Data[key] = value2
-	if err := client.Put(restClient, "", "v1", namespace, "configmaps", name, &configMap); err != nil {
-		t.Fatal(err)
-	} else if configMap, err := client.Get[coreV1.ConfigMap](restClient, "", "v1", namespace, "configmaps", name); err != nil {
-		t.Fatal(err)
-	} else if configMap.Name != name || configMap.Data[key] != value2 {
-		t.Fatal("invalid name - ", configMap.Name, configMap.Data)
-	}
-
-	if list, err := client.Get[coreV1.ConfigMapList](restClient, "", "v1", namespace, "configmaps", ""); err != nil {
-		t.Fatal(err)
-	} else {
-		for _, item := range list.Items {
-			t.Log(item.Name)
+	serverHandlerFunc := func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			if body, err := json.ToString(configMap); err != nil {
+				t.Fatal(err)
+			} else {
+				fmt.Fprintf(w, body)
+			}
+		case http.MethodPost:
+			fallthrough
+		case http.MethodPut:
+			if body, err := ioutil.ReadAll(r.Body); err != nil {
+				t.Fatal(err)
+			} else if answer, err := json.ToString(configMap); err != nil {
+				t.Fatal(err)
+			} else if string(body) != answer {
+				t.Log(string(body))
+				t.Log(answer)
+				t.Fatal("invalid")
+			}
+		case http.MethodDelete:
 		}
 	}
 
-	if err := client.Delete(restClient, "", "v1", namespace, "configmaps", name); err != nil {
-		t.Fatal(err)
+	testFunc := func(restClient rest.Interface) {
+		defer func() {
+			if err := client.Delete(restClient, "", "v1", namespace, "configmaps", name); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		if err := client.Post(restClient, "configmaps", &configMap); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := client.Put(restClient, "configmaps", &configMap); err != nil {
+			t.Fatal(err)
+		}
+
+		if configMap, err := client.Get[coreV1.ConfigMap](restClient, "", "v1", namespace, "configmaps", name); err != nil {
+			t.Fatal(err)
+		} else if configMap.Name != name || configMap.Data[key] != value {
+			t.Fatal(configMap)
+		}
 	}
+
+	test(t, serverHandlerFunc, testFunc)
 }
 
 func TestPost(t *testing.T) {
@@ -91,4 +113,25 @@ func TestPut(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	TestGet(t)
+}
+
+func test(t *testing.T, serverHandlerFunc http.HandlerFunc, testFunc func(rest.Interface)) {
+	server := httptest.NewUnstartedServer(serverHandlerFunc)
+	server.EnableHTTP2 = false
+	server.StartTLS()
+	defer server.Close()
+
+	config := rest.ClientContentConfig{
+		ContentType:  restful.MIME_JSON,
+		GroupVersion: appsV1.SchemeGroupVersion,
+		Negotiator:   runtime.NewClientNegotiator(scheme.Codecs.WithoutConversion(), appsV1.SchemeGroupVersion),
+	}
+
+	if baseURL, err := url.Parse(server.URL); err != nil {
+		t.Fatal(err)
+	} else if restClient, err := rest.NewRESTClient(baseURL, "", config, nil, server.Client()); err != nil {
+		t.Fatal(err)
+	} else {
+		testFunc(restClient)
+	}
 }
