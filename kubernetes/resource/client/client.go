@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -38,7 +39,7 @@ func GetClientUsingConfig(config *rest.Config) (rest.Interface, error) {
 
 // Get is get kubernetes resource.
 //
-// ex) pod, err := client.Get[coreV1.Pod](restClient, "", v1, "default", "pods", "pod_name")
+// ex) configMap, err := client.Get[coreV1.ConfigMap](restClient, "", "v1", namespace, "configmaps", name)
 func Get[T any](restClient rest.Interface, group, version, namespace, resource, name string) (T, error) {
 	var t T
 
@@ -53,26 +54,51 @@ func Get[T any](restClient rest.Interface, group, version, namespace, resource, 
 
 // Post is to create a kubernetes resource.
 //
-// ex) err := client.Post(restClient, "", "v1", "default", "pods", &pod)
-func Post(restClient rest.Interface, group, version, namespace, resource string, object runtime.Object) error {
-	_, err := do(restClient, http.MethodPost, group, version, namespace, resource, "", object)
-	return err
+// ex)
+//
+//	configMap := coreV1.ConfigMap{...}
+//	err := client.Post(restClient, "configmaps", &configMap)
+func Post(restClient rest.Interface, resource string, object runtime.Object) error {
+	return do_for_object(restClient, http.MethodPost, resource, object)
 }
 
 // Put is to update a kubernetes resource.
 //
-// ex) err := client.Put(restClient, "", "v1", "default", "pods", "pod_name", &pod)
-func Put(restClient rest.Interface, group, version, namespace, resource, name string, object runtime.Object) error {
-	_, err := do(restClient, http.MethodPut, group, version, namespace, resource, name, object)
-	return err
+// ex)
+//
+//	configMap := coreV1.ConfigMap{...}
+//	err := client.Put(restClient, "configmaps", &configMap)
+func Put(restClient rest.Interface, resource string, object runtime.Object) error {
+	return do_for_object(restClient, http.MethodPut, resource, object)
 }
 
 // Delete is to delete a kubernetes resource.
 //
-// ex) err := client.Delete(restClient, "", "v1", "default", "pods", "pod_name")
+// ex) err := client.Delete(restClient, "", "v1", namespace, "configmaps", name)
 func Delete(restClient rest.Interface, group, version, namespace, resource, name string) error {
 	_, err := do(restClient, http.MethodDelete, group, version, namespace, resource, name, nil)
 	return err
+}
+
+func do_for_object(restClient rest.Interface, method, resource string, object runtime.Object) error {
+	if metaObject, err := meta.Accessor(object); err != nil {
+		return err
+	} else {
+		group := object.GetObjectKind().GroupVersionKind().Group
+		version := object.GetObjectKind().GroupVersionKind().Version
+		namespace := metaObject.GetNamespace()
+
+		name := ""
+		switch method {
+		case http.MethodPost:
+			name = ""
+		default:
+			name = metaObject.GetName()
+		}
+
+		_, err := do(restClient, method, group, version, namespace, resource, name, object)
+		return err
+	}
 }
 
 func do(restClient rest.Interface, method, group, version, namespace, resource, name string, object runtime.Object) (string, error) {

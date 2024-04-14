@@ -14,6 +14,7 @@ require (
 	github.com/elastic/elastic-transport-go/v8 v8.5.0
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-elasticsearch/v8 v8.13.0
+	github.com/emicklei/go-restful/v3 v3.12.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gomodule/redigo v1.9.2
 	github.com/google/generative-ai-go v0.10.0
@@ -38,6 +39,7 @@ require (
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
 	k8s.io/klog/v2 v2.120.1
+	k8s.io/kubectl v0.29.3
 )
 
 require (
@@ -68,7 +70,6 @@ require (
 	github.com/btnguyen2k/consu/reddo v0.1.9 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

@@ -19,10 +19,6 @@ type Resource01 struct {
 }
 
 func (in *Resource01) DeepCopyObject() runtime.Object {
-	if in == nil {
-		return nil
-	}
-
 	out := new(Resource01)
 	*out = *in
 
