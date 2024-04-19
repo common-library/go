@@ -35,6 +35,8 @@ go get -u github.com/common-library/go
      - Oracle
      - Postgres
      - SQLite
+ - event
+   - cloudevents
  - file
  - grpc
  - http
