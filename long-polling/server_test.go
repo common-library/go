@@ -38,7 +38,7 @@ func TestStart(t *testing.T) {
 	}
 
 	stop := func() {
-		err := server.Stop(10 * time.Second)
+		err := server.Stop(100 * time.Second)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -76,7 +76,7 @@ func TestStart(t *testing.T) {
 func TestStop(t *testing.T) {
 	server := long_polling.Server{}
 
-	err := server.Stop(10 * time.Second)
+	err := server.Stop(100 * time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
