@@ -10,20 +10,27 @@ import (
 
 	"github.com/common-library/go/http"
 	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 var address string
 
+type handler struct {
+}
+
+func (this handler) ServeHTTP(w net_http.ResponseWriter, r *net_http.Request) {
+	w.WriteHeader(net_http.StatusOK)
+	w.Write([]byte(`{"field_1":1}`))
+}
+
 func setUp(server *http.Server) {
 	address = ":" + strconv.Itoa(10000+rand.IntN(1000))
 
-	server.RegisterPathPrefixHandler("/swagger/", httpSwagger.WrapHandler)
+	server.RegisterHandler("/test-01/{id}", net_http.MethodGet, handler{})
 
-	server.RegisterHandlerFunc("/test/{id}", net_http.MethodGet, func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
-		responseWriter.WriteHeader(net_http.StatusOK)
-		responseWriter.Write([]byte(`{"field_1":1}`))
-	})
+	server.RegisterHandlerFunc("/test-02/{id}", net_http.MethodGet, handler{}.ServeHTTP)
+
+	server.RegisterPathPrefixHandler("/test-03", handler{})
+	server.RegisterPathPrefixHandlerFunc("/test-04", handler{}.ServeHTTP)
 
 	middlewareFunction := func(nextHandler net_http.Handler) net_http.Handler {
 		return net_http.HandlerFunc(func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
@@ -38,7 +45,7 @@ func setUp(server *http.Server) {
 }
 
 func tearDown(server *http.Server) {
-	if err := server.Stop(10); err != nil {
+	if err := server.Stop(10 * time.Second); err != nil {
 		panic(err)
 	}
 }
@@ -55,8 +62,18 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestRegisterHandler(t *testing.T) {
+	if response, err := http.Request("http://"+address+"/test-01/id-01", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
+		t.Fatal(err)
+	} else if response.StatusCode != 200 {
+		t.Fatal("invalid -", response.StatusCode)
+	} else if response.Body != `{"field_1":1}` {
+		t.Fatal("invalid -", response.Body)
+	}
+}
+
 func TestRegisterHandlerFunc(t *testing.T) {
-	if response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
+	if response, err := http.Request("http://"+address+"/test-02/id-01", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != 200 {
 		t.Fatal("invalid -", response.StatusCode)
@@ -66,10 +83,22 @@ func TestRegisterHandlerFunc(t *testing.T) {
 }
 
 func TestRegisterPathPrefixHandler(t *testing.T) {
-	if response, err := http.Request("http://"+address+"/swagger/index.html", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
+	if response, err := http.Request("http://"+address+"/test-03", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
-	} else if response.StatusCode != net_http.StatusOK {
+	} else if response.StatusCode != 200 {
 		t.Fatal("invalid -", response.StatusCode)
+	} else if response.Body != `{"field_1":1}` {
+		t.Fatal("invalid -", response.Body)
+	}
+}
+
+func TestRegisterPathPrefixHandlerFunc(t *testing.T) {
+	if response, err := http.Request("http://"+address+"/test-04", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
+		t.Fatal(err)
+	} else if response.StatusCode != 200 {
+		t.Fatal("invalid -", response.StatusCode)
+	} else if response.Body != `{"field_1":1}` {
+		t.Fatal("invalid -", response.Body)
 	}
 }
 
@@ -86,7 +115,7 @@ func TestStart1(t *testing.T) {
 	}
 	time.Sleep(200 * time.Millisecond)
 
-	if err := server.Stop(10); err != nil {
+	if err := server.Stop(10 * time.Second); err != nil {
 		panic(err)
 	}
 }
@@ -105,7 +134,7 @@ func TestStart2(t *testing.T) {
 	}
 	time.Sleep(200 * time.Millisecond)
 
-	if err := server.Stop(10); err != nil {
+	if err := server.Stop(10 * time.Second); err != nil {
 		panic(err)
 	}
 }
@@ -113,7 +142,7 @@ func TestStart2(t *testing.T) {
 func TestStop(t *testing.T) {
 	server := http.Server{}
 
-	if err := server.Stop(10); err != nil {
+	if err := server.Stop(10 * time.Second); err != nil {
 		t.Fatal(err)
 	}
 }

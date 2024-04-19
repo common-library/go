@@ -12,8 +12,8 @@ import (
 
 // ServerInfo is server information.
 type ServerInfo struct {
-	Address string
-	Timeout int
+	Address        string
+	TimeoutSeconds int
 
 	SubscriptionURI                string
 	HandlerToRunBeforeSubscription func(w net_http.ResponseWriter, r *net_http.Request) bool
@@ -43,7 +43,7 @@ type Server struct {
 func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInfo, listenAndServeFailureFunc func(err error)) error {
 	option := golongpoll.Options{
 		LoggingEnabled:            false,
-		MaxLongpollTimeoutSeconds: serverInfo.Timeout,
+		MaxLongpollTimeoutSeconds: serverInfo.TimeoutSeconds,
 		//MaxEventBufferSize: 250,
 		//EventTimeToLiveSeconds:,
 		//DeleteEventAfterFirstRetrieval:,

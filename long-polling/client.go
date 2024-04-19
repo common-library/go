@@ -14,10 +14,10 @@ import (
 
 // SubscriptionRequest is subscription request information.
 type SubscriptionRequest struct {
-	Category  string `url:"category"`
-	Timeout   int    `url:"timeout"`
-	SinceTime int64  `url:"since_time,omitempty"`
-	LastID    string `url:"last_id,omitempty"`
+	Category       string `url:"category"`
+	TimeoutSeconds int    `url:"timeout"`
+	SinceTime      int64  `url:"since_time,omitempty"`
+	LastID         string `url:"last_id,omitempty"`
 }
 
 // SubscriptionResponse is subscription response information.
@@ -53,7 +53,7 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 	}
 	u.RawQuery = values.Encode()
 
-	response, err := http.Request(fmt.Sprintf("%v", u), net_http.MethodGet, header, "", time.Duration(request.Timeout), username, password, transport)
+	response, err := http.Request(fmt.Sprintf("%v", u), net_http.MethodGet, header, "", time.Duration(request.TimeoutSeconds)*time.Second, username, password, transport)
 	if err != nil {
 		return SubscriptionResponse{}, err
 	}

@@ -15,18 +15,32 @@ type Server struct {
 	router *mux.Router
 }
 
-// RegisterHandlerFunc is add handler.
+// RegisterHandler is add handler.
 //
-// ex) server.RegisterHandlerFunc("/v1/test", http.MethodPost, handler)
+// ex) server.RegisterHandler("/xxx", http.MethodPost, handler)
+func (this *Server) RegisterHandler(path, method string, handler http.Handler) {
+	this.getRouter().Handle(path, handler).Methods(method)
+}
+
+// RegisterHandlerFunc is add handler function.
+//
+// ex) server.RegisterHandlerFunc("/xxx", http.MethodPost, handlerFunc)
 func (this *Server) RegisterHandlerFunc(path, method string, handlerFunc http.HandlerFunc) {
 	this.getRouter().HandleFunc(path, handlerFunc).Methods(method)
 }
 
 // RegisterPathPrefixHandler is add path prefix handler.
 //
-// ex) server.RegisterPathPrefixHandler("/swagger/", httpSwagger.WrapHandler)
+// ex) server.RegisterPathPrefixHandler("xxx", handler)
 func (this *Server) RegisterPathPrefixHandler(prefix string, handler http.Handler) {
 	this.getRouter().PathPrefix(prefix).Handler(handler)
+}
+
+// RegisterPathPrefixHandlerFunc is add path prefix handler function.
+//
+// ex) server.RegisterPathPrefixHandlerFunc("xxx", Func)
+func (this *Server) RegisterPathPrefixHandlerFunc(prefix string, handlerFunc http.HandlerFunc) {
+	this.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc)
 }
 
 // Start is start the server.
