@@ -63,7 +63,7 @@ func setUp(server *long_polling.Server) {
 
 	serverInfo := long_polling.ServerInfo{
 		Address:                        address,
-		Timeout:                        3600,
+		TimeoutSeconds:                 3600,
 		SubscriptionURI:                "/subscription",
 		HandlerToRunBeforeSubscription: func(w http.ResponseWriter, r *http.Request) bool { return true },
 		PublishURI:                     "/publish",
@@ -80,7 +80,7 @@ func setUp(server *long_polling.Server) {
 }
 
 func tearDown(server *long_polling.Server) {
-	err := server.Stop(1)
+	err := server.Stop(1 * time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -103,13 +103,13 @@ func TestSubscription(t *testing.T) {
 	data := "data-" + uuid.New().String()
 
 	publish(t, category, data+"1")
-	timestamp, id := subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}, 1, data)
+	timestamp, id := subscription(t, long_polling.SubscriptionRequest{Category: category, TimeoutSeconds: 300, SinceTime: 1}, 1, data)
 
 	time.Sleep(100 * time.Millisecond)
 
 	publish(t, category, data+"2")
 	publish(t, category, data+"3")
-	subscription(t, long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: timestamp, LastID: id}, 2, data)
+	subscription(t, long_polling.SubscriptionRequest{Category: category, TimeoutSeconds: 300, SinceTime: timestamp, LastID: id}, 2, data)
 }
 
 func TestPublish(t *testing.T) {

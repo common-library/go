@@ -46,7 +46,7 @@ func UnRegister(collectors ...prometheus.Collector) bool {
 //
 // ex) err := exporter.Start(":10000", "metrics", func(err error) { klog.ErrorS(err, "") })
 func Start(address, urlPath string, listenAndServeFailureFunc func(error)) error {
-	server.RegisterHandlerFunc(urlPath, net_http.MethodGet, promhttp.Handler().ServeHTTP)
+	server.RegisterHandler(urlPath, net_http.MethodGet, promhttp.Handler())
 
 	return server.Start(address, listenAndServeFailureFunc)
 }

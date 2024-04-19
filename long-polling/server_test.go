@@ -22,7 +22,7 @@ func TestStart(t *testing.T) {
 	start := func() {
 		serverInfo := long_polling.ServerInfo{
 			Address:                        address,
-			Timeout:                        3600,
+			TimeoutSeconds:                 3600,
 			SubscriptionURI:                "/subscription",
 			HandlerToRunBeforeSubscription: func(w http.ResponseWriter, r *http.Request) bool { return true },
 			PublishURI:                     "/publish",
@@ -38,7 +38,7 @@ func TestStart(t *testing.T) {
 	}
 
 	stop := func() {
-		err := server.Stop(10)
+		err := server.Stop(10 * time.Second)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -61,7 +61,7 @@ func TestStart(t *testing.T) {
 		start()
 		defer stop()
 
-		request := long_polling.SubscriptionRequest{Category: category, Timeout: 300, SinceTime: 1}
+		request := long_polling.SubscriptionRequest{Category: category, TimeoutSeconds: 300, SinceTime: 1}
 		response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -76,7 +76,7 @@ func TestStart(t *testing.T) {
 func TestStop(t *testing.T) {
 	server := long_polling.Server{}
 
-	err := server.Stop(10)
+	err := server.Stop(10 * time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
