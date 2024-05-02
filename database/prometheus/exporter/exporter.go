@@ -11,15 +11,15 @@ import (
 
 // New is creates a Collector.
 //
-// ex) collector01 := exporter.New([]exporter.Metric{...})
-func New(metrics []Metric) prometheus.Collector {
+// ex) collector01 := exporter.NewCollector([]exporter.Metric{...})
+func NewCollector(metrics []Metric) prometheus.Collector {
 	return &collector{metrics: metrics}
 }
 
 // Register registers the Collectors.
 //
-// ex) err := exporter.Register(collector01)
-func Register(collectors ...prometheus.Collector) error {
+// ex) err := exporter.RegisterCollector(collector01)
+func RegisterCollector(collectors ...prometheus.Collector) error {
 	for _, collector := range collectors {
 		if err := prometheus.Register(collector); err != nil {
 			return err
@@ -31,8 +31,8 @@ func Register(collectors ...prometheus.Collector) error {
 
 // UnRegister unregister the Collectors.
 //
-// ex) result := exporter.UnRegister(collector01)
-func UnRegister(collectors ...prometheus.Collector) bool {
+// ex) result := exporter.UnRegisterCollector(collector01)
+func UnRegisterCollector(collectors ...prometheus.Collector) bool {
 	for _, collector := range collectors {
 		if prometheus.Unregister(collector) == false {
 			return false

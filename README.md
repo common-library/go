@@ -17,16 +17,16 @@ go get -u github.com/common-library/go
  - aws
    - Amazon DynamoDB
    - Amazon S3
- - command-line
+ - command line
    - arguments
    - flag
- - data-structure
+ - data structure
    - Deque
    - Queue
  - database
    - Elasticsearch v7/v8
    - MongoDB
-   - MySQL
+   - Prometheus
    - Redis
    - SQL
      - DynamoDB
@@ -44,11 +44,11 @@ go get -u github.com/common-library/go
  - kubernetes
    - resource
      - client
-     - custom-resource
-     - custom-resource-definition
+     - custom resource
+     - custom resource definition
  - lock
  - log
- - long-polling
+ - long polling
  - security
    - crypto
      - dsa
