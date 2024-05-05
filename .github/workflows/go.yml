@@ -11,6 +11,8 @@ on:
 
 env:
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  PROMETHEUS_ADDRESS: :9095
+  PROMETHEUS_VERSION: 2.51.2
 
 jobs:
 
@@ -38,6 +40,21 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go }}
+
+    - name: Prepare for Prometheus
+      uses: mikefarah/yq@v4
+      with:
+        cmd: |
+          wget https://github.com/prometheus/prometheus/releases/download/v${{ env.PROMETHEUS_VERSION }}/prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64.tar.gz
+          tar xvzf prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64.tar.gz
+          cd prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64
+          yq -i '.scrape_configs[0].static_configs[0].targets = ["${{ env.PROMETHEUS_ADDRESS }}"]' prometheus.yml
+
+    - name: Run Prometheus
+      run: |
+        cd prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64
+        ./prometheus --config.file=prometheus.yml --web.listen-address=${{ env.PROMETHEUS_ADDRESS }} &
+      shell: bash
 
     - name: Docker Setup Docker
       uses: crazy-max/ghaction-setup-docker@v3.1.0
