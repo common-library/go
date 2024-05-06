@@ -12,7 +12,6 @@ on:
 env:
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   PROMETHEUS_ADDRESS: :9095
-  PROMETHEUS_VERSION: 2.51.2
 
 jobs:
 
@@ -30,6 +29,7 @@ jobs:
         redis: [ '7.2.4' ]
         mysql: [ '5.7.44', '8.4.0' ]
         postgres: [ '16.2-alpine' ]
+        prometheus: [ '2.51.2' ]
 
     name: golang:${{ matrix.go }}, amazon/dynamodb-local:${{ matrix.dynamodb-local }}, adobe/s3mock:${{ matrix.s3mock }}, elasticsearch:${{ matrix.elasticsearch-v7 }}, elasticsearch:${{ matrix.elasticsearch-v8 }}, mongo:${{ matrix.mongo }}, redis:${{ matrix.redis }}, mysql:${{ matrix.mysql }}, postgres:${{ matrix.postgres }}
 
@@ -45,14 +45,14 @@ jobs:
       uses: mikefarah/yq@v4
       with:
         cmd: |
-          wget https://github.com/prometheus/prometheus/releases/download/v${{ env.PROMETHEUS_VERSION }}/prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64.tar.gz
-          tar xvzf prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64.tar.gz
-          cd prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64
+          wget https://github.com/prometheus/prometheus/releases/download/v${{ matrix.prometheus }}/prometheus-${{ matrix.prometheus }}.linux-amd64.tar.gz
+          tar xvzf prometheus-${{ matrix.prometheus }}.linux-amd64.tar.gz
+          cd prometheus-${{ matrix.prometheus }}.linux-amd64
           yq -i '.scrape_configs[0].static_configs[0].targets = ["${{ env.PROMETHEUS_ADDRESS }}"]' prometheus.yml
 
     - name: Run Prometheus
       run: |
-        cd prometheus-${{ env.PROMETHEUS_VERSION }}.linux-amd64
+        cd prometheus-${{ matrix.prometheus }}.linux-amd64
         ./prometheus --config.file=prometheus.yml --web.listen-address=${{ env.PROMETHEUS_ADDRESS }} &
       shell: bash
 
