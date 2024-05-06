@@ -22,13 +22,13 @@ jobs:
     strategy:
       matrix:
         go: [ '1.22.0', '1.22.2' ]
-        dynamodb-local: [ '2.3.0' ]
-        s3mock: [ '3.6.0' ]
-        elasticsearch-v7: [ '7.17.20' ]
+        dynamodb-local: [ '2.4.0' ]
+        s3mock: [ '3.7.3' ]
+        elasticsearch-v7: [ '7.17.21' ]
         elasticsearch-v8: [ '8.13.0' ]
-        mongo: [ '7.0.8' ]
+        mongo: [ '7.0.9' ]
         redis: [ '7.2.4' ]
-        mysql: [ '5.7.44', '8.3.0' ]
+        mysql: [ '5.7.44', '8.4.0' ]
         postgres: [ '16.2-alpine' ]
 
     name: golang:${{ matrix.go }}, amazon/dynamodb-local:${{ matrix.dynamodb-local }}, adobe/s3mock:${{ matrix.s3mock }}, elasticsearch:${{ matrix.elasticsearch-v7 }}, elasticsearch:${{ matrix.elasticsearch-v8 }}, mongo:${{ matrix.mongo }}, redis:${{ matrix.redis }}, mysql:${{ matrix.mysql }}, postgres:${{ matrix.postgres }}
