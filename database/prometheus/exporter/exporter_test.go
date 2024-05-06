@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
-func TestNew(t *testing.T) {
-	sample01Collector := exporter.New([]exporter.Metric{&metric01{}})
+func TestNewCollector(t *testing.T) {
+	sample01Collector := exporter.NewCollector([]exporter.Metric{&metric01{}})
 
 	if _, err := testutil.CollectAndLint(sample01Collector); err != nil {
 		t.Fatal(err)
@@ -26,33 +26,33 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestRegister(t *testing.T) {
-	sample01Collector := exporter.New([]exporter.Metric{&metric01{}})
+func TestRegisterCollector(t *testing.T) {
+	sample01Collector := exporter.NewCollector([]exporter.Metric{&metric01{}})
 
-	if err := exporter.Register(sample01Collector); err != nil {
+	if err := exporter.RegisterCollector(sample01Collector); err != nil {
 		t.Fatal(err)
 	}
 
-	if exporter.UnRegister(sample01Collector) == false {
+	if exporter.UnRegisterCollector(sample01Collector) == false {
 		t.Fatal("UnRegister false")
 	}
 }
 
-func TestUnRegister(t *testing.T) {
-	TestRegister(t)
+func TestUnRegisterCollector(t *testing.T) {
+	TestRegisterCollector(t)
 }
 
 func TestStart(t *testing.T) {
 	address := ":" + strconv.Itoa(10000+rand.IntN(1000))
 	path := "/metrics"
 
-	sample01Collector := exporter.New([]exporter.Metric{&metric01{}})
+	sample01Collector := exporter.NewCollector([]exporter.Metric{&metric01{}})
 
-	if err := exporter.Register(sample01Collector); err != nil {
+	if err := exporter.RegisterCollector(sample01Collector); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if exporter.UnRegister(sample01Collector) == false {
+		if exporter.UnRegisterCollector(sample01Collector) == false {
 			t.Fatal("UnRegister false")
 		}
 	}()
