@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	_ "github.com/btnguyen2k/godynamo"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -18,15 +19,18 @@ type Driver string
 
 const (
 	DriverAmazonDynamoDB     = Driver("godynamo")
+	DriverClickHouse         = Driver("clickhouse")
 	DriverMicrosoftSQLServer = Driver("sqlserver")
 	DriverMySQL              = Driver("mysql")
 	DriverOracle             = Driver("oracle")
-	DriverPostgres           = Driver("postgres")
+	DriverPostgreSQL         = Driver("postgres")
 	DriverSQLite             = Driver("sqlite3")
 )
 
 // Client is a struct that provides client related methods.
 type Client struct {
+	driver Driver
+
 	tx     *sql.Tx
 	txStmt *sql.Stmt
 
@@ -39,6 +43,8 @@ type Client struct {
 //
 // ex) err := client.Open(sql.DriverMySQL, `id:password@tcp(address)/table`, 1)
 func (this *Client) Open(driver Driver, dsn string, maxOpenConnection int) error {
+	this.driver = driver
+
 	if err := this.Close(); err != nil {
 		return err
 	} else if connection, err := sql.Open(string(driver), dsn); err != nil {
@@ -358,4 +364,8 @@ func (this *Client) ExecutePrepareTransaction(args ...any) error {
 
 	_, err := this.txStmt.Exec(args...)
 	return err
+}
+
+func (this *Client) GetDriver() Driver {
+	return this.driver
 }

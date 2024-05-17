@@ -2,7 +2,7 @@ package dynamodb_test
 
 import (
 	"context"
-	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -52,12 +52,16 @@ func (this *TestItem) getKey() (map[string]types.AttributeValue, error) {
 	return map[string]types.AttributeValue{"primary-key": pk, "sort-key": sk}, nil
 }
 
-func initialize(client *dynamodb.Client, putItems bool, t *testing.T) {
+func initialize(client *dynamodb.Client, putItems bool, t *testing.T) bool {
+	if len(os.Getenv("DYNAMODB_URL")) == 0 {
+		return false
+	}
+
 	if err := client.CreateClient(
 		context.TODO(), "dummy", "dummy", "dummy", "dummy",
 		config.WithEndpointResolver(aws.EndpointResolverFunc(
 			func(service, region string) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: fmt.Sprintf("http://127.0.0.1:8000")}, nil
+				return aws.Endpoint{URL: os.Getenv("DYNAMODB_URL")}, nil
 			}))); err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +99,7 @@ func initialize(client *dynamodb.Client, putItems bool, t *testing.T) {
 
 	{
 		if putItems == false {
-			return
+			return true
 		}
 
 		testItems := []TestItem{
@@ -152,6 +156,8 @@ func initialize(client *dynamodb.Client, putItems bool, t *testing.T) {
 			}
 		}
 	}
+
+	return true
 }
 
 func finalize(client *dynamodb.Client, t *testing.T) {
@@ -167,21 +173,27 @@ func finalize(client *dynamodb.Client, t *testing.T) {
 func TestCreateClient(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 }
 
 func TestCreateTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 }
 
 func TestListTables(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	response, err := client.ListTables(&aws_dynamodb.ListTablesInput{Limit: aws.Int32(10)})
@@ -204,7 +216,9 @@ func TestListTables(t *testing.T) {
 func TestDescribeTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	if response, err := client.DescribeTable(TABLE_NAME); err != nil {
@@ -219,7 +233,9 @@ func TestDescribeTable(t *testing.T) {
 func TestUpdateTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	if response, err := client.DescribeTable(TABLE_NAME); err != nil {
@@ -270,14 +286,18 @@ func TestUpdateTable(t *testing.T) {
 func TestDeleteTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 }
 
 func TestGetItem(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	testItemForPut := TestItem{
@@ -335,7 +355,9 @@ func TestGetItem(t *testing.T) {
 func TestPutItem(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	testItemForPut := TestItem{
@@ -393,7 +415,9 @@ func TestUpdateItem(t *testing.T) {
 
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	{
@@ -470,7 +494,9 @@ func TestUpdateItem(t *testing.T) {
 func TestDeleteItem(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, false, t)
+	if initialize(&client, false, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	{
@@ -517,7 +543,9 @@ func TestDeleteItem(t *testing.T) {
 func TestQuery(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, true, t)
+	if initialize(&client, true, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	keyEx := expression.Key("primary-key").Equal(expression.Value(3)).And(expression.Key("sort-key").Equal(expression.Value("c-1")))
@@ -554,7 +582,9 @@ func TestQuery(t *testing.T) {
 func TestScan(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, true, t)
+	if initialize(&client, true, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	filtEx := expression.Name("primary-key").Between(expression.Value(2), expression.Value(3))
@@ -586,7 +616,9 @@ func TestScan(t *testing.T) {
 func TestDescribeTimeToLive(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, true, t)
+	if initialize(&client, true, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	if response, err := client.DescribeTimeToLive(TABLE_NAME); err != nil {
@@ -615,7 +647,9 @@ func TestDescribeTimeToLive(t *testing.T) {
 func TestUpdateTimeToLive(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, true, t)
+	if initialize(&client, true, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	if response, err := client.DescribeTimeToLive(TABLE_NAME); err != nil {
@@ -644,7 +678,9 @@ func TestUpdateTimeToLive(t *testing.T) {
 func TestQueryPaginatorNextPage(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, true, t)
+	if initialize(&client, true, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	keyEx := expression.Key("primary-key").Equal(expression.Value(3))
@@ -672,7 +708,9 @@ func TestQueryPaginatorNextPage(t *testing.T) {
 func TestScanPaginatorNextPage(t *testing.T) {
 	client := dynamodb.Client{}
 
-	initialize(&client, true, t)
+	if initialize(&client, true, t) == false {
+		return
+	}
 	defer finalize(&client, t)
 
 	if response, err := client.ScanPaginatorNextPage(
