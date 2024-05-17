@@ -11,7 +11,15 @@ on:
 
 env:
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  DYNAMODB_URL: http://127.0.0.1:8000
+  S3_URL: http://127.0.0.1:9090
+  ELASTICSEARCH_ADDRESS_V7: http://:19200
+  ELASTICSEARCH_ADDRESS_V8: http://:29200
+  MONGODB_ADDRESS: :27017
   PROMETHEUS_ADDRESS: :9095
+  REDIS_ADDRESS: :6379
+  MYSQL_DSN: root:root@tcp(127.0.0.1)/
+  POSTGRESQL_DSN: host=localhost port=5432 user=postgres password=postgres sslmode=disable
 
 jobs:
 
@@ -29,7 +37,7 @@ jobs:
         redis: [ '7.2.4' ]
         mysql: [ '5.7.44', '8.4.0' ]
         postgres: [ '16.2-alpine' ]
-        prometheus: [ '2.51.2' ]
+        prometheus: [ '2.52.0' ]
 
     name: golang:${{ matrix.go }}, amazon/dynamodb-local:${{ matrix.dynamodb-local }}, adobe/s3mock:${{ matrix.s3mock }}, elasticsearch:${{ matrix.elasticsearch-v7 }}, elasticsearch:${{ matrix.elasticsearch-v8 }}, mongo:${{ matrix.mongo }}, redis:${{ matrix.redis }}, mysql:${{ matrix.mysql }}, postgres:${{ matrix.postgres }}
 

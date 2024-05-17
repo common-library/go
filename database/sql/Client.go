@@ -21,12 +21,14 @@ const (
 	DriverMicrosoftSQLServer = Driver("sqlserver")
 	DriverMySQL              = Driver("mysql")
 	DriverOracle             = Driver("oracle")
-	DriverPostgres           = Driver("postgres")
+	DriverPostgreSQL         = Driver("postgres")
 	DriverSQLite             = Driver("sqlite3")
 )
 
 // Client is a struct that provides client related methods.
 type Client struct {
+	driver Driver
+
 	tx     *sql.Tx
 	txStmt *sql.Stmt
 
@@ -39,6 +41,8 @@ type Client struct {
 //
 // ex) err := client.Open(sql.DriverMySQL, `id:password@tcp(address)/table`, 1)
 func (this *Client) Open(driver Driver, dsn string, maxOpenConnection int) error {
+	this.driver = driver
+
 	if err := this.Close(); err != nil {
 		return err
 	} else if connection, err := sql.Open(string(driver), dsn); err != nil {
@@ -358,4 +362,8 @@ func (this *Client) ExecutePrepareTransaction(args ...any) error {
 
 	_, err := this.txStmt.Exec(args...)
 	return err
+}
+
+func (this *Client) GetDriver() Driver {
+	return this.driver
 }

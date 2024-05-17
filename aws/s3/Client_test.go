@@ -2,8 +2,8 @@ package s3_test
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -12,27 +12,34 @@ import (
 	"github.com/google/uuid"
 )
 
-func getClient(t *testing.T) s3.Client {
+func getClient(t *testing.T) (s3.Client, bool) {
 	client := s3.Client{}
+
+	if len(os.Getenv("S3_URL")) == 0 {
+		return client, false
+	}
 
 	if err := client.CreateClient(context.TODO(), "dummy", "dummy", "dummy", "dummy",
 		config.WithEndpointResolver(aws.EndpointResolverFunc(
 			func(service, region string) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: fmt.Sprintf("http://127.0.0.1:9090"), HostnameImmutable: true}, nil
+				return aws.Endpoint{URL: os.Getenv("S3_URL"), HostnameImmutable: true}, nil
 			})),
 	); err != nil {
 		t.Fatal(err)
 	}
 
-	return client
+	return client, true
 }
 
 func TestCreateClient(t *testing.T) {
-	_ = getClient(t)
+	_, _ = getClient(t)
 }
 
 func TestCreateBucket(t *testing.T) {
-	client := getClient(t)
+	client, ok := getClient(t)
+	if ok == false {
+		return
+	}
 
 	bucketName := uuid.New().String()
 	if _, err := client.CreateBucket(bucketName, "dummy"); err != nil {
@@ -47,7 +54,10 @@ func TestCreateBucket(t *testing.T) {
 func TestListBuckets(t *testing.T) {
 	bucketName := uuid.New().String()
 
-	client := getClient(t)
+	client, ok := getClient(t)
+	if ok == false {
+		return
+	}
 
 	if output, err := client.ListBuckets(); err != nil {
 		t.Fatal(err)
@@ -97,7 +107,10 @@ func TestPutObject(t *testing.T) {
 	const key = "key"
 	const data = "data"
 
-	client := getClient(t)
+	client, ok := getClient(t)
+	if ok == false {
+		return
+	}
 
 	if _, err := client.CreateBucket(bucketName, "dummy"); err != nil {
 		t.Fatal(err)

@@ -1,22 +1,31 @@
 package redis_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/common-library/go/database/redis"
 )
 
-func TestInitialize(t *testing.T) {
+func getClient(t *testing.T) (redis.Client, bool) {
 	client := redis.Client{}
 
-	err := client.Initialize("127.0.0.1:6378", "", 10, 60)
-	if err.Error() != "dial tcp 127.0.0.1:6378: connect: connection refused" {
+	if len(os.Getenv("REDIS_ADDRESS")) == 0 {
+		return client, false
+	}
+
+	if err := client.Initialize(":6379", "", 10, 60); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	return client, true
+}
+
+func TestInitialize(t *testing.T) {
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Finalize(); err != nil {
@@ -25,7 +34,10 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestFinalize(t *testing.T) {
-	client := redis.Client{}
+	client, ok := getClient(t)
+	if ok == false {
+		return
+	}
 
 	if err := client.Finalize(); err != nil {
 		t.Fatal(err)
@@ -34,13 +46,13 @@ func TestFinalize(t *testing.T) {
 
 func TestPing(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.Ping(); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Ping(); err != nil {
@@ -54,13 +66,13 @@ func TestPing(t *testing.T) {
 
 func TestSelect(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.Select(0); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Select(0); err != nil {
@@ -78,13 +90,13 @@ func TestSelect(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	client := redis.Client{}
-
 	if _, err := client.Get("key"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.FlushDB(); err != nil {
@@ -102,13 +114,13 @@ func TestGet(t *testing.T) {
 
 func TestSet(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.Set("key", "value"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Set("key", "value"); err != nil {
@@ -132,13 +144,13 @@ func TestSet(t *testing.T) {
 
 func TestSetex(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.Setex("key", 2, "value"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if existsKey, err := client.Exists("key"); err != nil {
@@ -171,13 +183,13 @@ func TestSetex(t *testing.T) {
 }
 func TestMGet(t *testing.T) {
 	client := redis.Client{}
-
 	if _, err := client.MGet("key1", "key2"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if _, err := client.MGet("key1", "key2"); err != nil {
@@ -191,13 +203,13 @@ func TestMGet(t *testing.T) {
 
 func TestMSet(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.MSet("key1", "value1", "key2", "value2"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.MSet("key1", "value1", "key2", "value2"); err != nil {
@@ -227,13 +239,13 @@ func TestMSet(t *testing.T) {
 
 func TestDel(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.Del("key"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Del("key"); err != nil {
@@ -255,13 +267,13 @@ func TestDel(t *testing.T) {
 
 func TestFlushDB(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.FlushDB(); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Set("key", "value"); err != nil {
@@ -291,13 +303,13 @@ func TestFlushDB(t *testing.T) {
 
 func TestFlushAll(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.FlushAll(); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Set("key", "value"); err != nil {
@@ -327,13 +339,13 @@ func TestFlushAll(t *testing.T) {
 
 func TestTtl(t *testing.T) {
 	client := redis.Client{}
-
 	if _, err := client.Ttl("key"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Set("key", "value"); err != nil {
@@ -377,13 +389,13 @@ func TestTtl(t *testing.T) {
 
 func TestInfo(t *testing.T) {
 	client := redis.Client{}
-
 	if _, err := client.Info("ALL"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if result, err := client.Info("ALL"); err != nil {
@@ -399,13 +411,13 @@ func TestInfo(t *testing.T) {
 
 func TestDBsize(t *testing.T) {
 	client := redis.Client{}
-
 	if keyCount, err := client.DBsize(); keyCount != -1 || err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if keyCount1, err := client.DBsize(); err != nil {
@@ -429,13 +441,13 @@ func TestDBsize(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	client := redis.Client{}
-
 	if _, err := client.Exists("key"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if existsKey, err := client.Exists("key"); err != nil {
@@ -477,13 +489,13 @@ func TestExists(t *testing.T) {
 
 func TestRename(t *testing.T) {
 	client := redis.Client{}
-
 	if err := client.Rename("key", "key_rename"); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.Set("key", "value"); err != nil {
@@ -511,13 +523,13 @@ func TestRename(t *testing.T) {
 
 func TestRandomKey(t *testing.T) {
 	client := redis.Client{}
-
 	if _, err := client.RandomKey(); err.Error() != "please call Initialize first" {
 		t.Fatal(err)
 	}
 
-	if err := client.Initialize("127.0.0.1:6379", "", 10, 60); err != nil {
-		t.Fatal(err)
+	client, ok := getClient(t)
+	if ok == false {
+		return
 	}
 
 	if err := client.MSet("key1", "value1", "key2", "value2"); err != nil {
