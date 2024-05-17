@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	_ "github.com/btnguyen2k/godynamo"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -18,6 +19,7 @@ type Driver string
 
 const (
 	DriverAmazonDynamoDB     = Driver("godynamo")
+	DriverClickHouse         = Driver("clickhouse")
 	DriverMicrosoftSQLServer = Driver("sqlserver")
 	DriverMySQL              = Driver("mysql")
 	DriverOracle             = Driver("oracle")

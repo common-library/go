@@ -99,11 +99,14 @@ go get -u github.com/common-library/go
      - Amazon DynamoDB
        - `docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.4.0`
        - `export DYNAMODB_URL=http://127.0.0.1:8000`
+     - ClickHouse
+       - `docker run --name clickhouse --detach --publish 19000:9000 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:24.4.1`
+       - `export CLICKHOUSE_DSN='clickhouse://default:@127.0.0.1:19000'`
      - MySQL
        - `docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:8.4.0`
        - `export MYSQL_DSN='root:root@tcp(127.0.0.1)/'`
      - PostgreSQL
-       - 'docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:16.2-alpine'
+       - `docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:16.2-alpine`
        - `export POSTGRESQL_DSN='host=localhost port=5432 user=postgres password=postgres sslmode=disable'`
  - Test
    - `go clean -testcache && go test -cover ./...`

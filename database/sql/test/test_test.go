@@ -11,6 +11,7 @@ import (
 
 var databases = map[sql.Driver]database{
 	sql.DriverAmazonDynamoDB: &dynamodb{},
+	sql.DriverClickHouse:     &clickhouse{},
 	sql.DriverMySQL:          &mysql{},
 	sql.DriverPostgreSQL:     &postgresql{},
 	sql.DriverSQLite:         &sqlite{},
@@ -106,6 +107,11 @@ func TestExecute(t *testing.T) {
 	}
 
 	job := func(db database, client sql.Client, tableName string) {
+		switch client.GetDriver() {
+		case sql.DriverClickHouse:
+			return
+		}
+
 		if err := client.Execute(`UPDATE ` + tableName + ` SET field02='123' WHERE field01=1`); err != nil {
 			t.Fatal(err)
 		}
@@ -242,6 +248,8 @@ func TestBeginTransaction(t *testing.T) {
 	job := func(db database, client sql.Client, tableName string) {
 		switch client.GetDriver() {
 		case sql.DriverAmazonDynamoDB:
+			fallthrough
+		case sql.DriverClickHouse:
 			return
 		}
 
@@ -379,6 +387,8 @@ func TestExecuteTransaction(t *testing.T) {
 	job := func(db database, client sql.Client, tableName string) {
 		switch client.GetDriver() {
 		case sql.DriverAmazonDynamoDB:
+			fallthrough
+		case sql.DriverClickHouse:
 			return
 		}
 
@@ -428,6 +438,8 @@ func TestSetPrepareTransaction(t *testing.T) {
 	job := func(db database, client sql.Client, tableName string) {
 		switch client.GetDriver() {
 		case sql.DriverAmazonDynamoDB:
+			fallthrough
+		case sql.DriverClickHouse:
 			return
 		}
 
@@ -468,6 +480,8 @@ func TestQueryPrepareTransaction(t *testing.T) {
 	job := func(db database, client sql.Client, tableName string) {
 		switch client.GetDriver() {
 		case sql.DriverAmazonDynamoDB:
+			fallthrough
+		case sql.DriverClickHouse:
 			return
 		}
 
@@ -512,6 +526,8 @@ func TestQueryRowPrepareTransaction(t *testing.T) {
 	job := func(db database, client sql.Client, tableName string) {
 		switch client.GetDriver() {
 		case sql.DriverAmazonDynamoDB:
+			fallthrough
+		case sql.DriverClickHouse:
 			return
 		}
 
@@ -552,6 +568,8 @@ func TestExecutePrepareTransaction(t *testing.T) {
 	job := func(db database, client sql.Client, tableName string) {
 		switch client.GetDriver() {
 		case sql.DriverAmazonDynamoDB:
+			fallthrough
+		case sql.DriverClickHouse:
 			return
 		}
 
