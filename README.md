@@ -29,7 +29,8 @@ go get -u github.com/common-library/go
    - Prometheus
    - Redis
    - SQL
-     - DynamoDB
+     - Amazon DynamoDB
+     - ClickHouse
      - Microsoft SQL Server
      - MySQL
      - Oracle
