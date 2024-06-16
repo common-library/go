@@ -10,6 +10,7 @@ on:
     branches: [ "**" ]
 
 env:
+  GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   DYNAMODB_URL: http://127.0.0.1:8000
   S3_URL: http://127.0.0.1:9090

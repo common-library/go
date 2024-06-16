@@ -10,25 +10,22 @@ import (
 
 // Chat is a struct that provides chat.
 type Chat struct {
-	ctx                   context.Context
-	client                *genai.Client
-	chatSession           *genai.ChatSession
-	chatSessionWithImages *genai.ChatSession
+	ctx         context.Context
+	client      *genai.Client
+	chatSession *genai.ChatSession
 }
 
 // Start is start a chat.
 //
-// ex) err := chat.Start(API_KEY)
-func (this *Chat) Start(apiKey string) error {
+// ex) err := chat.Start("gemini-1.5-flash", API_KEY)
+func (this *Chat) Start(model, apiKey string) error {
 	this.ctx = context.Background()
 
-	if client, err := getClient(this.ctx, apiKey); err != nil {
+	if client, model, err := getModel(this.ctx, model, apiKey); err != nil {
 		return err
 	} else {
 		this.client = client
-
-		this.chatSession = client.GenerativeModel("gemini-pro").StartChat()
-		this.chatSessionWithImages = client.GenerativeModel("gemini-pro-vision").StartChat()
+		this.chatSession = model.StartChat()
 
 		return nil
 	}
@@ -39,7 +36,6 @@ func (this *Chat) Start(apiKey string) error {
 // ex) chat.Stop()
 func (this *Chat) Stop() {
 	this.chatSession = nil
-	this.chatSessionWithImages = nil
 
 	if this.client != nil {
 		this.client.Close()
@@ -54,7 +50,7 @@ func (this *Chat) Stop() {
 func (this *Chat) SendMessage(text string, images []string) (string, error) {
 	if parts, err := this.getParts(text, images); err != nil {
 		return "", err
-	} else if response, err := this.getChatSession(images).SendMessage(this.ctx, parts...); err != nil {
+	} else if response, err := this.chatSession.SendMessage(this.ctx, parts...); err != nil {
 		return "", err
 	} else {
 		return responseToAnswer(response), nil
@@ -68,7 +64,7 @@ func (this *Chat) SendMessageStream(text string, images []string) (chan answerFo
 	if parts, err := this.getParts(text, images); err != nil {
 		return nil, err
 	} else {
-		responseIterator := this.getChatSession(images).SendMessageStream(this.ctx, parts...)
+		responseIterator := this.chatSession.SendMessageStream(this.ctx, parts...)
 
 		return getStreamChannel(responseIterator), nil
 	}
@@ -78,24 +74,13 @@ func (this *Chat) SendMessageStream(text string, images []string) (chan answerFo
 //
 // ex) history := chat.GetHistory()
 func (this *Chat) GetHistory() []chatHistory {
-	return this.getHistory(this.chatSession)
-}
-
-// GetHistory returns the history of messages with images.
-//
-// ex) history := chat.GetHistoryWithImages()
-func (this *Chat) GetHistoryWithImages() []chatHistory {
-	return this.getHistory(this.chatSessionWithImages)
-}
-
-func (this *Chat) getHistory(chatSession *genai.ChatSession) []chatHistory {
-	if chatSession == nil {
+	if this.chatSession == nil {
 		return nil
 	}
 
 	histories := []chatHistory{}
 
-	for _, history := range chatSession.History {
+	for _, history := range this.chatSession.History {
 		histories = append(histories, chatHistory{Role: history.Role, Answer: contentToAnswer(history)})
 
 	}
@@ -109,12 +94,4 @@ func (this *Chat) getParts(text string, images []string) ([]genai.Part, error) {
 	}
 
 	return makeParts(text, images)
-}
-
-func (this *Chat) getChatSession(images []string) *genai.ChatSession {
-	if len(images) == 0 {
-		return this.chatSession
-	} else {
-		return this.chatSessionWithImages
-	}
 }

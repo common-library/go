@@ -13,7 +13,7 @@ func TestChat(t *testing.T) {
 	}
 
 	chat := gemini.Chat{}
-	if err := chat.Start(test.API_KEY); err != nil {
+	if err := chat.Start(test.MODEL, test.API_KEY); err != nil {
 		t.Fatal(err)
 	}
 	defer chat.Stop()
@@ -43,10 +43,6 @@ func TestChat(t *testing.T) {
 	}
 
 	for _, history := range chat.GetHistory() {
-		t.Log(history.Answer)
-	}
-
-	for _, history := range chat.GetHistoryWithImages() {
 		t.Log(history.Answer)
 	}
 }
