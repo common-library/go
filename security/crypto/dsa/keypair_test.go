@@ -8,6 +8,8 @@ import (
 )
 
 func keypair_instance(t *testing.T) dsa.KeyPair {
+	t.Parallel()
+
 	keyPair := dsa.KeyPair{}
 
 	if err := keyPair.Generate(crypto_dsa.L1024N160); err != nil {

@@ -7,25 +7,16 @@ import (
 )
 
 func TestGetTypeName(t *testing.T) {
-	{
-		typeName := utility.GetTypeName(int(1))
-		if typeName != "int" {
-			t.Errorf("invalid type name - (%s)", typeName)
-		}
+	if typeName := utility.GetTypeName(int(1)); typeName != "int" {
+		t.Fatal(typeName)
 	}
 
-	{
-		typeName := utility.GetTypeName(string("test"))
-		if typeName != "string" {
-			t.Errorf("invalid type name - (%s)", typeName)
-		}
+	if typeName := utility.GetTypeName(string("test")); typeName != "string" {
+		t.Fatal(typeName)
 	}
 
-	{
-		value := int(1)
-		typeName := utility.GetTypeName(&value)
-		if typeName != "*int" {
-			t.Errorf("invalid type name - (%s)", typeName)
-		}
+	value := int(1)
+	if typeName := utility.GetTypeName(&value); typeName != "*int" {
+		t.Fatal(typeName)
 	}
 }

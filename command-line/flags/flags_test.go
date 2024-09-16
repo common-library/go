@@ -50,61 +50,37 @@ func TestGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	{
-		value := flags.Get[bool]("bool")
-		if value != true {
-			t.Errorf("invalid value - (%t)", value)
-		}
+	if value := flags.Get[bool]("bool"); value != true {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[time.Duration]("time.Duration")
-		if duration, err := time.ParseDuration("1h2m3s4ms5us6ns"); err != nil {
-			t.Fatal(err)
-		} else if value != duration {
-			t.Errorf("invalid value - (%#v)", value)
-		}
+	if duration, err := time.ParseDuration("1h2m3s4ms5us6ns"); err != nil {
+		t.Fatal(err)
+	} else if value := flags.Get[time.Duration]("time.Duration"); value != duration {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[float64]("float64")
-		if value != 1 {
-			t.Errorf("invalid value - (%f)", value)
-		}
+	if value := flags.Get[float64]("float64"); value != 1 {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[int64]("int64")
-		if value != 2 {
-			t.Errorf("invalid value - (%d)", value)
-		}
+	if value := flags.Get[int64]("int64"); value != 2 {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[int]("int")
-		if value != 3 {
-			t.Errorf("invalid value - (%d)", value)
-		}
+	if value := flags.Get[int]("int"); value != 3 {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[string]("string")
-		if value != "a" {
-			t.Errorf("invalid value - (%s)", value)
-		}
+	if value := flags.Get[string]("string"); value != "a" {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[uint64]("uint64")
-		if value != 4 {
-			t.Errorf("invalid value - (%d)", value)
-		}
+	if value := flags.Get[uint64]("uint64"); value != 4 {
+		t.Fatal(value)
 	}
 
-	{
-		value := flags.Get[uint]("uint")
-		if value != 5 {
-			t.Errorf("invalid value - (%d)", value)
-		}
+	if value := flags.Get[uint]("uint"); value != 5 {
+		t.Fatal(value)
 	}
 }

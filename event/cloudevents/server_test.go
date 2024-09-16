@@ -8,7 +8,7 @@ import (
 )
 
 func TestStart(t *testing.T) {
-	address, server := startServer(t)
+	server, address := startServer(t)
 	defer stopServer(t, server)
 
 	if client, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
@@ -27,6 +27,8 @@ func TestStart(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
+	t.Parallel()
+
 	server := cloudevents.Server{}
 
 	if err := server.Stop(10); err != nil {

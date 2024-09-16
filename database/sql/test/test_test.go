@@ -27,6 +27,8 @@ type database interface {
 }
 
 func TestOpen(t *testing.T) {
+	t.Parallel()
+
 	for _, db := range databases {
 		client, ok := db.getClient(t, "")
 		if ok == false {
@@ -40,16 +42,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	for _, db := range databases {
-		client, ok := db.getClient(t, "")
-		if ok == false {
-			continue
-		}
-
-		if err := client.Close(); err != nil {
-			t.Fatal(err)
-		}
-	}
+	TestOpen(t)
 }
 
 func TestQuery(t *testing.T) {
@@ -636,6 +629,8 @@ func TestGetDriver(t *testing.T) {
 }
 
 func test(t *testing.T, job func(db database, client sql.Client, tableName string)) {
+	t.Parallel()
+
 	finalJob := func(db database) {
 		databaseName := strings.ToLower(t.Name())
 		tableName := strings.ToLower(t.Name())

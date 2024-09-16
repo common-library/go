@@ -11,6 +11,8 @@ var onceForKeyPair sync.Once
 var KEYPAIR rsa.KeyPair
 
 func keypair_instance(t *testing.T) rsa.KeyPair {
+	t.Parallel()
+
 	onceForKeyPair.Do(func() {
 		if err := KEYPAIR.Generate(4096); err != nil {
 			t.Fatal(err)
@@ -44,6 +46,8 @@ func keypair_test(t *testing.T, keyPair rsa.KeyPair) {
 }
 
 func TestKeyPair_Generate(t *testing.T) {
+	t.Parallel()
+
 	keyPair := rsa.KeyPair{}
 
 	if err := keyPair.Generate(4096); err != nil {

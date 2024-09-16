@@ -8,6 +8,8 @@ import (
 )
 
 func TestQuestion(t *testing.T) {
+	t.Parallel()
+
 	if len(test.API_KEY) == 0 {
 		return
 	}
@@ -26,6 +28,8 @@ func TestQuestion(t *testing.T) {
 }
 
 func TestQuestionStream(t *testing.T) {
+	t.Parallel()
+
 	if len(test.API_KEY) == 0 {
 		return
 	}

@@ -9,11 +9,9 @@ import (
 )
 
 func TestGetConnection(t *testing.T) {
-	connection, err := grpc.GetConnection("127.0.0.1:" + strconv.Itoa(10000+rand.IntN(10000)))
-
-	if err != nil {
-		t.Error(err)
+	if connection, err := grpc.GetConnection("127.0.0.1:" + strconv.Itoa(10000+rand.IntN(10000))); err != nil {
+		t.Fatal(err)
+	} else if err := connection.Close(); err != nil {
+		t.Fatal(err)
 	}
-
-	defer connection.Close()
 }

@@ -11,33 +11,33 @@ import (
 )
 
 func TestStart(t *testing.T) {
+	t.Parallel()
+
 	server := grpc.Server{}
 
 	err := server.Start("1.1.1.1:10000", &sample.Server{})
-
 	if err.Error() != "listen tcp 1.1.1.1:10000: bind: cannot assign requested address" {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	go func() {
-		err = server.Start(":"+strconv.Itoa(10000+rand.IntN(10000)), &sample.Server{})
-		if err != nil {
-			t.Error(err)
+		if err := server.Start(":"+strconv.Itoa(10000+rand.IntN(10000)), &sample.Server{}); err != nil {
+			t.Fatal(err)
 		}
 	}()
 	time.Sleep(200 * time.Millisecond)
 
-	err = server.Stop()
-	if err != nil {
-		t.Error(err)
+	if err := server.Stop(); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestStop(t *testing.T) {
+	t.Parallel()
+
 	server := grpc.Server{}
 
-	err := server.Stop()
-	if err != nil {
-		t.Error(err)
+	if err := server.Stop(); err != nil {
+		t.Fatal(err)
 	}
 }

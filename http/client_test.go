@@ -11,6 +11,8 @@ import (
 )
 
 func TestRequest1(t *testing.T) {
+	t.Parallel()
+
 	_, err := http.Request("invalid_url", net_http.MethodGet, nil, "", 1, "", "", nil)
 	if err.Error() != `Get "invalid_url": unsupported protocol scheme ""` {
 		t.Fatal(err)
@@ -18,6 +20,8 @@ func TestRequest1(t *testing.T) {
 }
 
 func TestRequest2(t *testing.T) {
+	t.Parallel()
+
 	address := ":" + strconv.Itoa(10000+rand.IntN(10000))
 
 	server := http.Server{}
@@ -42,9 +46,9 @@ func TestRequest2(t *testing.T) {
 	if response, err := http.Request("http://"+address+"/test/id-01", net_http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != 200 {
-		t.Fatal("invalid -", response.StatusCode)
+		t.Fatal(response.StatusCode)
 	} else if response.Body != `{"field_1":1}` {
-		t.Fatal("invalid -", response.Body)
+		t.Fatal(response.Body)
 	}
 
 	if err := server.Stop(10); err != nil {

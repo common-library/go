@@ -94,7 +94,7 @@ func (this *Client) Finalize() error {
 //	 result_interface, err := client.FindOne("test_database", "test_collection", bson.M{"value1": 1}, TestStruct{})
 //
 //	 result, ok := result_interface.(TestStruct)
-func (this *Client) FindOne(databaseName string, collectionName string, filter any, dataForm any) (any, error) {
+func (this *Client) FindOne(databaseName, collectionName string, filter any, dataForm any) (any, error) {
 	if this.client == nil {
 		return nil, errors.New("please call Initialize first")
 	}
@@ -121,7 +121,7 @@ func (this *Client) FindOne(databaseName string, collectionName string, filter a
 //	results_interface, err := client.Find("test_database", "test_collection", bson.M{}, TestStruct{})
 //
 //	results, ok := results_interface.([]TestStruct)
-func (this *Client) Find(databaseName string, collectionName string, filter any, dataForm any) (any, error) {
+func (this *Client) Find(databaseName, collectionName string, filter, dataForm any) (any, error) {
 	if this.client == nil {
 		return nil, errors.New("please call Initialize first")
 	}
@@ -156,7 +156,7 @@ func (this *Client) Find(databaseName string, collectionName string, filter any,
 // InsertOne is insert a one document.
 //
 // ex) err := client.InsertOne("test_database", "test_collection", TestStruct{})
-func (this *Client) InsertOne(databaseName string, collectionName string, document any) error {
+func (this *Client) InsertOne(databaseName, collectionName string, document any) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -182,7 +182,7 @@ func (this *Client) InsertOne(databaseName string, collectionName string, docume
 //	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
 //
 //	err := client.InsertMany("test_database", "test_collection", insertData)
-func (this *Client) InsertMany(databaseName string, collectionName string, documents []any) error {
+func (this *Client) InsertMany(databaseName, collectionName string, documents []any) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -202,7 +202,7 @@ func (this *Client) InsertMany(databaseName string, collectionName string, docum
 // UpdateOne is update the one value corresponding to the filter argument with the value of the "update" argument.
 //
 // ex) err := client.UpdateOne("test_database", "test_collection", bson.M{"value1": 1}, bson.D{{"$set", bson.D{{"value2", "update_value"}}}})
-func (this *Client) UpdateOne(databaseName string, collectionName string, filter any, update any) error {
+func (this *Client) UpdateOne(databaseName, collectionName string, filter, update any) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -222,7 +222,7 @@ func (this *Client) UpdateOne(databaseName string, collectionName string, filter
 // UpdateMany is update the value corresponding to the filter argument with the values of the "update" argument.
 //
 // ex) err := client.UpdateMany("test_database", "test_collection", bson.M{"value1": 1}, bson.D{{"$set", bson.D{{"value2", "update_value"}}}})
-func (this *Client) UpdateMany(databaseName string, collectionName string, filter any, update any) error {
+func (this *Client) UpdateMany(databaseName, collectionName string, filter, update any) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -242,7 +242,7 @@ func (this *Client) UpdateMany(databaseName string, collectionName string, filte
 // DeleteOne is delete one value corresponding to the filter argument.
 //
 // ex) err := client.DeleteOne("test_database", "test_collection", bson.M{"value1": 1})
-func (this *Client) DeleteOne(databaseName string, collectionName string, filter any) error {
+func (this *Client) DeleteOne(databaseName, collectionName string, filter any) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}
@@ -262,7 +262,7 @@ func (this *Client) DeleteOne(databaseName string, collectionName string, filter
 // DeleteMany is delete the values corresponding to the filter argument.
 //
 // ex) err := client.DeleteMany("test_database", "test_collection", bson.M{})
-func (this *Client) DeleteMany(databaseName string, collectionName string, filter any) error {
+func (this *Client) DeleteMany(databaseName, collectionName string, filter any) error {
 	if this.client == nil {
 		return errors.New("please call Initialize first")
 	}

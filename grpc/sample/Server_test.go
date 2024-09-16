@@ -15,8 +15,7 @@ import (
 
 func setUp(server *grpc.Server) {
 	go func() {
-		err := server.Start(":10000", &sample.Server{})
-		if err != nil {
+		if err := server.Start(":10000", &sample.Server{}); err != nil {
 			panic(err)
 		}
 	}()
@@ -24,8 +23,7 @@ func setUp(server *grpc.Server) {
 }
 
 func tearDown(server *grpc.Server) {
-	err := server.Stop()
-	if err != nil {
+	if err := server.Stop(); err != nil {
 		panic(err)
 	}
 }
@@ -34,15 +32,14 @@ func TestMain(m *testing.M) {
 	server := grpc.Server{}
 
 	setUp(&server)
-
 	code := m.Run()
-
 	tearDown(&server)
-
 	os.Exit(code)
 }
 
 func TestFunc1(t *testing.T) {
+	t.Parallel()
+
 	connection, err := grpc.GetConnection(":10000")
 	if err != nil {
 		t.Fatal(err)
@@ -57,18 +54,18 @@ func TestFunc1(t *testing.T) {
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		reply, err := client.Func1(ctx, &sample.Request{Data1: data1, Data2: data2})
-		if err != nil {
-			t.Fatal(err)
-		}
 
-		if reply.Data1 != data1 || reply.Data2 != data2 {
-			t.Errorf("invalid reply - (%d)(%d)(%s)(%s)", data1, reply.Data1, data2, reply.Data2)
+		if reply, err := client.Func1(ctx, &sample.Request{Data1: data1, Data2: data2}); err != nil {
+			t.Fatal(err)
+		} else if reply.Data1 != data1 || reply.Data2 != data2 {
+			t.Fatal(reply)
 		}
 	}
 }
 
 func TestFunc2(t *testing.T) {
+	t.Parallel()
+
 	connection, err := grpc.GetConnection(":10000")
 	if err != nil {
 		t.Fatal(err)
@@ -87,32 +84,24 @@ func TestFunc2(t *testing.T) {
 	const data1 = 1
 	const data2 = "message"
 
-	{
-		err := stream.Send(&sample.Request{Data1: data1, Data2: data2})
-		if err != nil {
+	if err := stream.Send(&sample.Request{Data1: data1, Data2: data2}); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 3; i++ {
+		if reply, err := stream.Recv(); err == io.EOF {
+			break
+		} else if err != nil {
 			t.Fatal(err)
-		}
-
-		for i := 0; i < 3; i++ {
-			reply, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				t.Error(err)
-			}
-
-			if reply.Data1 != data1 || reply.Data2 != data2 {
-				t.Errorf("invalid reply - (%d)(%d)(%s)(%s)", data1, reply.Data1, data2, reply.Data2)
-			}
+		} else if reply.Data1 != data1 || reply.Data2 != data2 {
+			t.Fatal(reply)
 		}
 	}
 
 	go func() {
 		for i := 0; i < 3; i++ {
-			err := stream.Send(&sample.Request{Data1: data1, Data2: data2})
-			if err != nil {
-				t.Error(err)
+			if err := stream.Send(&sample.Request{Data1: data1, Data2: data2}); err != nil {
+				t.Fatal(err)
 			}
 		}
 
@@ -125,16 +114,12 @@ func TestFunc2(t *testing.T) {
 		defer wg.Done()
 
 		for {
-			reply, err := stream.Recv()
-			if err == io.EOF {
+			if reply, err := stream.Recv(); err == io.EOF {
 				return
-			}
-			if err != nil {
-				t.Error(err)
-			}
-
-			if reply.Data1 != data1 || reply.Data2 != data2 {
-				t.Errorf("invalid reply - (%d)(%d)(%s)(%s)", data1, reply.Data1, data2, reply.Data2)
+			} else if err != nil {
+				t.Fatal(err)
+			} else if reply.Data1 != data1 || reply.Data2 != data2 {
+				t.Fatal(reply)
 			}
 		}
 	}()

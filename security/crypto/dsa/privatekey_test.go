@@ -8,6 +8,8 @@ import (
 )
 
 func privatekey_instance(t *testing.T) dsa.PrivateKey {
+	t.Parallel()
+
 	privateKey := dsa.PrivateKey{}
 
 	if err := privateKey.SetSizes(crypto_dsa.L1024N160); err != nil {

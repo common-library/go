@@ -11,6 +11,8 @@ import (
 )
 
 func TestStart(t *testing.T) {
+	t.Parallel()
+
 	const category = "category-1"
 	const data = "data-1"
 	const count = 10
@@ -30,16 +32,14 @@ func TestStart(t *testing.T) {
 
 		filePersistorInfo := long_polling.FilePersistorInfo{Use: true, FileName: dir + "/file-persistor.txt", WriteBufferSize: 250, WriteFlushPeriodSeconds: 1}
 
-		err := server.Start(serverInfo, filePersistorInfo, func(err error) { panic(err) })
-		if err != nil {
+		if err := server.Start(serverInfo, filePersistorInfo, func(err error) { panic(err) }); err != nil {
 			t.Fatal(err)
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
 
 	stop := func() {
-		err := server.Stop(100 * time.Second)
-		if err != nil {
+		if err := server.Stop(100 * time.Second); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -50,8 +50,7 @@ func TestStart(t *testing.T) {
 
 		for i := 0; i < count; i++ {
 			request := long_polling.PublishRequest{Category: category, Data: data}
-			_, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil)
-			if err != nil {
+			if _, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -62,22 +61,20 @@ func TestStart(t *testing.T) {
 		defer stop()
 
 		request := long_polling.SubscriptionRequest{Category: category, TimeoutSeconds: 300, SinceTime: 1}
-		response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "", nil)
-		if err != nil {
+		if response, err := long_polling.Subscription("http://"+address+"/subscription", nil, request, "", "", nil); err != nil {
 			t.Fatal(err)
-		}
-
-		if len(response.Events) != count {
-			t.Fatalf("invalid count - (%d)(%d)", len(response.Events), count)
+		} else if len(response.Events) != count {
+			t.Fatal(len(response.Events), count)
 		}
 	}()
 }
 
 func TestStop(t *testing.T) {
+	t.Parallel()
+
 	server := long_polling.Server{}
 
-	err := server.Stop(100 * time.Second)
-	if err != nil {
+	if err := server.Stop(100 * time.Second); err != nil {
 		t.Fatal(err)
 	}
 }

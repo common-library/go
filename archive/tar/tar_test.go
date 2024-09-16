@@ -11,6 +11,8 @@ import (
 )
 
 func TestCompress(t *testing.T) {
+	t.Parallel()
+
 	name := uuid.New().String() + string(filepath.Separator) + uuid.New().String() + ".tar.gz"
 	defer file.RemoveAll(filepath.Dir(name))
 
@@ -52,10 +54,14 @@ func TestCompress(t *testing.T) {
 	} else if data, err := file.Read(output + path01); err != nil {
 		t.Fatal(err)
 	} else if data != data01 {
-		t.Fatal("invalid data - ", data, ", ", data01)
+		t.Fatal(data, ",", data01)
 	} else if data, err := file.Read(output + path02); err != nil {
 		t.Fatal(err)
 	} else if data != data02 {
-		t.Fatal("invalid data - ", data, ", ", data02)
+		t.Fatal(data, ",", data02)
 	}
+}
+
+func TestDecompress(t *testing.T) {
+	TestCompress(t)
 }

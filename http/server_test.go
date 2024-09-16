@@ -54,15 +54,14 @@ func TestMain(m *testing.M) {
 	server := http.Server{}
 
 	setUp(&server)
-
 	code := m.Run()
-
 	tearDown(&server)
-
 	os.Exit(code)
 }
 
 func TestRegisterHandler(t *testing.T) {
+	t.Parallel()
+
 	if response, err := http.Request("http://"+address+"/test-01/id-01", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != 200 {
@@ -73,6 +72,8 @@ func TestRegisterHandler(t *testing.T) {
 }
 
 func TestRegisterHandlerFunc(t *testing.T) {
+	t.Parallel()
+
 	if response, err := http.Request("http://"+address+"/test-02/id-01", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != 200 {
@@ -83,6 +84,8 @@ func TestRegisterHandlerFunc(t *testing.T) {
 }
 
 func TestRegisterPathPrefixHandler(t *testing.T) {
+	t.Parallel()
+
 	if response, err := http.Request("http://"+address+"/test-03", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != 200 {
@@ -93,6 +96,8 @@ func TestRegisterPathPrefixHandler(t *testing.T) {
 }
 
 func TestRegisterPathPrefixHandlerFunc(t *testing.T) {
+	t.Parallel()
+
 	if response, err := http.Request("http://"+address+"/test-04", net_http.MethodGet, nil, "", 10, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != 200 {
@@ -103,6 +108,8 @@ func TestRegisterPathPrefixHandlerFunc(t *testing.T) {
 }
 
 func TestStart1(t *testing.T) {
+	t.Parallel()
+
 	listenAndServeFailureFunc := func(err error) {
 		if err.Error() != "listen tcp "+address+": bind: address already in use" {
 			t.Fatal(err)
@@ -121,6 +128,8 @@ func TestStart1(t *testing.T) {
 }
 
 func TestStart2(t *testing.T) {
+	t.Parallel()
+
 	listenAndServeFailureFunc := func(err error) {
 		if err != nil {
 			t.Fatal(err)
@@ -140,6 +149,8 @@ func TestStart2(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
+	t.Parallel()
+
 	server := http.Server{}
 
 	if err := server.Stop(10 * time.Second); err != nil {
@@ -148,6 +159,8 @@ func TestStop(t *testing.T) {
 }
 
 func TestSetRouter(t *testing.T) {
+	t.Parallel()
+
 	router := mux.NewRouter()
 
 	server := http.Server{}

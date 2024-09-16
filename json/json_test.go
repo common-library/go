@@ -9,7 +9,6 @@ import (
 
 	"github.com/common-library/go/file"
 	"github.com/common-library/go/json"
-	"github.com/google/uuid"
 )
 
 type test1Struct struct {
@@ -96,7 +95,7 @@ func TestToString(t *testing.T) {
 	if data, err := json.ToString(getSampleStruct()); err != nil {
 		t.Fatal(err)
 	} else if data != answer {
-		t.Fatalf("invalid data - output : (%s), jsonData : (%s)", data, answer)
+		t.Fatal(data)
 	}
 }
 
@@ -136,12 +135,12 @@ func TestToStringIndent(t *testing.T) {
 	if data, err := json.ToStringIndent(getSampleStruct(), "", "    "); err != nil {
 		t.Fatal(err)
 	} else if data != answer {
-		t.Fatalf("invalid data - output : (%s), jsonData : (%s)", data, answer)
+		t.Fatal(data)
 	}
 }
 
 func TestConvertFromFile(t *testing.T) {
-	jsonFile := uuid.New().String() + ".json"
+	jsonFile := t.Name() + ".json"
 	defer os.Remove(jsonFile)
 
 	if data, err := json.ToString(getSampleStruct()); err != nil {

@@ -8,6 +8,8 @@ import (
 )
 
 func TestInfo(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
@@ -18,6 +20,8 @@ func TestInfo(t *testing.T) {
 }
 
 func TestInfoS(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
@@ -28,6 +32,8 @@ func TestInfoS(t *testing.T) {
 }
 
 func TestInfof(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
@@ -38,6 +44,8 @@ func TestInfof(t *testing.T) {
 }
 
 func TestInfoln(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
@@ -48,6 +56,8 @@ func TestInfoln(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
@@ -58,6 +68,8 @@ func TestError(t *testing.T) {
 }
 
 func TestErrorS(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	err := errors.New("error")
@@ -70,6 +82,8 @@ func TestErrorS(t *testing.T) {
 }
 
 func TestErrorf(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
@@ -80,6 +94,8 @@ func TestErrorf(t *testing.T) {
 }
 
 func TestErrorln(t *testing.T) {
+	t.Parallel()
+
 	defer klog.Flush()
 
 	klog.SetWithCallerInfo(false)
