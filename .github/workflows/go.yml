@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         runner: [ 'ubuntu-24.04' ]
-        go: [ '1.22.0', '1.23.1' ]
+        go: [ '1.23.0', '1.23.1' ]
         dynamodb-local: [ '2.5.2' ]
         s3mock: [ '3.10.0' ]
         elasticsearch-v7: [ '7.17.24' ]
