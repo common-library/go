@@ -28,6 +28,8 @@ go get -u github.com/common-library/go
    - MongoDB
    - Prometheus
    - Redis
+   - ORM
+     - Beego
    - SQL
      - Amazon DynamoDB
      - ClickHouse
