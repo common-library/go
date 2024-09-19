@@ -15,8 +15,7 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 		t.Parallel()
 	}
 
-	const dsn = "host=localhost port=5432 dbname=postgres user=postgres password=postgres sslmode=disable"
-
+	dsn := os.Getenv("POSTGRESQL_DSN") + " dbname=postgres"
 	if connection, err := sql.Open("postgres", dsn); err != nil {
 		return nil, err
 	} else {
@@ -25,6 +24,10 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 }
 
 func TestMain(m *testing.M) {
+	if len(os.Getenv("POSTGRESQL_DSN")) == 0 {
+		return
+	}
+
 	ctx := context.Background()
 
 	setup := func() {

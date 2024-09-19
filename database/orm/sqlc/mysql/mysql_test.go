@@ -15,8 +15,7 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 		t.Parallel()
 	}
 
-	const dsn = "root:root@tcp(127.0.0.1)/mysql"
-
+	dsn := os.Getenv("MYSQL_DSN") + "mysql"
 	if connection, err := sql.Open("mysql", dsn); err != nil {
 		return nil, err
 	} else {
@@ -25,6 +24,10 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 }
 
 func TestMain(m *testing.M) {
+	if len(os.Getenv("MYSQL_DSN")) == 0 {
+		return
+	}
+
 	ctx := context.Background()
 
 	setup := func() {

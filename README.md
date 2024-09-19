@@ -33,6 +33,7 @@ go get -u github.com/common-library/go
      - ent
      - GORM
      - sqlc
+     - sqlx
    - SQL
      - Amazon DynamoDB
      - ClickHouse
