@@ -31,6 +31,7 @@ go get -u github.com/common-library/go
    - ORM
      - beego
      - ent
+     - GORM
    - SQL
      - Amazon DynamoDB
      - ClickHouse
