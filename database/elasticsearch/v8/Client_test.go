@@ -10,9 +10,7 @@ import (
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
-var index string = uuid.NewString()
 var documentId string = uuid.NewString()
-var template string = uuid.NewString()
 
 func getClient(t *testing.T) (*v8.Client, bool) {
 	t.Parallel()
@@ -31,11 +29,11 @@ func getClient(t *testing.T) (*v8.Client, bool) {
 }
 
 func getIndex(t *testing.T) string {
-	return strings.ToLower(t.Name())
+	return strings.ToLower(t.Name()) + uuid.NewString()
 }
 
 func getTemplate(t *testing.T) string {
-	return strings.ToLower(t.Name())
+	return strings.ToLower(t.Name()) + uuid.NewString()
 }
 
 func indicesExists(t *testing.T, client *v8.Client, index string) {
