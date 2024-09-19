@@ -1,0 +1,27 @@
+{
+    "version": "2",
+    "sql": [
+        {
+            "engine": "mysql",
+            "schema": "./schema/mysql.sql",
+            "queries": "./queries/mysql.sql",
+            "gen": {
+                "go": {
+                    "package": "pkg",
+                    "out": "./mysql/pkg/"
+                }
+            }
+        },
+        {
+            "engine": "postgresql",
+            "schema": "./schema/postgresql.sql",
+            "queries": "./queries/postgresql.sql",
+            "gen": {
+                "go": {
+                    "package": "pkg",
+                    "out": "./postgresql/pkg/"
+                }
+            }
+        }
+    ]
+}

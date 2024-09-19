@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS table01_for_postgresql (
+  field01 TEXT PRIMARY KEY,
+  field02 BIGINT NOT NULL
+);
