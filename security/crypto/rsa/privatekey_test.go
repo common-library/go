@@ -11,6 +11,8 @@ var onceForPrivateKey sync.Once
 var PRIVATEKEY rsa.PrivateKey
 
 func privatekey_instance(t *testing.T) rsa.PrivateKey {
+	t.Parallel()
+
 	onceForPrivateKey.Do(func() {
 		if err := PRIVATEKEY.SetBits(4096); err != nil {
 			t.Fatal(err)

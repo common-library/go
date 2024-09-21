@@ -22,20 +22,20 @@ func subscription(t *testing.T, request long_polling.SubscriptionRequest, count 
 	}
 
 	if response.StatusCode != http.StatusOK {
-		t.Fatalf("invalid status code - (%d)(%s)", response.StatusCode, http.StatusText(response.StatusCode))
+		t.Fatal(response.StatusCode, http.StatusText(response.StatusCode))
 	}
 
 	if len(response.Events) != count {
-		t.Fatalf("invalid count - (%d)(%d)", len(response.Events), count)
+		t.Fatal(len(response.Events), count)
 	}
 
 	for _, event := range response.Events {
 		if event.Category != request.Category {
-			t.Fatalf("invalid category - (%s)(%s)", event.Category, request.Category)
+			t.Fatal(event.Category, request.Category)
 		}
 
 		if strings.HasPrefix(event.Data, data) == false {
-			t.Fatalf("invalid data - (%s)(%s)", event.Data, data)
+			t.Fatal(event.Data, data)
 		}
 	}
 
@@ -44,17 +44,12 @@ func subscription(t *testing.T, request long_polling.SubscriptionRequest, count 
 
 func publish(t *testing.T, category, data string) {
 	request := long_polling.PublishRequest{Category: category, Data: data}
-	response, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil)
-	if err != nil {
+	if response, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil); err != nil {
 		t.Fatal(err)
-	}
-
-	if response.StatusCode != http.StatusOK {
-		t.Fatalf("invalid status code - (%d)(%s)", response.StatusCode, http.StatusText(response.StatusCode))
-	}
-
-	if response.Body != `{"success": true}` {
-		t.Fatalf("invalid body- (%s)", response.Body)
+	} else if response.StatusCode != http.StatusOK {
+		t.Fatal(response.StatusCode, http.StatusText(response.StatusCode))
+	} else if response.Body != `{"success": true}` {
+		t.Fatal(response.Body)
 	}
 }
 
@@ -71,8 +66,7 @@ func setUp(server *long_polling.Server) {
 
 	filePersistorInfo := long_polling.FilePersistorInfo{Use: false}
 
-	err := server.Start(serverInfo, filePersistorInfo, func(err error) { panic(err) })
-	if err != nil {
+	if err := server.Start(serverInfo, filePersistorInfo, func(err error) { panic(err) }); err != nil {
 		panic(err)
 	}
 
@@ -80,8 +74,7 @@ func setUp(server *long_polling.Server) {
 }
 
 func tearDown(server *long_polling.Server) {
-	err := server.Stop(1 * time.Second)
-	if err != nil {
+	if err := server.Stop(1 * time.Second); err != nil {
 		panic(err)
 	}
 }
@@ -90,15 +83,14 @@ func TestMain(m *testing.M) {
 	server := long_polling.Server{}
 
 	setUp(&server)
-
 	code := m.Run()
-
 	tearDown(&server)
-
 	os.Exit(code)
 }
 
 func TestSubscription(t *testing.T) {
+	t.Parallel()
+
 	category := "category-" + uuid.New().String()
 	data := "data-" + uuid.New().String()
 

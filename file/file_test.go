@@ -10,7 +10,7 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	fileName := uuid.New().String()
+	fileName := t.Name()
 	defer file.Remove(fileName)
 
 	if _, err := file.Read(fileName); os.IsExist(err) {
@@ -18,15 +18,12 @@ func TestRead(t *testing.T) {
 	}
 
 	const answer = "aaa\nbbb\nccc\n"
-
 	if err := file.Write(fileName, answer, 0600); err != nil {
 		t.Fatal(err)
-	}
-
-	if data, err := file.Read(fileName); err != nil {
+	} else if data, err := file.Read(fileName); err != nil {
 		t.Fatal(err)
 	} else if data != answer {
-		t.Fatalf("invalid - (%s)", data)
+		t.Fatal(data)
 	}
 }
 
@@ -35,11 +32,11 @@ func TestWrite(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	if _, err := file.List(uuid.New().String(), false); os.IsExist(err) {
+	if _, err := file.List(t.Name(), false); os.IsExist(err) {
 		t.Fatal(err)
 	}
 
-	dir01 := uuid.New().String() + string(filepath.Separator)
+	dir01 := t.Name() + string(filepath.Separator)
 	defer file.RemoveAll(dir01)
 
 	dir02 := dir01 + uuid.New().String() + string(filepath.Separator)
@@ -62,19 +59,15 @@ func TestList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	answer := map[string]bool{}
-
-	answer = map[string]bool{dir02: false, dir03: false, file01: false}
+	answer := map[string]bool{dir02: false, dir03: false, file01: false}
 	if list, err := file.List(dir01, false); err != nil {
 		t.Fatal(err)
+	} else if len(list) != len(answer) {
+		t.Fatal(list)
 	} else {
-		if len(list) != len(answer) {
-			t.Fatal("invalid list -", list)
-		}
-
 		for _, name := range list {
 			if _, exist := answer[name]; exist == false {
-				t.Fatal("invalid name :", name, list)
+				t.Fatal(name, list)
 			}
 		}
 	}
@@ -82,21 +75,19 @@ func TestList(t *testing.T) {
 	answer = map[string]bool{dir02: true, file01: true, file02: true}
 	if list, err := file.List(dir01, true); err != nil {
 		t.Fatal(err)
+	} else if len(list) != len(answer) {
+		t.Fatal(list)
 	} else {
-		if len(list) != len(answer) {
-			t.Fatal("invalid list -", list)
-		}
-
 		for _, name := range list {
 			if _, exist := answer[name]; exist == false {
-				t.Fatal("invalid name :", name, list)
+				t.Fatal(name, list)
 			}
 		}
 	}
 }
 
 func TestCreateDirectory(t *testing.T) {
-	name := uuid.New().String() + string(filepath.Separator)
+	name := t.Name() + string(filepath.Separator)
 
 	if err := file.CreateDirectory(name, os.ModePerm); err != nil {
 		t.Fatal(err)
@@ -108,7 +99,7 @@ func TestCreateDirectory(t *testing.T) {
 }
 
 func TestCreateDirectoryAll(t *testing.T) {
-	dir01 := uuid.New().String() + string(filepath.Separator)
+	dir01 := t.Name() + string(filepath.Separator)
 
 	dir02 := dir01 + uuid.New().String() + string(filepath.Separator)
 	if err := file.CreateDirectoryAll(dir02, os.ModePerm); err != nil {
@@ -121,7 +112,7 @@ func TestCreateDirectoryAll(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	name := uuid.New().String()
+	name := t.Name()
 	if err := file.Remove(name); os.IsExist(err) {
 		t.Fatal(err)
 	} else if err := file.Write(name, "test", 0600); err != nil {
@@ -138,7 +129,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestRemoveAll(t *testing.T) {
-	dir01 := uuid.New().String() + string(filepath.Separator)
+	dir01 := t.Name() + string(filepath.Separator)
 
 	dir02 := dir01 + uuid.New().String() + string(filepath.Separator)
 	if err := file.CreateDirectoryAll(dir02, os.ModePerm); err != nil {

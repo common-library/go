@@ -8,56 +8,35 @@ import (
 )
 
 func TestGetCallerInfo(t *testing.T) {
-	callerInfo, err := utility.GetCallerInfo(1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	wg := new(sync.WaitGroup)
+	goroutineID := 0
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-	if callerInfo.PackageName != "github.com/common-library/go/utility_test" {
-		t.Errorf("invalid package name - (%s)", callerInfo.PackageName)
-	}
-
-	if callerInfo.FileName != "CallerInfo_test.go" {
-		t.Errorf("invalid file name - (%s)", callerInfo.FileName)
-	}
-
-	if callerInfo.FunctionName != "TestGetCallerInfo" {
-		t.Errorf("invalid function name - (%s)", callerInfo.FunctionName)
-	}
-
-	if callerInfo.Line != 11 {
-		t.Errorf("invalid line - (%d)", callerInfo.Line)
-	}
-
-	{
-		callerInfo2, err := utility.GetCallerInfo(1)
-		if err != nil {
+		if callerInfo, err := utility.GetCallerInfo(1); err != nil {
 			t.Fatal(err)
-		}
-
-		if callerInfo.GoroutineID != callerInfo2.GoroutineID {
-			t.Errorf("invalid goroutine id - (%d)", callerInfo.GoroutineID)
-		}
-	}
-
-	{
-		wg := new(sync.WaitGroup)
-		goroutineID := 0
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			callerInfo, err := utility.GetCallerInfo(1)
-			if err != nil {
-				t.Fatal(err)
-			}
-
+		} else {
 			goroutineID = callerInfo.GoroutineID
-		}()
-		wg.Wait()
-
-		if callerInfo.GoroutineID == goroutineID {
-			t.Errorf("invalid goroutine id - (%d)(%d)", callerInfo.GoroutineID, goroutineID)
 		}
+	}()
+	wg.Wait()
+
+	if callerInfo, err := utility.GetCallerInfo(1); err != nil {
+		t.Fatal(err)
+	} else if callerInfo.PackageName != "github.com/common-library/go/utility_test" {
+		t.Fatal(callerInfo.PackageName)
+	} else if callerInfo.FileName != "CallerInfo_test.go" {
+		t.Fatal(callerInfo.FileName)
+	} else if callerInfo.FunctionName != "TestGetCallerInfo" {
+		t.Fatal(callerInfo.FunctionName)
+	} else if callerInfo.Line != 25 {
+		t.Fatal(callerInfo.Line)
+	} else if callerInfo.GoroutineID == goroutineID {
+		t.Fatal(callerInfo.GoroutineID, goroutineID)
+	} else if callerInfo2, err := utility.GetCallerInfo(1); err != nil {
+		t.Fatal(err)
+	} else if callerInfo.GoroutineID != callerInfo2.GoroutineID {
+		t.Fatal(callerInfo.GoroutineID, ",", callerInfo2.GoroutineID)
 	}
 }

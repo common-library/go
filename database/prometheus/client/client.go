@@ -12,7 +12,6 @@ import (
 )
 
 type Range = v1.Range
-type Secret = config.Secret
 
 // NewClient creates a client.
 //
@@ -28,10 +27,10 @@ func NewClient(address string) (*client, error) {
 // NewClientWithBasicAuth creates a client with basic authentication.
 //
 // ex) c, err := client.NewClientWithBasicAuth("http://:9090", "username", "password")
-func NewClientWithBasicAuth(address, username string, password Secret) (*client, error) {
+func NewClientWithBasicAuth(address, username string, password string) (*client, error) {
 	config := api.Config{
 		Address:      address,
-		RoundTripper: config.NewBasicAuthRoundTripper(username, password, "", "", api.DefaultRoundTripper),
+		RoundTripper: config.NewBasicAuthRoundTripper(config.NewInlineSecret(username), config.NewInlineSecret(password), api.DefaultRoundTripper),
 	}
 
 	if prometheusClient, err := api.NewClient(config); err != nil {
@@ -44,10 +43,10 @@ func NewClientWithBasicAuth(address, username string, password Secret) (*client,
 // NewClientWithBearerToken creates a client that performs bearer token authentication.
 //
 // ex) c, err := client.NewClientWithBearerToken("http://:9090", "token")
-func NewClientWithBearerToken(address string, token Secret) (*client, error) {
+func NewClientWithBearerToken(address string, token string) (*client, error) {
 	config := api.Config{
 		Address:      address,
-		RoundTripper: config.NewAuthorizationCredentialsRoundTripper("Bearer", token, api.DefaultRoundTripper),
+		RoundTripper: config.NewAuthorizationCredentialsRoundTripper("Bearer", config.NewInlineSecret(token), api.DefaultRoundTripper),
 	}
 
 	if prometheusClient, err := api.NewClient(config); err != nil {
@@ -81,7 +80,7 @@ func (this *client) Query(query string, when time.Time, timeout time.Duration) (
 //
 //	c, err := client.NewClient(address)
 //	value, warnings, err := c.QueryRange("rate(process_cpu_seconds_total[5m])", r, 10*time.Second)
-func (this *client) QueryRange(query string, r Range, timeout time.Duration) (model.Value, v1.Warnings, error) {
+func (this *client) QueryRange(query string, r v1.Range, timeout time.Duration) (model.Value, v1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

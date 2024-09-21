@@ -9,6 +9,8 @@ import (
 )
 
 func TestClientInterface(t *testing.T) {
+	t.Parallel()
+
 	func(elasticsearch.ClientInterface) {}(&v7.Client{})
 	func(elasticsearch.ClientInterface) {}(&v8.Client{})
 }

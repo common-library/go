@@ -4,15 +4,18 @@ import (
 	"context"
 	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	aws_s3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/common-library/go/aws/s3"
-	"github.com/google/uuid"
 )
 
 func getClient(t *testing.T) (s3.Client, bool) {
+	t.Parallel()
+
 	client := s3.Client{}
 
 	if len(os.Getenv("S3_URL")) == 0 {
@@ -41,60 +44,51 @@ func TestCreateBucket(t *testing.T) {
 		return
 	}
 
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	if _, err := client.CreateBucket(bucketName, "dummy"); err != nil {
 		t.Fatal(err)
-	} else {
-		if _, err := client.DeleteBucket(bucketName); err != nil {
-			t.Fatal(err)
-		}
+	} else if _, err := client.DeleteBucket(bucketName); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestListBuckets(t *testing.T) {
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 
 	client, ok := getClient(t)
 	if ok == false {
 		return
 	}
 
+	exist := func(output *aws_s3.ListBucketsOutput, bucketName string) bool {
+		for _, bucket := range output.Buckets {
+			if *bucket.Name == bucketName {
+				return true
+			}
+		}
+
+		return false
+	}
+
 	if output, err := client.ListBuckets(); err != nil {
 		t.Fatal(err)
-	} else if len(output.Buckets) != 0 {
-		for _, bucket := range output.Buckets {
-			t.Log(*bucket.Name)
-		}
-		t.Fatal("invalid buckets")
+	} else if exist(output, bucketName) {
+		t.Fatal(output)
 	}
 
 	if _, err := client.CreateBucket(bucketName, "dummy"); err != nil {
 		t.Fatal(err)
-	} else {
-		defer func() {
-			if _, err := client.DeleteBucket(bucketName); err != nil {
-				t.Fatal(err)
-			}
-		}()
 	}
+	defer func() {
+		if _, err := client.DeleteBucket(bucketName); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	if output, err := client.ListBuckets(); err != nil {
 		t.Fatal(err)
-	} else {
-		find := false
-		for _, bucket := range output.Buckets {
-			if *bucket.Name == bucketName {
-				find = true
-				break
-			}
-		}
-
-		if find == false {
-			for _, bucket := range output.Buckets {
-				t.Log(*bucket.Name)
-			}
-			t.Fatalf("invalid buckets - (%s)", bucketName)
-		}
+	} else if exist(output, bucketName) == false {
+		t.Fatal(output)
 	}
 }
 
@@ -103,9 +97,9 @@ func TestDeleteBucket(t *testing.T) {
 }
 
 func TestPutObject(t *testing.T) {
-	bucketName := uuid.New().String()
 	const key = "key"
 	const data = "data"
+	bucketName := strings.ToLower(t.Name())
 
 	client, ok := getClient(t)
 	if ok == false {
@@ -114,23 +108,21 @@ func TestPutObject(t *testing.T) {
 
 	if _, err := client.CreateBucket(bucketName, "dummy"); err != nil {
 		t.Fatal(err)
-	} else {
-		defer func() {
-			if _, err := client.DeleteBucket(bucketName); err != nil {
-				t.Fatal(err)
-			}
-		}()
 	}
+	defer func() {
+		if _, err := client.DeleteBucket(bucketName); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	if _, err := client.PutObject(bucketName, key, data); err != nil {
 		t.Fatal(err)
-	} else {
-		defer func() {
-			if _, err := client.DeleteObject(bucketName, key); err != nil {
-				t.Fatal(err)
-			}
-		}()
 	}
+	defer func() {
+		if _, err := client.DeleteObject(bucketName, key); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	if output, err := client.GetObject(bucketName, key); err != nil {
 		t.Fatal(err)
@@ -140,7 +132,7 @@ func TestPutObject(t *testing.T) {
 		if body, err := io.ReadAll(output.Body); err != nil {
 			t.Fatal(err)
 		} else if string(body) != data {
-			t.Fatalf("invalid body - (%s)(%s)", string(body), data)
+			t.Fatal(string(body), ",", data)
 		}
 	}
 

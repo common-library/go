@@ -71,15 +71,11 @@ func makeParts(text string, images []string) ([]genai.Part, error) {
 	return parts, nil
 }
 
-func getClient(ctx context.Context, apiKey string) (*genai.Client, error) {
-	return genai.NewClient(ctx, option.WithAPIKey(apiKey))
-}
-
-func getModel(client *genai.Client, images []string) *genai.GenerativeModel {
-	if len(images) == 0 {
-		return client.GenerativeModel("gemini-pro")
+func getModel(ctx context.Context, model, apiKey string) (*genai.Client, *genai.GenerativeModel, error) {
+	if client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey)); err != nil {
+		return nil, nil, err
 	} else {
-		return client.GenerativeModel("gemini-pro-vision")
+		return client, client.GenerativeModel(model), nil
 	}
 }
 

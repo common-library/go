@@ -1,19 +1,15 @@
 package rsa_test
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/common-library/go/security/crypto/rsa"
 )
 
-var onceForPublicKey sync.Once
 var keyPairForPublicKey rsa.KeyPair
 
 func publickey_instance(t *testing.T) (rsa.PrivateKey, rsa.PublicKey) {
-	onceForPublicKey.Do(func() {
-		keyPairForPublicKey = keypair_instance(t)
-	})
+	keyPairForPublicKey = keypair_instance(t)
 
 	return keyPairForPublicKey.GetKeyPair()
 }

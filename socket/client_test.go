@@ -21,90 +21,79 @@ type TestServer struct {
 }
 
 func (this *TestServer) Start(t *testing.T) {
+	t.Parallel()
+
 	this.Network = "tcp"
-	this.Address = ":" + strconv.Itoa(10000+rand.IntN(100))
+	this.Address = ":" + strconv.Itoa(10000+rand.IntN(10000))
 	this.Greeting = "greeting"
 	this.PrefixOfResponse = "[response] "
 
 	acceptSuccessFunc := func(client socket.Client) {
-		writeLen, err := client.Write(this.Greeting)
-		if err != nil {
-			t.Error(err)
-		}
-		if writeLen != len(this.Greeting) {
-			t.Errorf("invalid write - (%d)(%d)", writeLen, len(this.Greeting))
+		if writeLen, err := client.Write(this.Greeting); err != nil {
+			t.Fatal(err)
+		} else if writeLen != len(this.Greeting) {
+			t.Fatal(writeLen, ",", len(this.Greeting))
 		}
 
 		readData, err := client.Read(1024)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		writeData := this.PrefixOfResponse + readData
-		writeLen, err = client.Write(writeData)
-		if err != nil {
-			t.Error(err)
-		}
-		if writeLen != len(writeData) {
-			t.Errorf("invalid write - (%d)(%d)", writeLen, len(writeData))
+		if writeLen, err := client.Write(writeData); err != nil {
+			t.Fatal(err)
+		} else if writeLen != len(writeData) {
+			t.Fatal(writeLen, ",", len(writeData))
 		}
 	}
 
 	acceptFailureFunc := func(err error) {
-		t.Error(err)
-	}
-
-	err := this.server.Start(this.Network, this.Address, 100, acceptSuccessFunc, acceptFailureFunc)
-	if err != nil {
 		t.Fatal(err)
 	}
+
+	if err := this.server.Start(this.Network, this.Address, 100, acceptSuccessFunc, acceptFailureFunc); err != nil {
+		t.Fatal(err)
+	}
+
 	for this.server.GetCondition() == false {
 		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 func (this *TestServer) Stop(t *testing.T) {
-	err := this.server.Stop()
-	if err != nil {
+	if err := this.server.Stop(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConnect(t *testing.T) {
+	t.Parallel()
+
 	const network = "tcp"
 	const address = ":10001"
 
 	var client socket.Client
 	defer client.Close()
 
-	err := client.Connect("", address)
-	if err.Error() != "dial: unknown network " {
-		t.Error(err)
+	if err := client.Connect("", address); err.Error() != "dial: unknown network " {
+		t.Fatal(err)
 	}
 
-	err = client.Connect("invalid", address)
-	if err.Error() != "dial invalid: unknown network invalid" {
-		t.Error(err)
+	if err := client.Connect("invalid", address); err.Error() != "dial invalid: unknown network invalid" {
+		t.Fatal(err)
 	}
 
-	err = client.Connect(network, "")
-	if err.Error() != "dial tcp: missing address" {
-		t.Error(err)
+	if err := client.Connect(network, ""); err.Error() != "dial tcp: missing address" {
+		t.Fatal(err)
 	}
 
-	err = client.Connect(network, "127.0.0.1")
-	if err.Error() != "dial tcp: address 127.0.0.1: missing port in address" {
-		t.Error(err)
+	if err := client.Connect(network, "127.0.0.1"); err.Error() != "dial tcp: address 127.0.0.1: missing port in address" {
+		t.Fatal(err)
 	}
 
-	err = client.Connect(network, address)
-	if err.Error() != "dial tcp "+address+": connect: connection refused" {
-		t.Error(err)
-	}
-
-	err = client.Close()
-	if err != nil {
-		t.Error(err)
+	if err := client.Connect(network, address); err.Error() != "dial tcp "+address+": connect: connection refused" {
+		t.Fatal(err)
 	}
 }
 
@@ -119,44 +108,33 @@ func TestReadWrite(t *testing.T) {
 		client := socket.Client{}
 		defer client.Close()
 
-		_, err := client.Read(1024)
-		if err.Error() != "please call the Connect function first" {
+		if _, err := client.Read(1024); err.Error() != "please call the Connect function first" {
+			t.Fatal(err)
+		} else if _, err := client.Write(""); err.Error() != "please call the Connect function first" {
 			t.Fatal(err)
 		}
 
-		_, err = client.Write("")
-		if err.Error() != "please call the Connect function first" {
+		if err := client.Connect(testServer.Network, testServer.Address); err != nil {
 			t.Fatal(err)
 		}
 
-		err = client.Connect(testServer.Network, testServer.Address)
-		if err != nil {
+		if readData, err := client.Read(1024); err != nil {
 			t.Fatal(err)
-		}
-
-		readData, err := client.Read(1024)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if readData != testServer.Greeting {
-			t.Fatalf("invalid read - (%s)(%s)", readData, testServer.Greeting)
+		} else if readData != testServer.Greeting {
+			t.Fatal(readData, ",", testServer.Greeting)
 		}
 
 		writeData := "test"
-		writeLen, err := client.Write(writeData)
-		if err != nil {
+		if writeLen, err := client.Write(writeData); err != nil {
 			t.Fatal(err)
-		}
-		if writeLen != len(writeData) {
-			t.Fatalf("invalid write - (%d)(%d)", writeLen, len(writeData))
+		} else if writeLen != len(writeData) {
+			t.Fatal(writeLen, ",", len(writeData))
 		}
 
-		readData, err = client.Read(1024)
-		if err != nil {
+		if readData, err := client.Read(1024); err != nil {
 			t.Fatal(err)
-		}
-		if readData != testServer.PrefixOfResponse+writeData {
-			t.Fatalf("invalid read - (%s)(%s)", writeData, testServer.PrefixOfResponse+readData)
+		} else if readData != testServer.PrefixOfResponse+writeData {
+			t.Fatal(writeData, ",", testServer.PrefixOfResponse+readData)
 		}
 	}
 
@@ -169,11 +147,12 @@ func TestReadWrite(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+	t.Parallel()
+
 	client := socket.Client{}
 
-	err := client.Close()
-	if err != nil {
-		t.Error(err)
+	if err := client.Close(); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -184,41 +163,27 @@ func TestGetLocalAddr(t *testing.T) {
 
 	client := socket.Client{}
 
-	addr := client.GetLocalAddr()
-	if addr != nil {
-		t.Errorf("invalid addr - (%#v)", addr)
+	if addr := client.GetLocalAddr(); addr != nil {
+		t.Fatal(addr)
 	}
 
-	err := client.Connect(testServer.Network, testServer.Address)
-	if err != nil {
+	if err := client.Connect(testServer.Network, testServer.Address); err != nil {
 		t.Fatal(err)
 	}
 	defer client.Close()
 
-	{
-		_, err = client.Read(1024)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = client.Write("test")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = client.Read(1024)
-		if err != nil {
-			t.Fatal(err)
-		}
+	if _, err := client.Read(1024); err != nil {
+		t.Fatal(err)
+	} else if _, err := client.Write("test"); err != nil {
+		t.Fatal(err)
+	} else if _, err := client.Read(1024); err != nil {
+		t.Fatal(err)
 	}
 
-	addr = client.GetLocalAddr()
-	if addr == nil {
-		t.Errorf("invalid addr")
-	}
-
-	if addr.Network() != testServer.Network {
-		t.Errorf("invalid addr network - (%s)(%s)", addr.Network(), testServer.Network)
+	if addr := client.GetLocalAddr(); addr == nil {
+		t.Fatal(addr)
+	} else if addr.Network() != testServer.Network {
+		t.Fatal(addr.Network(), ",", testServer.Network)
 	}
 }
 
@@ -229,44 +194,28 @@ func TestGetRemoteAddr(t *testing.T) {
 
 	client := socket.Client{}
 
-	addr := client.GetRemoteAddr()
-	if addr != nil {
-		t.Fatalf("invalid addr - (%#v)", addr)
+	if addr := client.GetRemoteAddr(); addr != nil {
+		t.Fatal(addr)
 	}
 
-	err := client.Connect(testServer.Network, testServer.Address)
-	if err != nil {
+	if err := client.Connect(testServer.Network, testServer.Address); err != nil {
 		t.Fatal(err)
 	}
 	defer client.Close()
 
-	{
-		_, err = client.Read(1024)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = client.Write("test")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = client.Read(1024)
-		if err != nil {
-			t.Fatal(err)
-		}
+	if _, err := client.Read(1024); err != nil {
+		t.Fatal(err)
+	} else if _, err := client.Write("test"); err != nil {
+		t.Fatal(err)
+	} else if _, err := client.Read(1024); err != nil {
+		t.Fatal(err)
 	}
 
-	addr = client.GetRemoteAddr()
-	if addr == nil {
-		t.Errorf("invalid addr")
-	}
-
-	if addr.Network() != testServer.Network {
-		t.Errorf("invalid addr network - (%s)(%s)", addr.Network(), testServer.Network)
-	}
-
-	if strings.HasSuffix(addr.String(), testServer.Address) == false {
-		t.Errorf("invalid addr string - (%s)(%s)", addr.String(), testServer.Address)
+	if addr := client.GetRemoteAddr(); addr == nil {
+		t.Fatal(addr)
+	} else if addr.Network() != testServer.Network {
+		t.Fatal(addr.Network(), ",", testServer.Network)
+	} else if strings.HasSuffix(addr.String(), testServer.Address) == false {
+		t.Fatal(addr.String(), ",", testServer.Address)
 	}
 }

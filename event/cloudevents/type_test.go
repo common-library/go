@@ -43,27 +43,29 @@ func getEvent(t *testing.T) cloudevents.Event {
 
 func consistencyEvent(t *testing.T, event *cloudevents.Event) {
 	if event.ID() != eventID {
-		t.Error("invalid -", event.ID())
+		t.Fatal(event.ID())
 	} else if event.Type() != eventType {
-		t.Error("invalid -", event.Type())
+		t.Fatal(event.Type())
 	} else if event.Source() != eventSource {
-		t.Error("invalid -", event.Source())
+		t.Fatal(event.Source())
 	} else if event.Subject() != eventSubject {
-		t.Error("invalid -", event.Subject())
+		t.Fatal(event.Subject())
 	} else if event.DataContentType() != eventDataContentType {
-		t.Error("invalid -", event.DataContentType())
+		t.Fatal(event.DataContentType())
 	} else if event.Extensions()[eventExtensionsName01] == nil ||
 		event.Extensions()[eventExtensionsName01].(string) != eventExtensionsValue01 {
-		t.Error("invalid -", event.Extensions()[eventExtensionsName01])
+		t.Fatal(event.Extensions()[eventExtensionsName01])
 	} else if event.Extensions()[eventExtensionsName02] == nil ||
 		event.Extensions()[eventExtensionsName02].(string) != eventExtensionsValue02 {
-		t.Error("invalid -", event.Extensions()[eventExtensionsName02])
+		t.Fatal(event.Extensions()[eventExtensionsName02])
 	} else if string(event.Data()) != eventData {
-		t.Error("invalid -", string(event.Data()))
+		t.Fatal(string(event.Data()))
 	}
 }
 
-func startServer(t *testing.T) (string, *cloudevents.Server) {
+func startServer(t *testing.T) (*cloudevents.Server, string) {
+	t.Parallel()
+
 	handler := func(event cloudevents.Event) (*cloudevents.Event, cloudevents.Result) {
 		consistencyEvent(t, &event)
 
@@ -80,7 +82,7 @@ func startServer(t *testing.T) (string, *cloudevents.Server) {
 	}
 	time.Sleep(200 * time.Millisecond)
 
-	return address, &server
+	return &server, address
 }
 
 func stopServer(t *testing.T, server *cloudevents.Server) {

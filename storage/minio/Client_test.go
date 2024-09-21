@@ -2,6 +2,7 @@ package minio_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/common-library/go/file"
@@ -9,8 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func getClient(t *testing.T) minio.Client {
-	client := minio.Client{}
+func getClient(t *testing.T) *minio.Client {
+	t.Parallel()
+
+	client := &minio.Client{}
 
 	if err := client.CreateClient("127.0.0.1:9090", "dummy", "dummy", false); err != nil {
 		t.Fatal(err)
@@ -19,7 +22,7 @@ func getClient(t *testing.T) minio.Client {
 	return client
 }
 
-func removeBucket(t *testing.T, client minio.Client, bucketName string) {
+func removeBucket(t *testing.T, client *minio.Client, bucketName string) {
 	if exist, err := client.BucketExists(bucketName); err != nil {
 		t.Fatal(err)
 	} else if exist == false {
@@ -49,7 +52,7 @@ func TestMakeBucket(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	defer removeBucket(t, client, bucketName)
 
 	if err := client.MakeBucket(bucketName, "", true); err != nil {
@@ -57,7 +60,7 @@ func TestMakeBucket(t *testing.T) {
 	} else if exist, err := client.BucketExists(bucketName); err != nil {
 		t.Fatal(err)
 	} else if exist == false {
-		t.Fatal("exist == false")
+		t.Fatal(exist)
 	}
 }
 
@@ -67,19 +70,26 @@ func TestListBuckets(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	defer removeBucket(t, client, bucketName)
+
+	if err := client.MakeBucket(bucketName, "", true); err != nil {
+		t.Fatal(err)
+	}
 
 	if buckets, err := client.ListBuckets(); err != nil {
 		t.Fatal(err)
-	} else if len(buckets) != 0 {
-		t.Fatal("len(buckets) != 0")
-	} else if err := client.MakeBucket(bucketName, "", true); err != nil {
-		t.Fatal(err)
-	} else if buckets, err := client.ListBuckets(); err != nil {
-		t.Fatal(err)
-	} else if buckets[0].Name != bucketName {
-		t.Fatal(bucketName, buckets[0].Name)
+	} else {
+		find := false
+		for _, bucket := range buckets {
+			if bucket.Name == bucketName {
+				find = true
+			}
+		}
+
+		if find == false {
+			t.Fatal(buckets)
+		}
 	}
 }
 
@@ -89,7 +99,7 @@ func TestBucketExists(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	defer removeBucket(t, client, bucketName)
 
 	if exist, err := client.BucketExists(bucketName); err != nil {
@@ -101,7 +111,7 @@ func TestBucketExists(t *testing.T) {
 	} else if exist, err := client.BucketExists(bucketName); err != nil {
 		t.Fatal(err)
 	} else if exist == false {
-		t.Fatal("exist == false")
+		t.Fatal(exist)
 	}
 }
 
@@ -111,7 +121,7 @@ func TestRemoveBucket(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 
 	if err := client.MakeBucket(bucketName, "", true); err != nil {
 		t.Fatal(err)
@@ -126,7 +136,7 @@ func TestListObjects(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -151,7 +161,7 @@ func TestGetObject(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -166,7 +176,7 @@ func TestGetObject(t *testing.T) {
 	} else if objectInfo, err := object.Stat(); err != nil {
 		t.Fatal(err)
 	} else if objectInfo.Key != objectName {
-		t.Fatal("objectInfo.Key != objectName")
+		t.Fatal(objectInfo.Key, ",", objectName)
 	}
 }
 
@@ -176,7 +186,7 @@ func TestPutObject(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -200,7 +210,7 @@ func TestPutObject(t *testing.T) {
 	} else if objectInfo, err := client.StatObject(bucketName, objectName); err != nil {
 		t.Fatal(err)
 	} else if objectInfo.Key != objectName {
-		t.Fatal("objectInfo.Key != objectName")
+		t.Fatal(objectInfo.Key, ",", objectName)
 	}
 }
 
@@ -232,7 +242,7 @@ func TestCopyObject(t *testing.T) {
 	} else if objectInfo, err := object.Stat(); err != nil {
 		t.Fatal(err)
 	} else if objectInfo.Key != destinationObjectName {
-		t.Fatal("objectInfo.Key != destinationObjectName")
+		t.Fatal(objectInfo.Key, ",", destinationObjectName)
 	}
 }
 
@@ -242,7 +252,7 @@ func TestStatObject(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -255,7 +265,7 @@ func TestStatObject(t *testing.T) {
 	} else if objectInfo, err := client.StatObject(bucketName, objectName); err != nil {
 		t.Fatal(err)
 	} else if objectInfo.Key != objectName {
-		t.Fatal("objectInfo.Key != objectName")
+		t.Fatal(objectInfo.Key, ",", objectName)
 	}
 }
 
@@ -265,7 +275,7 @@ func TestRemoveObject(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -280,7 +290,7 @@ func TestRemoveObject(t *testing.T) {
 	} else if objectInfos, err := client.ListObjects(bucketName, "", true); err != nil {
 		t.Fatal(err)
 	} else if len(objectInfos) != 0 {
-		t.Fatal("len(objectInfos) != 0")
+		t.Fatal(objectInfos)
 	}
 }
 
@@ -290,7 +300,7 @@ func TestRemoveObjects(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -307,7 +317,7 @@ func TestRemoveObjects(t *testing.T) {
 	} else if objectInfos, err := client.ListObjects(bucketName, "", true); err != nil {
 		t.Fatal(err)
 	} else if len(objectInfos) != 0 {
-		t.Fatal("len(objectInfos) != 0")
+		t.Fatal(objectInfos)
 	}
 }
 
@@ -317,7 +327,7 @@ func TestFPutObject(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -330,7 +340,7 @@ func TestFPutObject(t *testing.T) {
 	} else if objectInfo, err := client.StatObject(bucketName, objectName); err != nil {
 		t.Fatal(err)
 	} else if objectInfo.Key != objectName {
-		t.Fatal("objectInfo.Key != objectName")
+		t.Fatal(objectInfo.Key, ",", objectName)
 	}
 }
 
@@ -340,7 +350,7 @@ func TestFGetObject(t *testing.T) {
 	}
 
 	client := getClient(t)
-	bucketName := uuid.New().String()
+	bucketName := strings.ToLower(t.Name())
 	objectName := "test"
 	filePath := "./test.txt"
 	contentType := "text/plain"
@@ -360,6 +370,6 @@ func TestFGetObject(t *testing.T) {
 	} else if answer, err := file.Read(filePath); err != nil {
 		t.Fatal(err)
 	} else if data != answer {
-		t.Fatal("invalid -", data)
+		t.Fatal(data, ",", answer)
 	}
 }

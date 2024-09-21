@@ -8,6 +8,8 @@ import (
 )
 
 func TestMutex(t *testing.T) {
+	t.Parallel()
+
 	mutex := lock.Mutex{}
 
 	mutex.Lock()
@@ -28,6 +30,7 @@ func TestMutex(t *testing.T) {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
+
 			mutex.Lock()
 			defer mutex.Unlock()
 
@@ -35,12 +38,15 @@ func TestMutex(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
+
 	if result != count*(count+1)/2 {
-		t.Fatal("invalid - ", count, result)
+		t.Fatal(count, result)
 	}
 }
 
 func TestMutexByKey(t *testing.T) {
+	t.Parallel()
+
 	mutexs := lock.MutexByKey{}
 
 	test := func(key any) {
@@ -64,6 +70,7 @@ func TestMutexByKey(t *testing.T) {
 			wg.Add(1)
 			go func(index int) {
 				defer wg.Done()
+
 				mutexs.Lock(key)
 				defer mutexs.Unlock(key)
 
@@ -72,7 +79,7 @@ func TestMutexByKey(t *testing.T) {
 		}
 		wg.Wait()
 		if result != count*(count+1)/2 {
-			t.Fatal("invalid - ", count, result)
+			t.Fatal(count, result)
 		}
 	}
 

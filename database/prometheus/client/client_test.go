@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/common-library/go/database/prometheus/client"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 var addressForHttp = "http://" + os.Getenv("PROMETHEUS_ADDRESS")
@@ -70,7 +69,7 @@ func TestQueryRange(t *testing.T) {
 		return
 	}
 
-	r := v1.Range{
+	r := client.Range{
 		Start: time.Now().Add(-time.Hour),
 		End:   time.Now(),
 		Step:  time.Minute,

@@ -3,7 +3,6 @@ package dynamodb_test
 import (
 	"context"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,10 +13,7 @@ import (
 	aws_dynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/common-library/go/aws/dynamodb"
-	"github.com/google/uuid"
 )
-
-var TABLE_NAME = strings.ReplaceAll(uuid.NewString(), "-", "")
 
 const INDEX_NAME = "field1-index"
 const TTL_NAME = "ttl-test"
@@ -39,20 +35,18 @@ type TestItem struct {
 }
 
 func (this *TestItem) getKey() (map[string]types.AttributeValue, error) {
-	pk, err := attributevalue.Marshal(this.PrimaryKey)
-	if err != nil {
+	if pk, err := attributevalue.Marshal(this.PrimaryKey); err != nil {
 		return nil, err
-	}
-
-	sk, err := attributevalue.Marshal(this.SortKey)
-	if err != nil {
+	} else if sk, err := attributevalue.Marshal(this.SortKey); err != nil {
 		return nil, err
+	} else {
+		return map[string]types.AttributeValue{"primary-key": pk, "sort-key": sk}, nil
 	}
-
-	return map[string]types.AttributeValue{"primary-key": pk, "sort-key": sk}, nil
 }
 
-func initialize(client *dynamodb.Client, putItems bool, t *testing.T) bool {
+func initialize(t *testing.T, client *dynamodb.Client, putItems bool) bool {
+	t.Parallel()
+
 	if len(os.Getenv("DYNAMODB_URL")) == 0 {
 		return false
 	}
@@ -68,7 +62,7 @@ func initialize(client *dynamodb.Client, putItems bool, t *testing.T) bool {
 
 	if response, err := client.CreateTable(
 		&aws_dynamodb.CreateTableInput{
-			TableName: aws.String(TABLE_NAME),
+			TableName: aws.String(t.Name()),
 			AttributeDefinitions: []types.AttributeDefinition{{
 				AttributeName: aws.String("primary-key"),
 				AttributeType: types.ScalarAttributeTypeN,
@@ -91,10 +85,10 @@ func initialize(client *dynamodb.Client, putItems bool, t *testing.T) bool {
 		},
 		true, 10); err != nil {
 		t.Fatal(err)
-	} else if *response.TableDescription.TableName != TABLE_NAME {
-		t.Fatalf("invalid TableName - (%s)(%s)", *response.TableDescription.TableName, TABLE_NAME)
+	} else if *response.TableDescription.TableName != t.Name() {
+		t.Fatal(*response.TableDescription.TableName, ",", t.Name())
 	} else if response.TableDescription.TableStatus != types.TableStatusActive {
-		t.Fatalf("invalid TableStatus - (%s)", response.TableDescription.TableStatus)
+		t.Fatal(response.TableDescription.TableStatus)
 	}
 
 	{
@@ -150,7 +144,7 @@ func initialize(client *dynamodb.Client, putItems bool, t *testing.T) bool {
 				t.Fatal(err)
 			} else if _, err = client.PutItem(
 				&aws_dynamodb.PutItemInput{
-					TableName: aws.String(TABLE_NAME), Item: item,
+					TableName: aws.String(t.Name()), Item: item,
 				}); err != nil {
 				t.Fatal(err)
 			}
@@ -160,41 +154,41 @@ func initialize(client *dynamodb.Client, putItems bool, t *testing.T) bool {
 	return true
 }
 
-func finalize(client *dynamodb.Client, t *testing.T) {
-	if response, err := client.DeleteTable(TABLE_NAME, true, 10); err != nil {
+func finalize(t *testing.T, client *dynamodb.Client) {
+	if response, err := client.DeleteTable(t.Name(), true, 10); err != nil {
 		t.Fatal(err)
-	} else if *response.TableDescription.TableName != TABLE_NAME {
-		t.Fatalf("invalid TableName - (%s)(%s)", *response.TableDescription.TableName, TABLE_NAME)
+	} else if *response.TableDescription.TableName != t.Name() {
+		t.Fatal(*response.TableDescription.TableName, ",", t.Name())
 	} else if response.TableDescription.TableStatus != types.TableStatusActive {
-		t.Fatalf("invalid TableStatus - (%s)", response.TableDescription.TableStatus)
+		t.Fatal(response.TableDescription.TableStatus)
 	}
 }
 
 func TestCreateClient(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 }
 
 func TestCreateTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 }
 
 func TestListTables(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	response, err := client.ListTables(&aws_dynamodb.ListTablesInput{Limit: aws.Int32(10)})
 	if err != nil {
@@ -203,54 +197,50 @@ func TestListTables(t *testing.T) {
 
 	exist := false
 	for _, name := range response.TableNames {
-		if name == TABLE_NAME {
+		if name == t.Name() {
 			exist = true
 		}
 	}
 
 	if exist == false {
-		t.Fatalf("invalid ListTables - (%#v)", response.TableNames)
+		t.Fatal(response.TableNames, ",", t.Name())
 	}
 }
 
 func TestDescribeTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
-	if response, err := client.DescribeTable(TABLE_NAME); err != nil {
+	if response, err := client.DescribeTable(t.Name()); err != nil {
 		t.Fatal(err)
-	} else if *response.Table.TableName != TABLE_NAME {
-		t.Fatalf("invalid TableName - (%s)(%s)", *response.Table.TableName, TABLE_NAME)
+	} else if *response.Table.TableName != t.Name() {
+		t.Fatal(*response.Table.TableName, ",", t.Name())
 	} else if response.Table.TableStatus != types.TableStatusActive {
-		t.Fatalf("invalid TableStatus - (%s)", response.Table.TableStatus)
+		t.Fatal(response.Table.TableStatus)
 	}
 }
 
 func TestUpdateTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
-	if response, err := client.DescribeTable(TABLE_NAME); err != nil {
+	if response, err := client.DescribeTable(t.Name()); err != nil {
 		t.Fatal(err)
 	} else if len(response.Table.GlobalSecondaryIndexes) != 0 {
-		for _, index := range response.Table.GlobalSecondaryIndexes {
-			t.Log(*index.IndexName)
-		}
-
-		t.Fatalf("invalid indexes size - (%d)", len(response.Table.GlobalSecondaryIndexes))
+		t.Fatal(response.Table.GlobalSecondaryIndexes)
 	}
 
 	if response, err := client.UpdateTable(
 		&aws_dynamodb.UpdateTableInput{
-			TableName: aws.String(TABLE_NAME),
+			TableName: aws.String(t.Name()),
 			AttributeDefinitions: []types.AttributeDefinition{{
 				AttributeName: aws.String("field1"),
 				AttributeType: types.ScalarAttributeTypeN,
@@ -279,26 +269,26 @@ func TestUpdateTable(t *testing.T) {
 		}); err != nil {
 		t.Fatal(err)
 	} else if *response.TableDescription.GlobalSecondaryIndexes[0].IndexName != INDEX_NAME {
-		t.Fatalf("invalid IndexName - (%s)(%s)", *response.TableDescription.GlobalSecondaryIndexes[0].IndexName, INDEX_NAME)
+		t.Fatal(*response.TableDescription.GlobalSecondaryIndexes[0].IndexName, ",", INDEX_NAME)
 	}
 }
 
 func TestDeleteTable(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 }
 
 func TestGetItem(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	testItemForPut := TestItem{
 		PrimaryKey: 1, SortKey: "a", Field1: false, Field2: 1,
@@ -315,7 +305,7 @@ func TestGetItem(t *testing.T) {
 			t.Fatal(err)
 		} else if _, err = client.PutItem(
 			&aws_dynamodb.PutItemInput{
-				TableName: aws.String(TABLE_NAME),
+				TableName: aws.String(t.Name()),
 				Item:      item,
 			}); err != nil {
 			t.Fatal(err)
@@ -325,18 +315,12 @@ func TestGetItem(t *testing.T) {
 	{
 		testItemForGet := TestItem{PrimaryKey: 1, SortKey: "a"}
 
-		key, err := testItemForGet.getKey()
-		if err != nil {
+		if key, err := testItemForGet.getKey(); err != nil {
 			t.Fatal(err)
-		}
-
-		response, err := client.GetItem(&aws_dynamodb.GetItemInput{
-			TableName: aws.String(TABLE_NAME), Key: key})
-		if err != nil {
+		} else if response, err := client.GetItem(&aws_dynamodb.GetItemInput{
+			TableName: aws.String(t.Name()), Key: key}); err != nil {
 			t.Fatal(err)
-		}
-
-		if err := attributevalue.UnmarshalMap(response.Item, &testItemForGet); err != nil {
+		} else if err := attributevalue.UnmarshalMap(response.Item, &testItemForGet); err != nil {
 			t.Fatal(err)
 		} else if testItemForGet.Field1 != testItemForPut.Field1 ||
 			testItemForGet.Field2 != testItemForPut.Field2 ||
@@ -345,9 +329,9 @@ func TestGetItem(t *testing.T) {
 			testItemForGet.Field4[0].SubField2 != testItemForPut.Field4[0].SubField2 ||
 			testItemForGet.Field4[1].SubField1 != testItemForPut.Field4[1].SubField1 ||
 			testItemForGet.Field4[1].SubField2 != testItemForPut.Field4[1].SubField2 {
-			t.Logf("testItemForGet : (%#v)", testItemForGet)
-			t.Logf("testItemForPut : (%#v)", testItemForPut)
-			t.Fatal("invalid GetItem")
+			t.Log(testItemForGet)
+			t.Log(testItemForPut)
+			t.Fatal("invalid")
 		}
 	}
 }
@@ -355,10 +339,10 @@ func TestGetItem(t *testing.T) {
 func TestPutItem(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	testItemForPut := TestItem{
 		PrimaryKey: 1, SortKey: "a", Field1: false, Field2: 1, Field3: "value_for_1",
@@ -374,7 +358,7 @@ func TestPutItem(t *testing.T) {
 			t.Fatal(err)
 		} else if _, err = client.PutItem(
 			&aws_dynamodb.PutItemInput{
-				TableName: aws.String(TABLE_NAME),
+				TableName: aws.String(t.Name()),
 				Item:      item}); err != nil {
 			t.Fatal(err)
 		}
@@ -383,18 +367,12 @@ func TestPutItem(t *testing.T) {
 	{
 		testItemForGet := TestItem{PrimaryKey: 1, SortKey: "a"}
 
-		key, err := testItemForGet.getKey()
-		if err != nil {
+		if key, err := testItemForGet.getKey(); err != nil {
 			t.Fatal(err)
-		}
-
-		response, err := client.GetItem(
-			&aws_dynamodb.GetItemInput{TableName: aws.String(TABLE_NAME), Key: key})
-		if err != nil {
+		} else if response, err := client.GetItem(
+			&aws_dynamodb.GetItemInput{TableName: aws.String(t.Name()), Key: key}); err != nil {
 			t.Fatal(err)
-		}
-
-		if err := attributevalue.UnmarshalMap(response.Item, &testItemForGet); err != nil {
+		} else if err := attributevalue.UnmarshalMap(response.Item, &testItemForGet); err != nil {
 			t.Fatal(err)
 		} else if testItemForGet.Field1 != testItemForPut.Field1 ||
 			testItemForGet.Field2 != testItemForPut.Field2 ||
@@ -403,9 +381,9 @@ func TestPutItem(t *testing.T) {
 			testItemForGet.Field4[0].SubField2 != testItemForPut.Field4[0].SubField2 ||
 			testItemForGet.Field4[1].SubField1 != testItemForPut.Field4[1].SubField1 ||
 			testItemForGet.Field4[1].SubField2 != testItemForPut.Field4[1].SubField2 {
-			t.Logf("testItemForGet : (%#v)", testItemForGet)
-			t.Logf("testItemForPut : (%#v)", testItemForPut)
-			t.Fatal("invalid GetItem")
+			t.Log(testItemForGet)
+			t.Log(testItemForPut)
+			t.Fatal("invalid")
 		}
 	}
 }
@@ -415,10 +393,10 @@ func TestUpdateItem(t *testing.T) {
 
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	{
 		testItem := TestItem{
@@ -434,7 +412,7 @@ func TestUpdateItem(t *testing.T) {
 			t.Fatal(err)
 		} else if _, err := client.PutItem(
 			&aws_dynamodb.PutItemInput{
-				TableName: aws.String(TABLE_NAME),
+				TableName: aws.String(t.Name()),
 				Item:      item}); err != nil {
 			t.Fatal(err)
 		}
@@ -442,21 +420,15 @@ func TestUpdateItem(t *testing.T) {
 
 	{
 		testItem := TestItem{PrimaryKey: 1, SortKey: "a"}
-
-		key, err := testItem.getKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		update := expression.Set(expression.Name("field2"), expression.Value(aws.Int(updateValue)))
-		expr, err := expression.NewBuilder().WithUpdate(update).Build()
-		if err != nil {
-			t.Fatal(err)
-		}
 
-		if _, err = client.UpdateItem(
+		if key, err := testItem.getKey(); err != nil {
+			t.Fatal(err)
+		} else if expr, err := expression.NewBuilder().WithUpdate(update).Build(); err != nil {
+			t.Fatal(err)
+		} else if _, err = client.UpdateItem(
 			&aws_dynamodb.UpdateItemInput{
-				TableName:                 aws.String(TABLE_NAME),
+				TableName:                 aws.String(t.Name()),
 				Key:                       key,
 				ExpressionAttributeNames:  expr.Names(),
 				ExpressionAttributeValues: expr.Values(),
@@ -470,23 +442,17 @@ func TestUpdateItem(t *testing.T) {
 	{
 		testItem := TestItem{PrimaryKey: 1, SortKey: "a"}
 
-		key, err := testItem.getKey()
-		if err != nil {
+		if key, err := testItem.getKey(); err != nil {
 			t.Fatal(err)
-		}
-
-		response, err := client.GetItem(
+		} else if response, err := client.GetItem(
 			&aws_dynamodb.GetItemInput{
-				TableName: aws.String(TABLE_NAME),
-				Key:       key})
-		if err != nil {
+				TableName: aws.String(t.Name()),
+				Key:       key}); err != nil {
 			t.Fatal(err)
-		}
-
-		if err := attributevalue.UnmarshalMap(response.Item, &testItem); err != nil {
+		} else if err := attributevalue.UnmarshalMap(response.Item, &testItem); err != nil {
 			t.Fatal(err)
 		} else if testItem.Field2 != updateValue {
-			t.Fatalf("invalid field2 - (%d)(%d)", testItem.Field2, updateValue)
+			t.Fatal(testItem.Field2, ",", updateValue)
 		}
 	}
 }
@@ -494,10 +460,10 @@ func TestUpdateItem(t *testing.T) {
 func TestDeleteItem(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, false, t) == false {
+	if initialize(t, &client, false) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	{
 		testItem := TestItem{
@@ -513,7 +479,7 @@ func TestDeleteItem(t *testing.T) {
 			t.Fatal(err)
 		} else if _, err := client.PutItem(
 			&aws_dynamodb.PutItemInput{
-				TableName: aws.String(TABLE_NAME),
+				TableName: aws.String(t.Name()),
 				Item:      item}); err != nil {
 			t.Fatal(err)
 		}
@@ -525,17 +491,17 @@ func TestDeleteItem(t *testing.T) {
 			t.Fatal(err)
 		} else if _, err := client.DeleteItem(
 			&aws_dynamodb.DeleteItemInput{
-				TableName: aws.String(TABLE_NAME),
+				TableName: aws.String(t.Name()),
 				Key:       key}); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	{
-		if response, err := client.DescribeTable(TABLE_NAME); err != nil {
+		if response, err := client.DescribeTable(t.Name()); err != nil {
 			t.Fatal(err)
 		} else if *response.Table.ItemCount != 0 {
-			t.Fatalf("invalid ItemCount - (%d)", *response.Table.ItemCount)
+			t.Fatal(*response.Table.ItemCount)
 		}
 	}
 }
@@ -543,10 +509,10 @@ func TestDeleteItem(t *testing.T) {
 func TestQuery(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, true, t) == false {
+	if initialize(t, &client, true) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	keyEx := expression.Key("primary-key").Equal(expression.Value(3)).And(expression.Key("sort-key").Equal(expression.Value("c-1")))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
@@ -556,7 +522,7 @@ func TestQuery(t *testing.T) {
 
 	response, err := client.Query(
 		&aws_dynamodb.QueryInput{
-			TableName:                 aws.String(TABLE_NAME),
+			TableName:                 aws.String(t.Name()),
 			ExpressionAttributeNames:  expr.Names(),
 			ExpressionAttributeValues: expr.Values(),
 			KeyConditionExpression:    expr.KeyCondition()})
@@ -575,17 +541,17 @@ func TestQuery(t *testing.T) {
 		testItems[0].Field4[0].SubField2 != "sub-value1-2_for_3" ||
 		testItems[0].Field4[1].SubField1 != "sub-value2-1_for_3" ||
 		testItems[0].Field4[1].SubField2 != "sub-value2-2_for_3" {
-		t.Fatalf("invalid Query - (%#v)", testItems)
+		t.Fatal(testItems)
 	}
 }
 
 func TestScan(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, true, t) == false {
+	if initialize(t, &client, true) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	filtEx := expression.Name("primary-key").Between(expression.Value(2), expression.Value(3))
 	projEx := expression.NamesList(expression.Name("primary-key"), expression.Name("sort-key"), expression.Name("field2"))
@@ -593,7 +559,7 @@ func TestScan(t *testing.T) {
 
 	response, err := client.Scan(
 		&aws_dynamodb.ScanInput{
-			TableName:                 aws.String(TABLE_NAME),
+			TableName:                 aws.String(t.Name()),
 			ExpressionAttributeNames:  expr.Names(),
 			ExpressionAttributeValues: expr.Values(),
 			FilterExpression:          expr.Filter(),
@@ -609,89 +575,86 @@ func TestScan(t *testing.T) {
 		testItems[0].Field2 != 2 ||
 		testItems[1].Field2 != 31 ||
 		testItems[2].Field2 != 32 {
-		t.Fatalf("invalid Scan - (%#v)", testItems)
+		t.Fatal(testItems)
 	}
 }
 
 func TestDescribeTimeToLive(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, true, t) == false {
+	if initialize(t, &client, true) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
-	if response, err := client.DescribeTimeToLive(TABLE_NAME); err != nil {
+	if response, err := client.DescribeTimeToLive(t.Name()); err != nil {
 		t.Fatal(err)
 	} else if response.TimeToLiveDescription.AttributeName != nil {
-		t.Fatal("invalid DescribeTimeToLive")
+		t.Fatal(response.TimeToLiveDescription.AttributeName)
 	}
 
-	if response, err := client.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true); err != nil {
+	if response, err := client.UpdateTimeToLive(t.Name(), TTL_NAME, true); err != nil {
 		t.Fatal(err)
 	} else if *response.TimeToLiveSpecification.AttributeName != TTL_NAME {
-		t.Fatalf("invalid AttributeName - (%s)", *response.TimeToLiveSpecification.AttributeName)
+		t.Fatal(*response.TimeToLiveSpecification.AttributeName)
 	} else if *response.TimeToLiveSpecification.Enabled != true {
-		t.Fatalf("invalid Enabled - (%t)", *response.TimeToLiveSpecification.Enabled)
+		t.Fatal(*response.TimeToLiveSpecification.Enabled)
 	}
 
-	if response, err := client.DescribeTimeToLive(TABLE_NAME); err != nil {
+	if response, err := client.DescribeTimeToLive(t.Name()); err != nil {
 		t.Fatal(err)
 	} else if *response.TimeToLiveDescription.AttributeName != TTL_NAME {
-		t.Fatalf("invalid AttributeName - (%s)", *response.TimeToLiveDescription.AttributeName)
+		t.Fatal(*response.TimeToLiveDescription.AttributeName)
 	} else if response.TimeToLiveDescription.TimeToLiveStatus != types.TimeToLiveStatusEnabled {
-		t.Fatalf("invalid TimeToLiveStatus - (%s)", response.TimeToLiveDescription.TimeToLiveStatus)
+		t.Fatal(response.TimeToLiveDescription.TimeToLiveStatus)
 	}
 }
 
 func TestUpdateTimeToLive(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, true, t) == false {
+	if initialize(t, &client, true) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
-	if response, err := client.DescribeTimeToLive(TABLE_NAME); err != nil {
+	if response, err := client.DescribeTimeToLive(t.Name()); err != nil {
 		t.Fatal(err)
 	} else if response.TimeToLiveDescription.AttributeName != nil {
-		t.Fatal("invalid DescribeTimeToLive")
+		t.Fatal(response.TimeToLiveDescription.AttributeName)
 	}
 
-	if response, err := client.UpdateTimeToLive(TABLE_NAME, TTL_NAME, true); err != nil {
+	if response, err := client.UpdateTimeToLive(t.Name(), TTL_NAME, true); err != nil {
 		t.Fatal(err)
 	} else if *response.TimeToLiveSpecification.AttributeName != TTL_NAME {
-		t.Fatalf("invalid AttributeName - (%s)", *response.TimeToLiveSpecification.AttributeName)
+		t.Fatal(*response.TimeToLiveSpecification.AttributeName)
 	} else if *response.TimeToLiveSpecification.Enabled != true {
-		t.Fatalf("invalid Enabled - (%t)", *response.TimeToLiveSpecification.Enabled)
+		t.Fatal(*response.TimeToLiveSpecification.Enabled)
 	}
 
-	if response, err := client.DescribeTimeToLive(TABLE_NAME); err != nil {
+	if response, err := client.DescribeTimeToLive(t.Name()); err != nil {
 		t.Fatal(err)
 	} else if *response.TimeToLiveDescription.AttributeName != TTL_NAME {
-		t.Fatalf("invalid AttributeName - (%s)", *response.TimeToLiveDescription.AttributeName)
+		t.Fatal(*response.TimeToLiveDescription.AttributeName)
 	} else if response.TimeToLiveDescription.TimeToLiveStatus != types.TimeToLiveStatusEnabled {
-		t.Fatalf("invalid TimeToLiveStatus - (%s)", response.TimeToLiveDescription.TimeToLiveStatus)
+		t.Fatal(response.TimeToLiveDescription.TimeToLiveStatus)
 	}
 }
 
 func TestQueryPaginatorNextPage(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, true, t) == false {
+	if initialize(t, &client, true) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	keyEx := expression.Key("primary-key").Equal(expression.Value(3))
-	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
-	if err != nil {
+	if expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build(); err != nil {
 		t.Fatal(err)
-	}
-
-	if response, err := client.QueryPaginatorNextPage(
+	} else if response, err := client.QueryPaginatorNextPage(
 		&aws_dynamodb.QueryInput{
-			TableName:                 aws.String(TABLE_NAME),
+			TableName:                 aws.String(t.Name()),
 			ExpressionAttributeNames:  expr.Names(),
 			ExpressionAttributeValues: expr.Values(),
 			KeyConditionExpression:    expr.KeyCondition(),
@@ -701,27 +664,27 @@ func TestQueryPaginatorNextPage(t *testing.T) {
 		t.Fatal(err)
 	} else if response.Count != 1 || response.ScannedCount != 1 ||
 		len(response.Items) != 1 || response.LastEvaluatedKey == nil {
-		t.Fatalf("invalid response - (%#v)", response)
+		t.Fatal(response)
 	}
 }
 
 func TestScanPaginatorNextPage(t *testing.T) {
 	client := dynamodb.Client{}
 
-	if initialize(&client, true, t) == false {
+	if initialize(t, &client, true) == false {
 		return
 	}
-	defer finalize(&client, t)
+	defer finalize(t, &client)
 
 	if response, err := client.ScanPaginatorNextPage(
 		&aws_dynamodb.ScanInput{
-			TableName:         aws.String(TABLE_NAME),
+			TableName:         aws.String(t.Name()),
 			Limit:             aws.Int32(2),
 			ExclusiveStartKey: nil,
 		}); err != nil {
 		t.Fatal(err)
 	} else if response.Count != 2 || response.ScannedCount != 2 ||
 		len(response.Items) != 2 || response.LastEvaluatedKey == nil {
-		t.Fatalf("invalid response - (%#v)", response)
+		t.Fatal(response)
 	}
 }

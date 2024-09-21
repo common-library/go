@@ -18,7 +18,7 @@ func TestNewCollector(t *testing.T) {
 	}
 
 	if count := testutil.CollectAndCount(sample01Collector); count != 3 {
-		t.Fatal("invalid -", count)
+		t.Fatal(count)
 	}
 
 	if err := testutil.CollectAndCompare(sample01Collector, (&metric01{}).getExpected()); err != nil {
@@ -34,7 +34,7 @@ func TestRegisterCollector(t *testing.T) {
 	}
 
 	if exporter.UnRegisterCollector(sample01Collector) == false {
-		t.Fatal("UnRegister false")
+		t.Fatal("UnRegisterCollector false")
 	}
 }
 
@@ -46,6 +46,8 @@ func TestStart(t *testing.T) {
 	address := ":" + strconv.Itoa(10000+rand.IntN(1000))
 	path := "/metrics"
 
+	t.Log(address)
+
 	sample01Collector := exporter.NewCollector([]exporter.Metric{&metric01{}})
 
 	if err := exporter.RegisterCollector(sample01Collector); err != nil {
@@ -53,7 +55,7 @@ func TestStart(t *testing.T) {
 	}
 	defer func() {
 		if exporter.UnRegisterCollector(sample01Collector) == false {
-			t.Fatal("UnRegister false")
+			t.Fatal("UnRegisterCollector false")
 		}
 	}()
 
@@ -74,5 +76,16 @@ func TestStart(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
-	TestStart(t)
+	if err := exporter.Stop(60); err != nil {
+		t.Fatal(err)
+	}
+
+	address := ":" + strconv.Itoa(10000+rand.IntN(1000))
+	path := "/metrics"
+	listenAndServeFailureFunc := func(err error) { t.Fatal(err) }
+	if err := exporter.Start(address, path, listenAndServeFailureFunc); err != nil {
+		t.Fatal(err)
+	} else if err := exporter.Stop(60); err != nil {
+		t.Fatal(err)
+	}
 }

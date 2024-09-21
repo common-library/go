@@ -75,6 +75,8 @@ func TestResource01(t *testing.T) {
 }
 
 func test(t *testing.T, serverHandlerFunc http.HandlerFunc, testFunc func(rest.Interface)) {
+	t.Parallel()
+
 	server := httptest.NewUnstartedServer(serverHandlerFunc)
 	server.EnableHTTP2 = false
 	server.StartTLS()

@@ -28,6 +28,12 @@ go get -u github.com/common-library/go
    - MongoDB
    - Prometheus
    - Redis
+   - ORM
+     - beego
+     - ent
+     - GORM
+     - sqlc
+     - sqlx
    - SQL
      - Amazon DynamoDB
      - ClickHouse
@@ -116,6 +122,24 @@ go get -u github.com/common-library/go
      - `go clean -testcache && go test -coverprofile=coverage.out -cover ./...`
    - convert coverage file to html file
      - `go tool cover -html=./coverage.out -o ./coverage.html`
+
+<br/>
+
+## How to add a ent schema
+ - Assuming the schema name is `Xxx`
+ - `go get entgo.io/ent/cmd/ent`
+ - `go run entgo.io/ent/cmd/ent new --target ./database/orm/ent/schema Xxx`
+ - Modify `./database/orm/ent/schema/xxx.go`
+ - `go run entgo.io/ent/cmd/ent generate --feature sql/upsert ./database/orm/ent/schema`
+
+<br/>
+
+## How to use sqlc
+ - Add or modify query file to `./database/orm/sqlc/queries`
+ - Add or modify schema file to `./database/orm/sqlc/schema`
+ - Modify `./database/orm/sqlc/sqlc.json`
+ - `go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0`
+ - `sqlc generate --file ./database/orm/sqlc/sqlc.json`
 
 <br/>
 

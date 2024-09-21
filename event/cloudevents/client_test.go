@@ -12,7 +12,7 @@ import (
 )
 
 func TestSend(t *testing.T) {
-	address, server := startServer(t)
+	server, address := startServer(t)
 	defer stopServer(t, server)
 
 	if client, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
@@ -31,7 +31,7 @@ func TestSend(t *testing.T) {
 }
 
 func TestRequest(t *testing.T) {
-	address, server := startServer(t)
+	server, address := startServer(t)
 	defer stopServer(t, server)
 
 	if client, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
@@ -52,6 +52,8 @@ func TestRequest(t *testing.T) {
 }
 
 func TestStartReceiver(t *testing.T) {
+	t.Parallel()
+
 	port := rand.IntN(1000) + 10000
 	httpOption := []cloudeventssdk_http.Option{cloudeventssdk_http.WithPort(port)}
 	handler := func(ctx context.Context, event cloudevents.Event) {
@@ -76,6 +78,8 @@ func TestStartReceiver(t *testing.T) {
 }
 
 func TestStopReceiver(t *testing.T) {
+	t.Parallel()
+
 	if client, err := cloudevents.NewHttp("", nil, nil); err != nil {
 		t.Fatal(err)
 	} else {
