@@ -17,30 +17,62 @@ type Server struct {
 
 // RegisterHandler is add handler.
 //
-// ex) server.RegisterHandler("/xxx", http.MethodPost, handler)
-func (this *Server) RegisterHandler(path, method string, handler http.Handler) {
-	this.getRouter().Handle(path, handler).Methods(method)
+// ex)
+//
+//	server.RegisterHandler("/xxx", handler) //all method
+//	server.RegisterHandler("/xxx", handler, http.MethodGet)
+//	server.RegisterHandler("/xxx", handler, http.MethodGet, http.MethodPost)
+func (this *Server) RegisterHandler(path string, handler http.Handler, methods ...string) {
+	if len(methods) == 0 {
+		this.getRouter().Handle(path, handler)
+	} else {
+		this.getRouter().Handle(path, handler).Methods(methods...)
+	}
 }
 
 // RegisterHandlerFunc is add handler function.
 //
-// ex) server.RegisterHandlerFunc("/xxx", http.MethodPost, handlerFunc)
-func (this *Server) RegisterHandlerFunc(path, method string, handlerFunc http.HandlerFunc) {
-	this.getRouter().HandleFunc(path, handlerFunc).Methods(method)
+// ex)
+//
+//	server.RegisterHandlerFunc("/xxx", handlerFunc) //all method
+//	server.RegisterHandlerFunc("/xxx", handlerFunc, http.MethodGet)
+//	server.RegisterHandlerFunc("/xxx", handlerFunc, http.MethodGet, http.MethodPost)
+func (this *Server) RegisterHandlerFunc(path string, handlerFunc http.HandlerFunc, methods ...string) {
+	if len(methods) == 0 {
+		this.getRouter().HandleFunc(path, handlerFunc)
+	} else {
+		this.getRouter().HandleFunc(path, handlerFunc).Methods(methods...)
+	}
 }
 
 // RegisterPathPrefixHandler is add path prefix handler.
 //
-// ex) server.RegisterPathPrefixHandler("xxx", handler)
-func (this *Server) RegisterPathPrefixHandler(prefix string, handler http.Handler) {
-	this.getRouter().PathPrefix(prefix).Handler(handler)
+// ex)
+//
+//	server.RegisterPathPrefixHandler("/xxx", handler) //all method
+//	server.RegisterPathPrefixHandler("/xxx", handler, http.MethodGet)
+//	server.RegisterPathPrefixHandler("/xxx", handler, http.MethodGet, http.MethodPost)
+func (this *Server) RegisterPathPrefixHandler(prefix string, handler http.Handler, methods ...string) {
+	if len(methods) == 0 {
+		this.getRouter().PathPrefix(prefix).Handler(handler)
+	} else {
+		this.getRouter().PathPrefix(prefix).Handler(handler).Methods(methods...)
+	}
 }
 
 // RegisterPathPrefixHandlerFunc is add path prefix handler function.
 //
-// ex) server.RegisterPathPrefixHandlerFunc("xxx", Func)
-func (this *Server) RegisterPathPrefixHandlerFunc(prefix string, handlerFunc http.HandlerFunc) {
-	this.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc)
+// ex)
+//
+//	server.RegisterPathPrefixHandlerFunc("/xxx", handlerFunc) //all method
+//	server.RegisterPathPrefixHandlerFunc("/xxx", handlerFunc, http.MethodGet)
+//	server.RegisterPathPrefixHandlerFunc("/xxx", handlerFunc, http.MethodGet, http.MethodPost)
+func (this *Server) RegisterPathPrefixHandlerFunc(prefix string, handlerFunc http.HandlerFunc, methods ...string) {
+	if len(methods) == 0 {
+		this.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc)
+	} else {
+		this.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc).Methods(methods...)
+	}
 }
 
 // Start is start the server.

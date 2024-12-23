@@ -25,12 +25,11 @@ func (this handler) ServeHTTP(w net_http.ResponseWriter, r *net_http.Request) {
 func setUp(server *http.Server) {
 	address = ":" + strconv.Itoa(10000+rand.IntN(1000))
 
-	server.RegisterHandler("/test-01/{id}", net_http.MethodGet, handler{})
+	server.RegisterHandler("/test-01/{id}", handler{})
+	server.RegisterHandlerFunc("/test-02/{id}", handler{}.ServeHTTP, net_http.MethodGet)
 
-	server.RegisterHandlerFunc("/test-02/{id}", net_http.MethodGet, handler{}.ServeHTTP)
-
-	server.RegisterPathPrefixHandler("/test-03", handler{})
-	server.RegisterPathPrefixHandlerFunc("/test-04", handler{}.ServeHTTP)
+	server.RegisterPathPrefixHandler("/test-03", handler{}, net_http.MethodGet)
+	server.RegisterPathPrefixHandlerFunc("/test-04", handler{}.ServeHTTP, net_http.MethodGet, net_http.MethodPost)
 
 	middlewareFunction := func(nextHandler net_http.Handler) net_http.Handler {
 		return net_http.HandlerFunc(func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
