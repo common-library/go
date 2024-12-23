@@ -1,0 +1,7 @@
+-- migrate:up
+ALTER TABLE test_01 DROP COLUMN field02;
+ALTER TABLE test_01 ADD field03 VARCHAR(20) NOT NULL;
+
+-- migrate:down
+ALTER TABLE test_01 DROP COLUMN field03;
+ALTER TABLE test_01 ADD field02 INTEGER NOT NULL;

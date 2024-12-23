@@ -3,6 +3,7 @@ package test
 import (
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/common-library/go/database/sql"
@@ -23,7 +24,7 @@ func (this *postgresql) getClient(t *testing.T, databaseName string) (sql.Client
 		return client, false
 	}
 
-	dsn := os.Getenv("POSTGRESQL_DSN") + " dbname=" + databaseName
+	dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", databaseName, 1)
 	if err := client.Open(this.getDriver(), dsn, 10); err != nil {
 		t.Fatal(err)
 	}

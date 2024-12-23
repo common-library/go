@@ -3,6 +3,7 @@ package sqlx_test
 import (
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -46,10 +47,12 @@ func TestMain(m *testing.M) {
 	setup := func() {
 		databaseInfo := map[string]string{}
 		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			databaseInfo[MySQL] = os.Getenv("MYSQL_DSN") + "mysql"
+			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
+			databaseInfo[MySQL] = dsn
 		}
 		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			databaseInfo[PostgreSQL] = os.Getenv("POSTGRESQL_DSN") + " dbname=postgres"
+			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
+			databaseInfo[PostgreSQL] = dsn
 		}
 
 		for driverName, dataSource := range databaseInfo {

@@ -5,6 +5,7 @@ go 1.23.0
 require (
 	entgo.io/ent v0.14.1
 	github.com/ClickHouse/clickhouse-go/v2 v2.28.3
+	github.com/amacneil/dbmate/v2 v2.21.0
 	github.com/aws/aws-sdk-go-v2 v1.31.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.36
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.34

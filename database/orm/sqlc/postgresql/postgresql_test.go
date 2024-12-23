@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/common-library/go/database/orm/sqlc/postgresql/pkg"
@@ -15,7 +16,7 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 		t.Parallel()
 	}
 
-	dsn := os.Getenv("POSTGRESQL_DSN") + " dbname=postgres"
+	dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
 	if connection, err := sql.Open("postgres", dsn); err != nil {
 		return nil, err
 	} else {

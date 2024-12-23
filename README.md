@@ -24,6 +24,7 @@ go get -u github.com/common-library/go
    - Deque
    - Queue
  - database
+   - dbmate
    - Elasticsearch v7/v8
    - MongoDB
    - Prometheus
@@ -78,6 +79,9 @@ go get -u github.com/common-library/go
      - S3
        - `docker run --name s3mock --detach --publish 9090:9090 --publish 9191:9191 adobe/s3mock:3.7.3`
        - `export S3_URL=http://127.0.0.1:9090`
+     - dbmate
+       - `#curl -fsSL -o $HOME/.local/bin/dbmate https://github.com/amacneil/dbmate/releases/download/v2.24.2/dbmate-linux-amd64`
+       - `chmod +x $HOME/.local/bin/dbmate`
    - Elasticsearch
      - v7
        - `docker run --name elasticsearch-v7 --detach --publish 19200:9200 --publish 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.21`

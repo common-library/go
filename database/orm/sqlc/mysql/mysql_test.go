@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/common-library/go/database/orm/sqlc/mysql/pkg"
@@ -15,7 +16,7 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 		t.Parallel()
 	}
 
-	dsn := os.Getenv("MYSQL_DSN") + "mysql"
+	dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
 	if connection, err := sql.Open("mysql", dsn); err != nil {
 		return nil, err
 	} else {
