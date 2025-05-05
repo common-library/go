@@ -91,8 +91,8 @@ func Error(arguments ...any) {
 // ex) klog.ErrorS(err, "message-01", "key-01", 1, "key-02", "value-01")
 func ErrorS(err error, message string, keysAndValues ...any) {
 	if withCallerInfo.Load() {
-		if callerInfo, err := utility.GetCallerInfo(2); err != nil {
-			klog.ErrorS(err, "")
+		if callerInfo, errTemp := utility.GetCallerInfo(2); errTemp != nil {
+			klog.ErrorS(errTemp, "")
 		} else {
 			klog.ErrorSDepth(1, err, message, append([]any{"callerInfo", callerInfo}, keysAndValues...)...)
 		}
