@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -98,10 +99,12 @@ func TestMain(m *testing.M) {
 		dialectors := []gorm.Dialector{}
 
 		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			dialectors = append(dialectors, mysql.Open(os.Getenv("MYSQL_DSN")+"mysql?parseTime=True"))
+			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
+			dialectors = append(dialectors, mysql.Open(dsn))
 		}
 		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			dialectors = append(dialectors, postgres.Open(os.Getenv("POSTGRESQL_DSN")+" dbname=postgres"))
+			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
+			dialectors = append(dialectors, postgres.Open(dsn))
 		}
 
 		for _, dialector := range dialectors {

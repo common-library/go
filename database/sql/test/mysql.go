@@ -2,6 +2,7 @@ package test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/common-library/go/database/sql"
@@ -21,7 +22,7 @@ func (this *mysql) getClient(t *testing.T, databaseName string) (sql.Client, boo
 		return client, false
 	}
 
-	dsn := os.Getenv("MYSQL_DSN") + databaseName
+	dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", databaseName, 1)
 	if err := client.Open(this.getDriver(), dsn, 10); err != nil {
 		t.Fatal(err)
 	}

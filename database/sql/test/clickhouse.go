@@ -2,6 +2,7 @@ package test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/common-library/go/database/sql"
@@ -17,14 +18,11 @@ func (this *clickhouse) createDatabase() bool {
 func (this *clickhouse) getClient(t *testing.T, databaseName string) (sql.Client, bool) {
 	client := sql.Client{}
 
-	if len(os.Getenv("CLICKHOUSE_DSN")) == 0 {
+	if len(os.Getenv("CLICKHOUSE_URL")) == 0 {
 		return client, false
 	}
 
-	dsn := os.Getenv("CLICKHOUSE_DSN")
-	if len(databaseName) != 0 {
-		dsn += "/" + databaseName
-	}
+	dsn := strings.Replace(os.Getenv("CLICKHOUSE_URL"), "${database}", databaseName, 1)
 
 	if err := client.Open(this.getDriver(), dsn, 10); err != nil {
 		t.Fatal(err)

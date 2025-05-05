@@ -24,6 +24,7 @@ go get -u github.com/common-library/go
    - Deque
    - Queue
  - database
+   - dbmate
    - Elasticsearch v7/v8
    - MongoDB
    - Prometheus
@@ -73,47 +74,50 @@ go get -u github.com/common-library/go
  - prepare
    - Amazon
      - DynamoDB
-       - `docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.4.0`
+       - `docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.6.1`
        - `export DYNAMODB_URL=http://127.0.0.1:8000`
      - S3
-       - `docker run --name s3mock --detach --publish 9090:9090 --publish 9191:9191 adobe/s3mock:3.7.3`
+       - `docker run --name s3mock --detach --publish 9090:9090 --publish 9191:9191 adobe/s3mock:4.1.1`
        - `export S3_URL=http://127.0.0.1:9090`
+   - dbmate
+     - `#curl -fsSL -o $HOME/.local/bin/dbmate https://github.com/amacneil/dbmate/releases/download/v2.24.2/dbmate-linux-amd64`
+     - `chmod +x $HOME/.local/bin/dbmate`
    - Elasticsearch
      - v7
-       - `docker run --name elasticsearch-v7 --detach --publish 19200:9200 --publish 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.21`
+       - `docker run --name elasticsearch-v7 --detach --publish 19200:9200 --publish 19300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" elasticsearch:7.17.28`
        - `export ELASTICSEARCH_ADDRESS_V7=http://:19200`
      - v8
        - `docker network create elastic`
-       - `docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 --publish 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:8.13.0`
+       - `docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 --publish 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:8.18.0`
        - `export ELASTICSEARCH_ADDRESS_V8=http://:29200`
    - GEMINI
      - [Set up API key](https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=go&hl=ko#set-up-api-key)
      - `export GEMINI_API_KEY=${API_KEY}`
    - MongoDB
-     - `docker run --name mongodb --detach --publish 27017:27017 mongo:7.0.9`
+     - `docker run --name mongodb --detach --publish 27017:27017 mongo:8.0.9`
      - `export MONGODB_ADDRESS=:27017`
    - Prometheus
-     - `wget https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz`
-     - `tar xvzf prometheus-2.52.0.linux-amd64.tar.gz`
-     - `cd prometheus-2.52.0.linux-amd64`
+     - `wget https://github.com/prometheus/prometheus/releases/download/v3.3.1/prometheus-3.3.1.linux-amd64.tar.gz`
+     - `tar xvzf prometheus-3.3.1.linux-amd64.tar.gz`
+     - `cd prometheus-3.3.1.linux-amd64`
      - `yq -i '.scrape_configs[0].static_configs[0].targets = [":9095"]' prometheus.yml`
      - `./prometheus --config.file=prometheus.yml --web.listen-address=:9095 &`
      - `export PROMETHEUS_ADDRESS=:9095`
    - Redis
-     - `docker run --name redis --detach --publish 6379:6379 redis:7.2.4`
+     - `docker run --name redis --detach --publish 6379:6379 redis:7.4.3-alpine`
      - `export REDIS_ADDRESS=:6379`
    - SQL
      - Amazon DynamoDB
-       - `docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.4.0`
+       - `docker run --name dynamodb --detach --publish 8000:8000 --env "-jar DynamoDBLocal.jar -sharedDb -inMemory" amazon/dynamodb-local:2.6.1`
        - `export DYNAMODB_URL=http://127.0.0.1:8000`
      - ClickHouse
-       - `docker run --name clickhouse --detach --publish 19000:9000 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:24.4.1`
+       - `docker run --name clickhouse --detach --publish 19000:9000 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:25.4.2.31-alpine`
        - `export CLICKHOUSE_DSN='clickhouse://default:@127.0.0.1:19000'`
      - MySQL
-       - `docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:8.4.0`
+       - `docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:9.3.0`
        - `export MYSQL_DSN='root:root@tcp(127.0.0.1)/'`
      - PostgreSQL
-       - `docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:16.2-alpine`
+       - `docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:17.4-alpine`
        - `export POSTGRESQL_DSN='host=localhost port=5432 user=postgres password=postgres sslmode=disable'`
  - Test
    - `go clean -testcache && go test -cover ./...`

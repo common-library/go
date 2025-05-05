@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/beego/beego/v2/client/orm"
@@ -47,10 +48,12 @@ func TestMain(m *testing.M) {
 		orm.RegisterModel(models...)
 
 		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "mysql", driverName: "mysql", dataSource: os.Getenv("MYSQL_DSN") + "mysql"})
+			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
+			dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "mysql", driverName: "mysql", dataSource: dsn})
 		}
 		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "postgres", driverName: "postgres", dataSource: os.Getenv("POSTGRESQL_DSN") + " dbname=postgres"})
+			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
+			dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "postgres", driverName: "postgres", dataSource: dsn})
 		}
 
 		if len(dataBaseInfos) != 0 {

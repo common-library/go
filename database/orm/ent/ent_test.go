@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 
@@ -73,10 +74,12 @@ func TestMain(m *testing.M) {
 		ctx := context.Background()
 
 		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			databaseInfo["mysql"] = os.Getenv("MYSQL_DSN") + "mysql?parseTime=true"
+			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
+			databaseInfo["mysql"] = dsn
 		}
 		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			databaseInfo["postgres"] = os.Getenv("POSTGRESQL_DSN") + " dbname=postgres"
+			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
+			databaseInfo["postgres"] = dsn
 		}
 
 		for driverName, dataSourceName := range databaseInfo {

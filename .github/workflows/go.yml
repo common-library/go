@@ -19,26 +19,28 @@ env:
   MONGODB_ADDRESS: :27017
   PROMETHEUS_ADDRESS: :9095
   REDIS_ADDRESS: :6379
-  CLICKHOUSE_DSN: clickhouse://default:@127.0.0.1:19000
-  MYSQL_DSN: root:root@tcp(127.0.0.1)/
-  POSTGRESQL_DSN: host=localhost port=5432 user=postgres password=postgres sslmode=disable
+  CLICKHOUSE_DSN: clickhouse://default:default@127.0.0.1:19000
+  MYSQL_DSN: root:root@tcp(127.0.0.1)/${database}?parseTime=true
+  MYSQL_URL: mysql://root:root@127.0.0.1:3306/${database}?parseTime=true
+  POSTGRESQL_DSN: host=localhost port=5432 user=postgres password=postgres sslmode=disable dbname=${database}
+  POSTGRESQL_URL: postgresql://postgres:postgres@localhost:5432/${database}?sslmode=disable
 
 jobs:
   build:
     strategy:
       matrix:
         runner: [ 'ubuntu-24.04' ]
-        go: [ '1.23.0', '1.23.1' ]
-        dynamodb-local: [ '2.5.2' ]
-        s3mock: [ '3.10.0' ]
-        elasticsearch-v7: [ '7.17.24' ]
-        elasticsearch-v8: [ '8.15.1' ]
-        mongo: [ '7.0.14' ]
-        redis: [ '7.4.0-alpine' ]
-        clickhouse: [ '24.8.4.13-alpine' ]
-        mysql: [ '9.0.1' ]
-        postgres: [ '16.4-alpine' ]
-        prometheus: [ '2.54.1' ]
+        go: [ '1.23.0', '1.24.2' ]
+        dynamodb-local: [ '2.6.1' ]
+        s3mock: [ '4.1.1' ]
+        elasticsearch-v7: [ '7.17.28' ]
+        elasticsearch-v8: [ '8.18.0' ]
+        mongo: [ '8.0.9' ]
+        redis: [ '7.4.3-alpine' ]
+        clickhouse: [ '25.4.2.31-alpine' ]
+        mysql: [ '9.3.0' ]
+        postgres: [ '17.4-alpine' ]
+        prometheus: [ '3.3.1' ]
 
     runs-on: ${{ matrix.runner }}
 
@@ -64,7 +66,7 @@ jobs:
           docker run --name elasticsearch-v8 --net elastic --detach --publish 29200:9200 -p 29300:9300 --env discovery.type=single-node --env ES_JAVA_OPTS="-Xms500m -Xmx500m" --env xpack.security.enabled=false elasticsearch:${{ matrix.elasticsearch-v8 }}
           docker run --name mongodb --detach --publish 27017:27017 mongo:${{ matrix.mongo }}
           docker run --name redis --detach --publish 6379:6379 redis:${{ matrix.redis }}
-          docker run --name clickhouse --detach --publish 19000:9000 --ulimit nofile=262144:262144 clickhouse/clickhouse-server:${{ matrix.clickhouse }}
+          docker run --name clickhouse --detach --publish 19000:9000 --env CLICKHOUSE_PASSWORD=default --ulimit nofile=262144:262144 clickhouse/clickhouse-server:${{ matrix.clickhouse }}
           docker run --name mysql --detach --publish 3306:3306 --env MYSQL_ROOT_PASSWORD=root mysql:${{ matrix.mysql }}
           docker run --name postgres --detach --publish 5432:5432 --env POSTGRES_PASSWORD=postgres postgres:${{ matrix.postgres }}
 

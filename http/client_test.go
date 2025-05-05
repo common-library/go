@@ -26,10 +26,10 @@ func TestRequest2(t *testing.T) {
 
 	server := http.Server{}
 
-	server.RegisterHandlerFunc("/test/{id}", net_http.MethodGet, func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
+	server.RegisterHandlerFunc("/test/{id}", func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
 		responseWriter.WriteHeader(net_http.StatusOK)
 		responseWriter.Write([]byte(`{"field_1":1}`))
-	})
+	}, net_http.MethodGet)
 
 	middlewareFunction := func(nextHandler net_http.Handler) net_http.Handler {
 		return net_http.HandlerFunc(func(responseWriter net_http.ResponseWriter, request *net_http.Request) {

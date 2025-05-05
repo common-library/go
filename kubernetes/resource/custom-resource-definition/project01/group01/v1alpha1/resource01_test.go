@@ -26,7 +26,7 @@ func TestResource01(t *testing.T) {
 			if body, err := json.ToString(v1alpha1.Resource01); err != nil {
 				t.Fatal(err)
 			} else {
-				fmt.Fprintf(w, body)
+				fmt.Fprintf(w, "%s", body)
 			}
 
 		case http.MethodPost:

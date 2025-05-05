@@ -60,7 +60,7 @@ func TestGet(t *testing.T) {
 			if body, err := json.ToString(configMap); err != nil {
 				t.Fatal(err)
 			} else {
-				fmt.Fprintf(w, body)
+				fmt.Fprintf(w, "%s", body)
 			}
 		case http.MethodPost:
 			fallthrough
