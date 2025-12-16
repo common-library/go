@@ -43,15 +43,15 @@ type client struct {
 // Send transmits an event.
 //
 // ex) result := client.Send(event)
-func (this *client) Send(event Event) Result {
-	return Result{result: this.clientOfSdk.Send(this.getContext(), event)}
+func (c *client) Send(event Event) Result {
+	return Result{result: c.clientOfSdk.Send(c.getContext(), event)}
 }
 
 // Send transmits an event and returns a response event.
 //
 // ex) responseEvent, result := client.Request(event)
-func (this *client) Request(event Event) (*Event, Result) {
-	responseEvent, result := this.clientOfSdk.Request(this.getContext(), event)
+func (c *client) Request(event Event) (*Event, Result) {
+	responseEvent, result := c.clientOfSdk.Request(c.getContext(), event)
 
 	return responseEvent, Result{result: result}
 }
@@ -63,15 +63,15 @@ func (this *client) Request(event Event) (*Event, Result) {
 //	httpOption := []cloudeventssdk_http.Option{cloudeventssdk_http.WithPort(port)}
 //	receiveclient, err := cloudevents.NewHttp("", httpOption, nil)
 //	receiveclient.StartReceiver(handler, failureFunc)
-func (this *client) StartReceiver(handler func(context.Context, Event), failureFunc func(error)) {
-	this.wgForReceiver.Add(1)
+func (c *client) StartReceiver(handler func(context.Context, Event), failureFunc func(error)) {
+	c.wgForReceiver.Add(1)
 	go func() {
-		defer this.wgForReceiver.Done()
+		defer c.wgForReceiver.Done()
 
-		ctx, cancel := context.WithCancel(this.getContext())
-		this.cancelFuncForReceiver = cancel
+		ctx, cancel := context.WithCancel(c.getContext())
+		c.cancelFuncForReceiver = cancel
 
-		if err := this.clientOfSdk.StartReceiver(ctx, handler); err != nil {
+		if err := c.clientOfSdk.StartReceiver(ctx, handler); err != nil {
 			failureFunc(err)
 		}
 	}()
@@ -80,17 +80,17 @@ func (this *client) StartReceiver(handler func(context.Context, Event), failureF
 // StopReceiver stops receiving events by StartReceiver.
 //
 // ex)client.StopReceiver()
-func (this *client) StopReceiver() {
-	if this.cancelFuncForReceiver != nil {
-		this.cancelFuncForReceiver()
+func (c *client) StopReceiver() {
+	if c.cancelFuncForReceiver != nil {
+		c.cancelFuncForReceiver()
 	}
-	this.wgForReceiver.Wait()
+	c.wgForReceiver.Wait()
 }
 
-func (this *client) getContext() context.Context {
-	switch this.clientType {
+func (c *client) getContext() context.Context {
+	switch c.clientType {
 	case clientTypeHttp:
-		return cloudeventssdk.ContextWithTarget(context.Background(), this.address)
+		return cloudeventssdk.ContextWithTarget(context.Background(), c.address)
 	default:
 		return nil
 	}

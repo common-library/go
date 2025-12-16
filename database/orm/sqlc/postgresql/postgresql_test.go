@@ -3,20 +3,26 @@ package postgresql_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/common-library/go/database/orm/sqlc/postgresql/pkg"
+	"github.com/common-library/go/testutil"
 	_ "github.com/lib/pq"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
+
+var container testcontainers.Container
+var dsn string
 
 func getQueries(t *testing.T) (*pkg.Queries, error) {
 	if t != nil {
 		t.Parallel()
 	}
 
-	dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
 	if connection, err := sql.Open("postgres", dsn); err != nil {
 		return nil, err
 	} else {
@@ -25,16 +31,52 @@ func getQueries(t *testing.T) (*pkg.Queries, error) {
 }
 
 func TestMain(m *testing.M) {
-	if len(os.Getenv("POSTGRESQL_DSN")) == 0 {
-		return
-	}
-
 	ctx := context.Background()
 
 	setup := func() {
-		if queries, err := getQueries(nil); err != nil {
+		var err error
+		container, err = postgres.Run(ctx, testutil.PostgresImage,
+			postgres.WithDatabase("testdb"),
+			postgres.WithUsername("testuser"),
+			postgres.WithPassword("testpass"),
+			postgres.BasicWaitStrategies(),
+		)
+		if err != nil {
 			panic(err)
-		} else if err := queries.CreateTable01(ctx); err != nil {
+		}
+
+		host, err := container.Host(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		port, err := container.MappedPort(ctx, "5432")
+		if err != nil {
+			panic(err)
+		}
+
+		dsn = fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", host, port.Port())
+
+		maxRetries := 10
+		for i := 0; i < maxRetries; i++ {
+			var queries *pkg.Queries
+			queries, err = getQueries(nil)
+			if err == nil {
+				err = queries.CreateTable01(ctx)
+				if err == nil {
+					break
+				}
+			}
+
+			if i < maxRetries-1 {
+				backoff := time.Duration(50<<uint(i)) * time.Millisecond
+				if backoff > time.Second {
+					backoff = time.Second
+				}
+				time.Sleep(backoff)
+			}
+		}
+		if err != nil {
 			panic(err)
 		}
 	}
@@ -43,6 +85,10 @@ func TestMain(m *testing.M) {
 		if queries, err := getQueries(nil); err != nil {
 			panic(err)
 		} else if err := queries.DropTable01(ctx); err != nil {
+			panic(err)
+		}
+
+		if err := container.Terminate(ctx); err != nil {
 			panic(err)
 		}
 	}

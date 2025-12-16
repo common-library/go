@@ -24,8 +24,8 @@ type Server struct {
 // Start is start the server.
 //
 // ex) err := server.Start("tcp", "127.0.0.1:10000", 1024, func(client Client) {...}, func(err error) {...})
-func (this *Server) Start(network, address string, clientPoolSize int, acceptSuccessFunc func(client Client), acceptFailureFunc func(err error)) error {
-	this.Stop()
+func (s *Server) Start(network, address string, clientPoolSize int, acceptSuccessFunc func(client Client), acceptFailureFunc func(err error)) error {
+	s.Stop()
 
 	if len(network) == 0 {
 		return errors.New("invalid network")
@@ -35,32 +35,32 @@ func (this *Server) Start(network, address string, clientPoolSize int, acceptSuc
 		return errors.New("invalid address")
 	}
 
-	this.channel = make(chan Client, clientPoolSize)
-	this.acceptSuccessFunc = acceptSuccessFunc
-	this.acceptFailureFunc = acceptFailureFunc
+	s.channel = make(chan Client, clientPoolSize)
+	s.acceptSuccessFunc = acceptSuccessFunc
+	s.acceptFailureFunc = acceptFailureFunc
 
 	listener, err := net.Listen(network, address)
 	if err != nil {
 		return err
 	}
-	this.listener = listener
+	s.listener = listener
 
 	go func() {
-		this.condition.Store(true)
-		for this.condition.Load() {
-			client, err := this.accept()
+		s.condition.Store(true)
+		for s.condition.Load() {
+			client, err := s.accept()
 			if err != nil {
-				if this.condition.Load() && this.acceptFailureFunc != nil {
-					this.acceptFailureFunc(err)
+				if s.condition.Load() && s.acceptFailureFunc != nil {
+					s.acceptFailureFunc(err)
 				}
 
 				continue
 			}
 
-			this.channel <- client
+			s.channel <- client
 
-			this.jobWaitGroup.Add(1)
-			go this.job()
+			s.jobWaitGroup.Add(1)
+			go s.job()
 		}
 	}()
 
@@ -70,21 +70,21 @@ func (this *Server) Start(network, address string, clientPoolSize int, acceptSuc
 // Stop is stop the server.
 //
 // ex) err := server.Stop()
-func (this *Server) Stop() error {
-	this.condition.Store(false)
+func (s *Server) Stop() error {
+	s.condition.Store(false)
 
-	this.jobWaitGroup.Wait()
+	s.jobWaitGroup.Wait()
 
-	if this.channel != nil {
-		for len(this.channel) != 0 {
+	if s.channel != nil {
+		for len(s.channel) != 0 {
 			time.Sleep(time.Millisecond)
 		}
-		this.channel = nil
+		s.channel = nil
 	}
 
-	if this.listener != nil {
-		err := this.listener.Close()
-		this.listener = nil
+	if s.listener != nil {
+		err := s.listener.Close()
+		s.listener = nil
 		if err != nil {
 			return err
 		}
@@ -96,22 +96,22 @@ func (this *Server) Stop() error {
 // GetCondition is get the condition
 //
 // ex) condition := server.GetCondition()
-func (this *Server) GetCondition() bool {
-	return this.condition.Load()
+func (s *Server) GetCondition() bool {
+	return s.condition.Load()
 }
 
-func (this *Server) accept() (Client, error) {
-	connnetion, err := this.listener.Accept()
+func (s *Server) accept() (Client, error) {
+	connnetion, err := s.listener.Accept()
 	return Client{connnetion}, err
 }
 
-func (this *Server) job() {
-	defer this.jobWaitGroup.Done()
+func (s *Server) job() {
+	defer s.jobWaitGroup.Done()
 
-	client := <-this.channel
+	client := <-s.channel
 	defer client.Close()
 
-	if this.acceptSuccessFunc != nil {
-		this.acceptSuccessFunc(client)
+	if s.acceptSuccessFunc != nil {
+		s.acceptSuccessFunc(client)
 	}
 }

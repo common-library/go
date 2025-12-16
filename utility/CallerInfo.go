@@ -23,7 +23,7 @@ type CallerInfo struct {
 // ex) callerInfo, err := utility.GetCallerInfo()
 func GetCallerInfo(numberOfStackFramesToAscend int) (CallerInfo, error) {
 	pc, file, line, ok := runtime.Caller(numberOfStackFramesToAscend)
-	if ok == false {
+	if !ok {
 		return CallerInfo{}, errors.New("runtime.Caller() call fail")
 	}
 

@@ -61,138 +61,137 @@ type Log struct {
 // Trace means recording trace level logs.
 //
 // ex) testLog.Trace("message-01", "key-01", "value-01", "key-02", 1)
-func (this *Log) Trace(message string, arguments ...any) {
-	this.producer(LevelTrace, message, arguments...)
+func (l *Log) Trace(message string, arguments ...any) {
+	l.producer(LevelTrace, message, arguments...)
 }
 
 // Debug means recording debug level logs.
 //
 // ex) testLog.Debug("message-02", "key-01", "value-02", "key-02", 2)
-func (this *Log) Debug(message string, arguments ...any) {
-	this.producer(LevelDebug, message, arguments...)
+func (l *Log) Debug(message string, arguments ...any) {
+	l.producer(LevelDebug, message, arguments...)
 }
 
 // Info means recording info level logs.
 //
 // ex) testLog.Info("message-03", "key-01", "value-03", "key-02", 3)
-func (this *Log) Info(message string, arguments ...any) {
-	this.producer(LevelInfo, message, arguments...)
+func (l *Log) Info(message string, arguments ...any) {
+	l.producer(LevelInfo, message, arguments...)
 }
 
 // Warn means recording warn level logs.
 //
 // ex) testLog.Warn("message-04", "key-01", "value-04", "key-02", 4)
-func (this *Log) Warn(message string, arguments ...any) {
-	this.producer(LevelWarn, message, arguments...)
+func (l *Log) Warn(message string, arguments ...any) {
+	l.producer(LevelWarn, message, arguments...)
 }
 
 // Error means recording error level logs.
 //
 // ex) testLog.Error("message-05", "key-01", "value-05", "key-02", 5)
-func (this *Log) Error(message string, arguments ...any) {
-	this.producer(LevelError, message, arguments...)
+func (l *Log) Error(message string, arguments ...any) {
+	l.producer(LevelError, message, arguments...)
 }
 
 // Fatal means recording fatal level logs.
 //
 // ex) testLog.Fatal("message-06", "key-01", "value-06", "key-02", 6)
-func (this *Log) Fatal(message string, arguments ...any) {
-	this.producer(LevelFatal, message, arguments...)
+func (l *Log) Fatal(message string, arguments ...any) {
+	l.producer(LevelFatal, message, arguments...)
 }
 
 // Flush waits to record the logs accumulated up to the time it was called.
 //
 // ex) testLog.Flush()
-func (this *Log) Flush() {
+func (l *Log) Flush() {
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	defer wg.Wait()
 
-	this.queueForLogging.Push(func() { wg.Done() })
-	go this.cosumer()
+	l.queueForLogging.Push(func() { wg.Done() })
+	go l.cosumer()
 }
 
 // GetLevel gets the level.
 //
 // ex) level := testLog.GetLevel()
-func (this *Log) GetLevel() Level {
-	return this.level
+func (l *Log) GetLevel() Level {
+	return l.level
 }
 
 // SetLevel sets the level.
 //
 // ex) testLog.SetLevel(log.LevelInfo)
-func (this *Log) SetLevel(level Level) {
-	this.queueForLogging.Push(func() {
-		this.setLogger(level, this.outputLocation, this.fileName, this.fileExtensionName, this.addDate)
+func (l *Log) SetLevel(level Level) {
+	l.queueForLogging.Push(func() {
+		l.setLogger(level, l.outputLocation, l.fileName, l.fileExtensionName, l.addDate)
 	})
 }
 
 // SetOutputToStdout sets the output to standard output.
 //
 // ex) testLog.SetOutputToStdout()
-func (this *Log) SetOutputToStdout() {
-	this.queueForLogging.Push(func() { this.setLogger(this.level, outPutStdout, "", "", this.addDate) })
+func (l *Log) SetOutputToStdout() {
+	l.queueForLogging.Push(func() { l.setLogger(l.level, outPutStdout, "", "", l.addDate) })
 }
 
 // SetOutputToStderr sets the output to standard error.
 //
 // ex) testLog.SetOutputToStderr()
-func (this *Log) SetOutputToStderr() {
-	this.queueForLogging.Push(func() { this.setLogger(this.level, outPutStderr, "", "", this.addDate) })
+func (l *Log) SetOutputToStderr() {
+	l.queueForLogging.Push(func() { l.setLogger(l.level, outPutStderr, "", "", l.addDate) })
 }
 
 // SetOutputToFile sets the output to file.
 //
 // ex) testLog.SetOutputToFile(fileName, fileExtensionName, true)
-func (this *Log) SetOutputToFile(fileName, fileExtensionName string, addDate bool) {
-	this.queueForLogging.Push(func() {
-		this.setLogger(this.level, outPutFile, fileName, fileExtensionName, addDate)
+func (l *Log) SetOutputToFile(fileName, fileExtensionName string, addDate bool) {
+	l.queueForLogging.Push(func() {
+		l.setLogger(l.level, outPutFile, fileName, fileExtensionName, addDate)
 	})
 }
 
 // SetWithCallerInfo also records caller information.
 //
 // ex) testLog.SetWithCallerInfo(true)
-func (this *Log) SetWithCallerInfo(withCallerInfo bool) {
-	this.queueForLogging.Push(func() { this.withCallerInfo = withCallerInfo })
+func (l *Log) SetWithCallerInfo(withCallerInfo bool) {
+	l.queueForLogging.Push(func() { l.withCallerInfo = withCallerInfo })
 }
 
-func (this *Log) getLogger() *slog.Logger {
-	this.mutexForLogger.Lock()
-	defer this.mutexForLogger.Unlock()
+func (l *Log) getLogger() *slog.Logger {
+	l.mutexForLogger.Lock()
+	defer l.mutexForLogger.Unlock()
 
-	if this.logger == nil {
-		this.logger = slog.Default()
+	if l.logger == nil {
+		l.logger = slog.Default()
 	}
 
-	return this.logger
+	return l.logger
 }
 
-func (this *Log) setLogger(level Level, outputLocation outPut, fileName, fileExtensionName string, addDate bool) {
-	this.mutexForLogger.Lock()
-	defer this.mutexForLogger.Unlock()
+func (l *Log) setLogger(level Level, outputLocation outPut, fileName, fileExtensionName string, addDate bool) {
+	l.mutexForLogger.Lock()
+	defer l.mutexForLogger.Unlock()
 
-	this.level = level
-	this.outputLocation = outputLocation
-	this.fileName = fileName
-	this.fileExtensionName = fileExtensionName
-	this.addDate = addDate
+	l.level = level
+	l.outputLocation = outputLocation
+	l.fileName = fileName
+	l.fileExtensionName = fileExtensionName
+	l.addDate = addDate
 
 	opts := &slog.HandlerOptions{
 		Level: slog.Level(level),
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.LevelKey {
+			switch a.Key {
+			case slog.LevelKey:
 				level := a.Value.Any().(slog.Level)
 				if levelLabel, exists := levelNames[level]; exists {
 					a.Value = slog.StringValue(levelLabel)
-				} else {
-					levelLabel = level.String()
 				}
 
-			} else if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(this.queueForTime.Front().String())
-				this.queueForTime.Pop()
+			case slog.TimeKey:
+				a.Value = slog.StringValue(l.queueForTime.Front().String())
+				l.queueForTime.Pop()
 			}
 
 			return a
@@ -209,10 +208,10 @@ func (this *Log) setLogger(level Level, outputLocation outPut, fileName, fileExt
 	case outPutFile:
 		options := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 
-		if this.addDate {
-			fileName = this.fileName + "_" + time.Now().Format("20060102") + "." + this.fileExtensionName
+		if l.addDate {
+			fileName = l.fileName + "_" + time.Now().Format("20060102") + "." + l.fileExtensionName
 		} else {
-			fileName = this.fileName + "." + this.fileExtensionName
+			fileName = l.fileName + "." + l.fileExtensionName
 		}
 
 		if file, err := os.OpenFile(fileName, options, os.FileMode(0644)); err != nil {
@@ -223,44 +222,44 @@ func (this *Log) setLogger(level Level, outputLocation outPut, fileName, fileExt
 		}
 	}
 
-	this.logger = slog.New(slog.NewJSONHandler(writer, opts))
+	l.logger = slog.New(slog.NewJSONHandler(writer, opts))
 }
 
-func (this *Log) producer(level Level, message string, arguments ...any) {
+func (l *Log) producer(level Level, message string, arguments ...any) {
 	t := time.Now()
 	callerInfo, errForCallerInfo := utility.GetCallerInfo(3)
-	logger := this.getLogger()
+	logger := l.getLogger()
 
 	f := func() {
-		if this.lastDay != t.Day() {
-			this.lastDay = t.Day()
-			this.setLogger(this.level, this.outputLocation, this.fileName, this.fileExtensionName, this.addDate)
+		if l.lastDay != t.Day() {
+			l.lastDay = t.Day()
+			l.setLogger(l.level, l.outputLocation, l.fileName, l.fileExtensionName, l.addDate)
 		}
 
-		logger = this.getLogger()
-		if this.withCallerInfo && errForCallerInfo == nil {
+		logger = l.getLogger()
+		if l.withCallerInfo && errForCallerInfo == nil {
 			logger = logger.With(slog.Any("CallerInfo", callerInfo))
-		} else if this.withCallerInfo && errForCallerInfo != nil {
+		} else if l.withCallerInfo && errForCallerInfo != nil {
 			logger.Error("utility.GetCallerInfo fail", "error", errForCallerInfo)
 		}
 
 		logger.Log(context.Background(), slog.Level(level), message, arguments...)
 	}
 
-	this.queueForTime.Push(t)
-	this.queueForLogging.Push(f)
+	l.queueForTime.Push(t)
+	l.queueForLogging.Push(f)
 
-	go this.cosumer()
+	go l.cosumer()
 }
 
-func (this *Log) cosumer() {
-	if this.mutexForLogging.TryLock() == false {
+func (l *Log) cosumer() {
+	if !l.mutexForLogging.TryLock() {
 		return
 	}
-	defer this.mutexForLogging.Unlock()
+	defer l.mutexForLogging.Unlock()
 
-	for this.queueForLogging.Size() != 0 {
-		this.queueForLogging.Front()()
-		this.queueForLogging.Pop()
+	for l.queueForLogging.Size() != 0 {
+		l.queueForLogging.Front()()
+		l.queueForLogging.Pop()
 	}
 }

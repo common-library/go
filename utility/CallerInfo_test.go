@@ -10,17 +10,26 @@ import (
 func TestGetCallerInfo(t *testing.T) {
 	wg := new(sync.WaitGroup)
 	goroutineID := 0
+	errorChan := make(chan error, 1)
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
 		if callerInfo, err := utility.GetCallerInfo(1); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else {
 			goroutineID = callerInfo.GoroutineID
 		}
 	}()
 	wg.Wait()
+
+	select {
+	case err := <-errorChan:
+		t.Fatal(err)
+	default:
+	}
 
 	if callerInfo, err := utility.GetCallerInfo(1); err != nil {
 		t.Fatal(err)
@@ -30,7 +39,7 @@ func TestGetCallerInfo(t *testing.T) {
 		t.Fatal(callerInfo.FileName)
 	} else if callerInfo.FunctionName != "TestGetCallerInfo" {
 		t.Fatal(callerInfo.FunctionName)
-	} else if callerInfo.Line != 25 {
+	} else if callerInfo.Line != 34 {
 		t.Fatal(callerInfo.Line)
 	} else if callerInfo.GoroutineID == goroutineID {
 		t.Fatal(callerInfo.GoroutineID, goroutineID)

@@ -2,7 +2,7 @@
 package http
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -54,7 +54,7 @@ func getResponse(request *http.Request, timeout time.Duration, transport *http.T
 	} else {
 		defer response.Body.Close()
 
-		if responseBody, err := ioutil.ReadAll(response.Body); err != nil {
+		if responseBody, err := io.ReadAll(response.Body); err != nil {
 			return Response{}, err
 		} else {
 			return Response{Header: response.Header, Body: string(responseBody), StatusCode: response.StatusCode}, nil

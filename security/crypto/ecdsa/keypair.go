@@ -14,11 +14,11 @@ type KeyPair struct {
 // Generate is to generate a key pair.
 //
 // ex) err := keyPair.Generate(elliptic.P384())
-func (this *KeyPair) Generate(curve elliptic.Curve) error {
-	if err := this.privateKey.SetCurve(curve); err != nil {
+func (kp *KeyPair) Generate(curve elliptic.Curve) error {
+	if err := kp.privateKey.SetCurve(curve); err != nil {
 		return err
 	} else {
-		this.publicKey = this.privateKey.GetPublicKey()
+		kp.publicKey = kp.privateKey.GetPublicKey()
 		return nil
 	}
 }
@@ -26,28 +26,28 @@ func (this *KeyPair) Generate(curve elliptic.Curve) error {
 // Sign is create a signature for message.
 //
 // ex) signature, err := keyPair.Sign(message)
-func (this *KeyPair) Sign(message string) (Signature, error) {
-	return this.privateKey.Sign(message)
+func (kp *KeyPair) Sign(message string) (Signature, error) {
+	return kp.privateKey.Sign(message)
 }
 
 // Verify is verifies the signature.
 //
 // ex) result := keyPair.Verify(message, signature)
-func (this *KeyPair) Verify(message string, signature Signature) bool {
-	return this.publicKey.Verify(message, signature)
+func (kp *KeyPair) Verify(message string, signature Signature) bool {
+	return kp.publicKey.Verify(message, signature)
 }
 
 // GetKeyPair is to get a key pair.
 //
 // ex) privateKey, publicKey := keyPair.GetKeyPair()
-func (this *KeyPair) GetKeyPair() (privateKey PrivateKey, publicKey PublicKey) {
-	return this.privateKey, this.publicKey
+func (kp *KeyPair) GetKeyPair() (privateKey PrivateKey, publicKey PublicKey) {
+	return kp.privateKey, kp.publicKey
 }
 
 // SetKeyPair is to set a key pair.
 //
 // ex) keyPair.SetKeyPair(privateKey, publicKey)
-func (this *KeyPair) SetKeyPair(privateKey PrivateKey, publicKey PublicKey) {
-	this.privateKey = privateKey
-	this.publicKey = publicKey
+func (kp *KeyPair) SetKeyPair(privateKey PrivateKey, publicKey PublicKey) {
+	kp.privateKey = privateKey
+	kp.publicKey = publicKey
 }

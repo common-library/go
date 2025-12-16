@@ -4,7 +4,6 @@ package gzip
 import (
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -54,7 +53,7 @@ func Decompress(gzipName, fileName, outputPath string) error {
 	}
 	defer gzipReader.Close()
 
-	if data, err := ioutil.ReadAll(gzipReader); err != nil {
+	if data, err := io.ReadAll(gzipReader); err != nil {
 		return err
 	} else if err := file.CreateDirectoryAll(outputPath, os.ModePerm); err != nil {
 		return err

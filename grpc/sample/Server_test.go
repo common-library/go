@@ -99,9 +99,10 @@ func TestFunc2(t *testing.T) {
 	}
 
 	go func() {
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			if err := stream.Send(&sample.Request{Data1: data1, Data2: data2}); err != nil {
-				t.Fatal(err)
+				t.Errorf("stream.Send failed: %v", err)
+				return
 			}
 		}
 
@@ -117,9 +118,11 @@ func TestFunc2(t *testing.T) {
 			if reply, err := stream.Recv(); err == io.EOF {
 				return
 			} else if err != nil {
-				t.Fatal(err)
+				t.Errorf("stream.Recv failed: %v", err)
+				return
 			} else if reply.Data1 != data1 || reply.Data2 != data2 {
-				t.Fatal(reply)
+				t.Errorf("unexpected reply: %v", reply)
+				return
 			}
 		}
 	}()

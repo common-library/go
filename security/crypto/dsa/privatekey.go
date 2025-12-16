@@ -1,7 +1,12 @@
 // Package dsa provides dsa crypto related implementations.
+//
+// Deprecated: DSA is a legacy algorithm and should not be used for new applications.
+// Use Ed25519 (crypto/ed25519) or other modern alternatives instead.
+// DSA keys with 1024-bit moduli are cryptographically weak.
 package dsa
 
 import (
+	//lint:ignore SA1019 DSA is deprecated but kept for compatibility
 	"crypto/dsa"
 	"crypto/rand"
 	"crypto/sha256"
@@ -17,9 +22,9 @@ type PrivateKey struct {
 // Sign is create a signature for message.
 //
 // ex) signature, err := privateKey.Sign(message)
-func (this *PrivateKey) Sign(message string) (Signature, error) {
+func (pk *PrivateKey) Sign(message string) (Signature, error) {
 	hash := sha256.Sum256([]byte(message))
-	if r, s, err := dsa.Sign(rand.Reader, this.privateKey, hash[:]); err != nil {
+	if r, s, err := dsa.Sign(rand.Reader, pk.privateKey, hash[:]); err != nil {
 		return Signature{}, err
 	} else {
 		return Signature{R: r, S: s}, nil
@@ -29,30 +34,30 @@ func (this *PrivateKey) Sign(message string) (Signature, error) {
 // Verify is verifies the signature.
 //
 // ex) result := privateKey.Verify(message, signature)
-func (this *PrivateKey) Verify(message string, signature Signature) bool {
+func (pk *PrivateKey) Verify(message string, signature Signature) bool {
 	hash := sha256.Sum256([]byte(message))
 
-	return dsa.Verify(&this.privateKey.PublicKey, hash[:], signature.R, signature.S)
+	return dsa.Verify(&pk.privateKey.PublicKey, hash[:], signature.R, signature.S)
 }
 
 // Get is to get a *dsa.PrivateKey.
 //
 // ex) key := privateKey.Get()
-func (this *PrivateKey) Get() *dsa.PrivateKey {
-	return this.privateKey
+func (pk *PrivateKey) Get() *dsa.PrivateKey {
+	return pk.privateKey
 }
 
 // Set is to set a *dsa.PrivateKey.
 //
 // ex) privateKey.Set(key)
-func (this *PrivateKey) Set(privateKey *dsa.PrivateKey) {
-	this.privateKey = privateKey
+func (pk *PrivateKey) Set(privateKey *dsa.PrivateKey) {
+	pk.privateKey = privateKey
 }
 
 // SetSizes is to set the primary key using sizes.
 //
 // ex) err := privateKey.SetSizes(crypto_dsa.L1024N160)
-func (this *PrivateKey) SetSizes(parameterSizes dsa.ParameterSizes) error {
+func (pk *PrivateKey) SetSizes(parameterSizes dsa.ParameterSizes) error {
 	params := new(dsa.Parameters)
 	if err := dsa.GenerateParameters(params, rand.Reader, parameterSizes); err != nil {
 		return err
@@ -64,7 +69,7 @@ func (this *PrivateKey) SetSizes(parameterSizes dsa.ParameterSizes) error {
 	if err := dsa.GenerateKey(privateKey, rand.Reader); err != nil {
 		return err
 	} else {
-		this.Set(privateKey)
+		pk.Set(privateKey)
 		return nil
 	}
 }
@@ -72,8 +77,8 @@ func (this *PrivateKey) SetSizes(parameterSizes dsa.ParameterSizes) error {
 // GetPemAsn1 is to get a string in Pem/Asn1 format.
 //
 // ex) pemAsn1, err := privateKey.GetPemAsn1()
-func (this *PrivateKey) GetPemAsn1() (string, error) {
-	if blockBytes, err := asn1.Marshal(*this.privateKey); err != nil {
+func (pk *PrivateKey) GetPemAsn1() (string, error) {
+	if blockBytes, err := asn1.Marshal(*pk.privateKey); err != nil {
 		return "", err
 	} else {
 		return string(pem.EncodeToMemory(
@@ -88,12 +93,12 @@ func (this *PrivateKey) GetPemAsn1() (string, error) {
 // SetPemAsn1 is to set the primary key using a string in Pem/Asn1 format.
 //
 // ex) err := privateKey.SetPemAsn1(pemAsn1)
-func (this *PrivateKey) SetPemAsn1(pemAsn1 string) error {
-	this.privateKey = &dsa.PrivateKey{}
+func (pk *PrivateKey) SetPemAsn1(pemAsn1 string) error {
+	pk.privateKey = &dsa.PrivateKey{}
 
 	block, _ := pem.Decode([]byte(pemAsn1))
-	if _, err := asn1.Unmarshal(block.Bytes, this.privateKey); err != nil {
-		this.privateKey = nil
+	if _, err := asn1.Unmarshal(block.Bytes, pk.privateKey); err != nil {
+		pk.privateKey = nil
 		return err
 	} else {
 		return nil
@@ -104,10 +109,10 @@ func (this *PrivateKey) SetPemAsn1(pemAsn1 string) error {
 // GetPublicKey is to get a PublicKey.
 //
 // ex) key := privateKey.GetPublicKey()
-func (this *PrivateKey) GetPublicKey() PublicKey {
+func (pk *PrivateKey) GetPublicKey() PublicKey {
 	publicKey := PublicKey{}
 
-	publicKey.Set(this.privateKey.PublicKey)
+	publicKey.Set(pk.privateKey.PublicKey)
 
 	return publicKey
 }

@@ -11,22 +11,22 @@ type Mutex struct {
 // Lock is lock.
 //
 // ex) mutex.Lock()
-func (this *Mutex) Lock() {
-	this.mutex.Lock()
+func (m *Mutex) Lock() {
+	m.mutex.Lock()
 }
 
 // TryLock attempts a lock and returns whether it was successful or not.
 //
 // ex) result := mutex.TryLock()
-func (this *Mutex) TryLock() bool {
-	return this.mutex.TryLock()
+func (m *Mutex) TryLock() bool {
+	return m.mutex.TryLock()
 }
 
 // Unlock is unlock.
 //
 // ex) mutex.Unlock()
-func (this *Mutex) Unlock() {
-	this.mutex.Unlock()
+func (m *Mutex) Unlock() {
+	m.mutex.Unlock()
 }
 
 // MutexByKey is a struct that provides mutex-related methods for each key.
@@ -37,8 +37,8 @@ type MutexByKey struct {
 // Lock locks the mutex corresponding to the key.
 //
 // ex) mutexs.Lock(key)
-func (this *MutexByKey) Lock(key any) {
-	mutex, _ := this.mutexs.LoadOrStore(key, &Mutex{})
+func (mbk *MutexByKey) Lock(key any) {
+	mutex, _ := mbk.mutexs.LoadOrStore(key, &Mutex{})
 
 	mutex.(*Mutex).Lock()
 }
@@ -46,8 +46,8 @@ func (this *MutexByKey) Lock(key any) {
 // TryLock attempts to lock the mutex corresponding to the key and returns whether it was successful or not.
 //
 // ex) result := mutexs.TryLock(key)
-func (this *MutexByKey) TryLock(key any) bool {
-	mutex, _ := this.mutexs.LoadOrStore(key, &Mutex{})
+func (mbk *MutexByKey) TryLock(key any) bool {
+	mutex, _ := mbk.mutexs.LoadOrStore(key, &Mutex{})
 
 	return mutex.(*Mutex).TryLock()
 }
@@ -55,8 +55,8 @@ func (this *MutexByKey) TryLock(key any) bool {
 // Unlock unlocks the mutex corresponding to the key.
 //
 // ex) mutexs.Unlock(key)
-func (this *MutexByKey) Unlock(key any) {
-	mutex, _ := this.mutexs.LoadOrStore(key, &Mutex{})
+func (mbk *MutexByKey) Unlock(key any) {
+	mutex, _ := mbk.mutexs.LoadOrStore(key, &Mutex{})
 
 	mutex.(*Mutex).Unlock()
 }
@@ -64,8 +64,8 @@ func (this *MutexByKey) Unlock(key any) {
 // UnlockAndDelete unlocks and deletes the mutex corresponding to the key.
 //
 // ex) mutexs.UnlockAndDelete(key)
-func (this *MutexByKey) UnlockAndDelete(key any) {
-	if mutex, loaded := this.mutexs.LoadAndDelete(key); loaded {
+func (mbk *MutexByKey) UnlockAndDelete(key any) {
+	if mutex, loaded := mbk.mutexs.LoadAndDelete(key); loaded {
 		mutex.(*Mutex).Unlock()
 	} else {
 		(&Mutex{}).Unlock()
@@ -75,6 +75,6 @@ func (this *MutexByKey) UnlockAndDelete(key any) {
 // Delete deletes the mutex corresponding to the key.
 //
 // ex) mutexs.Delete(key)
-func (this *MutexByKey) Delete(key any) {
-	this.mutexs.Delete(key)
+func (mbk *MutexByKey) Delete(key any) {
+	mbk.mutexs.Delete(key)
 }

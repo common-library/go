@@ -3,47 +3,115 @@ package mysql_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"math"
 	"os"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/common-library/go/database/orm/sqlc/mysql/pkg"
+	"github.com/common-library/go/testutil"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func getQueries(t *testing.T) (*pkg.Queries, error) {
+var (
+	container testcontainers.Container
+	dsn       string
+)
+
+func getQueries(t *testing.T) (*pkg.Queries, func(), error) {
 	if t != nil {
 		t.Parallel()
 	}
 
-	dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
-	if connection, err := sql.Open("mysql", dsn); err != nil {
-		return nil, err
-	} else {
-		return pkg.New(connection), nil
+	connection, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, nil, err
 	}
+
+	cleanup := func() {
+		connection.Close()
+	}
+
+	return pkg.New(connection), cleanup, nil
 }
 
 func TestMain(m *testing.M) {
-	if len(os.Getenv("MYSQL_DSN")) == 0 {
-		return
-	}
-
 	ctx := context.Background()
 
 	setup := func() {
-		if queries, err := getQueries(nil); err != nil {
+		var err error
+		container, err = mysql.Run(ctx, testutil.MySQLImage,
+			mysql.WithDatabase("testdb"),
+			mysql.WithUsername("testuser"),
+			mysql.WithPassword("testpass"),
+			testcontainers.WithWaitStrategy(
+				wait.ForLog("ready for connections").
+					WithOccurrence(2).
+					WithStartupTimeout(2*time.Minute)),
+		)
+		if err != nil {
 			panic(err)
-		} else if err := queries.CreateTable01(ctx); err != nil {
+		}
+
+		host, err := container.Host(ctx)
+		if err != nil {
 			panic(err)
+		}
+
+		port, err := container.MappedPort(ctx, "3306")
+		if err != nil {
+			panic(err)
+		}
+
+		dsn = fmt.Sprintf("testuser:testpass@tcp(%s:%s)/testdb?charset=utf8&parseTime=True&loc=Local", host, port.Port())
+
+		maxRetries := 20
+		for i := 0; i < maxRetries; i++ {
+			var queries *pkg.Queries
+			var cleanup func()
+			queries, cleanup, err = getQueries(nil)
+			if err == nil {
+				err = queries.CreateTable01(ctx)
+				if err == nil {
+					cleanup()
+					break
+				}
+				cleanup()
+			} else if cleanup != nil {
+				cleanup()
+			}
+
+			if i < maxRetries-1 {
+				baseMs := 100 << uint(i)
+				backoffMs := math.Min(float64(baseMs), 2000)
+				backoff := time.Duration(backoffMs) * time.Millisecond
+				time.Sleep(backoff)
+			}
+		}
+		if err != nil {
+			panic(fmt.Sprintf("Failed to setup MySQL after %d retries: %v", maxRetries, err))
 		}
 	}
 
 	teardown := func() {
-		if queries, err := getQueries(nil); err != nil {
-			panic(err)
-		} else if err := queries.DropTable01(ctx); err != nil {
-			panic(err)
+
+		queries, cleanup, err := getQueries(nil)
+		if err == nil && queries != nil {
+			defer cleanup()
+			_ = queries.DropTable01(ctx)
+		} else if cleanup != nil {
+			cleanup()
+		}
+
+		if container != nil {
+			if err := container.Terminate(ctx); err != nil {
+
+				fmt.Fprintf(os.Stderr, "Failed to terminate container: %v\n", err)
+			}
 		}
 	}
 
@@ -54,10 +122,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetTable01(t *testing.T) {
-	queries, err := getQueries(t)
+	queries, cleanup, err := getQueries(t)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer cleanup()
 
 	ctx := context.Background()
 
@@ -81,10 +150,11 @@ func TestGetTable01(t *testing.T) {
 }
 
 func TestListTable01(t *testing.T) {
-	queries, err := getQueries(t)
+	queries, cleanup, err := getQueries(t)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer cleanup()
 
 	ctx := context.Background()
 
@@ -110,10 +180,11 @@ func TestInsertTable01(t *testing.T) {
 }
 
 func TestUpdateTable01(t *testing.T) {
-	queries, err := getQueries(t)
+	queries, cleanup, err := getQueries(t)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer cleanup()
 
 	ctx := context.Background()
 
@@ -141,10 +212,11 @@ func TestUpdateTable01(t *testing.T) {
 }
 
 func TestDeleteTable01(t *testing.T) {
-	queries, err := getQueries(t)
+	queries, cleanup, err := getQueries(t)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer cleanup()
 
 	ctx := context.Background()
 

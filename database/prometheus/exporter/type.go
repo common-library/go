@@ -25,14 +25,14 @@ type collector struct {
 	metrics []Metric
 }
 
-func (this *collector) Describe(ch chan<- *prometheus.Desc) {
-	for _, metric := range this.metrics {
+func (t *collector) Describe(ch chan<- *prometheus.Desc) {
+	for _, metric := range t.metrics {
 		ch <- metric.GetDesc()
 	}
 }
 
-func (this *collector) Collect(ch chan<- prometheus.Metric) {
-	for _, metric := range this.metrics {
+func (t *collector) Collect(ch chan<- prometheus.Metric) {
+	for _, metric := range t.metrics {
 		for _, value := range metric.GetValues() {
 			ch <- prometheus.MustNewConstMetric(metric.GetDesc(), metric.GetValueType(), value.Value, value.LabelValues...)
 		}

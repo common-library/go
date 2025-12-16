@@ -9,13 +9,12 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/common-library/go/database/orm/ent/migrate"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/common-library/go/database/orm/ent/issueforent"
+	"github.com/common-library/go/database/orm/ent/migrate"
 	"github.com/common-library/go/database/orm/ent/repositoryforent"
 	"github.com/common-library/go/database/orm/ent/table01forent"
 	"github.com/common-library/go/database/orm/ent/userforent"

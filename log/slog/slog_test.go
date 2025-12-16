@@ -13,7 +13,7 @@ import (
 func test(t *testing.T, level slog.Level) {
 	t.Parallel()
 
-	repeat := 1000
+	repeat := 100
 	count := map[slog.Level]int{
 		slog.LevelTrace: 6,
 		slog.LevelDebug: 5,

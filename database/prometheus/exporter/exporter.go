@@ -34,7 +34,7 @@ func RegisterCollector(collectors ...prometheus.Collector) error {
 // ex) result := exporter.UnRegisterCollector(collector01)
 func UnRegisterCollector(collectors ...prometheus.Collector) bool {
 	for _, collector := range collectors {
-		if prometheus.Unregister(collector) == false {
+		if !prometheus.Unregister(collector) {
 			return false
 		}
 	}
