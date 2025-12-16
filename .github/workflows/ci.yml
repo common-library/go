@@ -1,0 +1,103 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        runner: [ 'ubuntu-24.04' ]
+        go: [ '1.25.5' ]  # 1.25.3은 보안 취약점(GO-2025-4175, GO-2025-4155)으로 제외
+      fail-fast: false
+
+    permissions:
+      contents: read
+
+    runs-on: ${{ matrix.runner }}
+
+    name: ${{ matrix.runner }}, golang:${{ matrix.go }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Install Tools
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Staticcheck
+        run: staticcheck ./...
+
+      - name: Go Vulnerability Check
+        run: govulncheck ./...
+        continue-on-error: true
+
+      - name: Test
+        run: go test -race -timeout=300s -parallel=4 -coverprofile=coverage.out -cover -v ./...
+
+      - name: Coverage Summary
+        if: always()
+        run: |
+          if [ -f coverage.out ]; then
+            go tool cover -func=coverage.out
+          else
+            echo "⚠️ No coverage data available"
+          fi
+        continue-on-error: true
+
+      - name: Coverage HTML Report
+        if: always()
+        run: |
+          if [ -f coverage.out ]; then
+            go tool cover -html=./coverage.out -o ./coverage.html
+          else
+            echo "⚠️ No coverage data available"
+          fi
+        continue-on-error: true
+
+      - name: Generate Test Summary
+        if: always()
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Go Version:** ${{ matrix.go }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Runner:** ${{ matrix.runner }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f coverage.out ]; then
+            COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+            echo "**Total Coverage:** $COVERAGE" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            echo "### Coverage by Package" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            go tool cover -func=coverage.out | head -20 >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No coverage data available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: coverage-report-${{ matrix.runner }}-go-${{ matrix.go }}
+          path: |
+            coverage.out
+            coverage.html
+          retention-days: 30

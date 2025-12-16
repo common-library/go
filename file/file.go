@@ -39,7 +39,7 @@ func List(path string, recursive bool) ([]string, error) {
 
 		if fileInfo, err := file.Stat(); err != nil {
 			return err
-		} else if fileInfo.IsDir() == false {
+		} else if !fileInfo.IsDir() {
 			*result = append(*result, path)
 			return nil
 		} else if fileInfos, err := file.Readdir(0); err != nil {
@@ -52,9 +52,9 @@ func List(path string, recursive bool) ([]string, error) {
 				dir := filepath.Dir(file.Name() + string(filepath.Separator))
 				name := dir + string(filepath.Separator) + fileInfo.Name()
 
-				if fileInfo.IsDir() == false {
+				if !fileInfo.IsDir() {
 					*result = append(*result, name)
-				} else if recursive == false {
+				} else if !recursive {
 					*result = append(*result, name+string(filepath.Separator))
 				} else {
 					list(result, name, recursive)

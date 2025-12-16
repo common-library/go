@@ -17,29 +17,29 @@ type PublicKey struct {
 // Verify is verifies the signature.
 //
 // ex) result := publicKey.Verify(message, signature)
-func (this *PublicKey) Verify(message string, signature []byte) bool {
-	return ed25519.Verify(this.publicKey, []byte(message), signature)
+func (pk *PublicKey) Verify(message string, signature []byte) bool {
+	return ed25519.Verify(pk.publicKey, []byte(message), signature)
 }
 
 // Get is to get a ed25519.PublicKey.
 //
 // ex) key := publicKey.Get()
-func (this *PublicKey) Get() ed25519.PublicKey {
-	return this.publicKey
+func (pk *PublicKey) Get() ed25519.PublicKey {
+	return pk.publicKey
 }
 
 // Set is to set a ed25519.PublicKey.
 //
 // ex) publicKey.Set(key)
-func (this *PublicKey) Set(publicKey ed25519.PublicKey) {
-	this.publicKey = publicKey
+func (pk *PublicKey) Set(publicKey ed25519.PublicKey) {
+	pk.publicKey = publicKey
 }
 
 // GetPemPKIX is to get a string in Pem/PKIX format.
 //
 // ex) pemPKIX, err := publicKey.GetPemPKIX()
-func (this *PublicKey) GetPemPKIX() (string, error) {
-	if blockBytes, err := x509.MarshalPKIXPublicKey(this.publicKey); err != nil {
+func (pk *PublicKey) GetPemPKIX() (string, error) {
+	if blockBytes, err := x509.MarshalPKIXPublicKey(pk.publicKey); err != nil {
 		return "", err
 	} else {
 		return string(pem.EncodeToMemory(
@@ -54,13 +54,13 @@ func (this *PublicKey) GetPemPKIX() (string, error) {
 // SetPemPKIX is to set the public key using a string in Pem/PKIX format.
 //
 // ex) err := publicKey.SetPemPKIX(pemPKIX)
-func (this *PublicKey) SetPemPKIX(pemPKIX string) error {
+func (pk *PublicKey) SetPemPKIX(pemPKIX string) error {
 	block, _ := pem.Decode([]byte(pemPKIX))
 
 	if key, err := x509.ParsePKIXPublicKey(block.Bytes); err != nil {
 		return err
 	} else {
-		this.publicKey = key.(ed25519.PublicKey)
+		pk.publicKey = key.(ed25519.PublicKey)
 		return nil
 	}
 }
@@ -68,8 +68,8 @@ func (this *PublicKey) SetPemPKIX(pemPKIX string) error {
 // GetSsh is to get a string in ssh format.
 //
 // ex) sshKey, err := publicKey.GetSsh()
-func (this *PublicKey) GetSsh() (string, error) {
-	if publicKey, err := ssh.NewPublicKey(this.publicKey); err != nil {
+func (pk *PublicKey) GetSsh() (string, error) {
+	if publicKey, err := ssh.NewPublicKey(pk.publicKey); err != nil {
 		return "", err
 	} else {
 		return string(ssh.MarshalAuthorizedKey(publicKey)), nil
@@ -79,29 +79,29 @@ func (this *PublicKey) GetSsh() (string, error) {
 // SetSsh is to set the public key using a string in ssh format.
 //
 // ex) err := publicKey.SetSsh(sshKey)
-func (this *PublicKey) SetSsh(sshKey string) error {
+func (pk *PublicKey) SetSsh(sshKey string) error {
 	if key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(sshKey)); err != nil {
 		return err
 	} else {
-		return this.SetSshPublicKey(key)
+		return pk.SetSshPublicKey(key)
 	}
 }
 
 // GetSshPublicKey is to get a ssh.PublicKey.
 //
 // ex) key, err := publicKey.GetSshPublicKey()
-func (this *PublicKey) GetSshPublicKey() (ssh.PublicKey, error) {
-	return ssh.NewPublicKey(this.publicKey)
+func (pk *PublicKey) GetSshPublicKey() (ssh.PublicKey, error) {
+	return ssh.NewPublicKey(pk.publicKey)
 }
 
 // SetSshPublicKey is to set the public key using ssh.PublicKey.
 //
 // ex) err := publicKey.SetSshPublicKey(key)
-func (this *PublicKey) SetSshPublicKey(publicKey ssh.PublicKey) error {
+func (pk *PublicKey) SetSshPublicKey(publicKey ssh.PublicKey) error {
 	if key, err := ssh.ParsePublicKey(publicKey.Marshal()); err != nil {
 		return err
 	} else {
-		this.publicKey = key.(ssh.CryptoPublicKey).CryptoPublicKey().(ed25519.PublicKey)
+		pk.publicKey = key.(ssh.CryptoPublicKey).CryptoPublicKey().(ed25519.PublicKey)
 		return nil
 	}
 }

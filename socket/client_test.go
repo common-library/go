@@ -20,19 +20,19 @@ type TestServer struct {
 	server socket.Server
 }
 
-func (this *TestServer) Start(t *testing.T) {
+func (ts *TestServer) Start(t *testing.T) {
 	t.Parallel()
 
-	this.Network = "tcp"
-	this.Address = ":" + strconv.Itoa(10000+rand.IntN(10000))
-	this.Greeting = "greeting"
-	this.PrefixOfResponse = "[response] "
+	ts.Network = "tcp"
+	ts.Address = ":" + strconv.Itoa(10000+rand.IntN(10000))
+	ts.Greeting = "greeting"
+	ts.PrefixOfResponse = "[response] "
 
 	acceptSuccessFunc := func(client socket.Client) {
-		if writeLen, err := client.Write(this.Greeting); err != nil {
+		if writeLen, err := client.Write(ts.Greeting); err != nil {
 			t.Fatal(err)
-		} else if writeLen != len(this.Greeting) {
-			t.Fatal(writeLen, ",", len(this.Greeting))
+		} else if writeLen != len(ts.Greeting) {
+			t.Fatal(writeLen, ",", len(ts.Greeting))
 		}
 
 		readData, err := client.Read(1024)
@@ -40,7 +40,7 @@ func (this *TestServer) Start(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		writeData := this.PrefixOfResponse + readData
+		writeData := ts.PrefixOfResponse + readData
 		if writeLen, err := client.Write(writeData); err != nil {
 			t.Fatal(err)
 		} else if writeLen != len(writeData) {
@@ -52,17 +52,17 @@ func (this *TestServer) Start(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := this.server.Start(this.Network, this.Address, 100, acceptSuccessFunc, acceptFailureFunc); err != nil {
+	if err := ts.server.Start(ts.Network, ts.Address, 100, acceptSuccessFunc, acceptFailureFunc); err != nil {
 		t.Fatal(err)
 	}
 
-	for this.server.GetCondition() == false {
+	for ts.server.GetCondition() == false {
 		time.Sleep(100 * time.Millisecond)
 	}
 }
 
-func (this *TestServer) Stop(t *testing.T) {
-	if err := this.server.Stop(); err != nil {
+func (ts *TestServer) Stop(t *testing.T) {
+	if err := ts.server.Stop(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -102,6 +102,7 @@ func TestReadWrite(t *testing.T) {
 	testServer.Start(t)
 	defer testServer.Stop(t)
 
+	errorChan := make(chan error, 1000)
 	clientJob := func(wg *sync.WaitGroup) {
 		defer wg.Done()
 
@@ -109,32 +110,41 @@ func TestReadWrite(t *testing.T) {
 		defer client.Close()
 
 		if _, err := client.Read(1024); err.Error() != "please call the Connect function first" {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if _, err := client.Write(""); err.Error() != "please call the Connect function first" {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		}
 
 		if err := client.Connect(testServer.Network, testServer.Address); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		}
 
 		if readData, err := client.Read(1024); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if readData != testServer.Greeting {
-			t.Fatal(readData, ",", testServer.Greeting)
+			errorChan <- err
+			return
 		}
 
 		writeData := "test"
 		if writeLen, err := client.Write(writeData); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if writeLen != len(writeData) {
-			t.Fatal(writeLen, ",", len(writeData))
+			errorChan <- err
+			return
 		}
 
 		if readData, err := client.Read(1024); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if readData != testServer.PrefixOfResponse+writeData {
-			t.Fatal(writeData, ",", testServer.PrefixOfResponse+readData)
+			errorChan <- err
+			return
 		}
 	}
 
@@ -144,6 +154,11 @@ func TestReadWrite(t *testing.T) {
 		go clientJob(&wg)
 	}
 	wg.Wait()
+
+	close(errorChan)
+	for err := range errorChan {
+		t.Fatal(err)
+	}
 }
 
 func TestClose(t *testing.T) {

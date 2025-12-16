@@ -1,7 +1,6 @@
 package json_test
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -60,20 +59,20 @@ func checkTestData(sampleStruct sampleStruct) error {
 	if sampleStruct.Test1Struct.Bool != true ||
 		sampleStruct.Test1Struct.Int != 111 ||
 		sampleStruct.Test1Struct.String != "aaa" {
-		return errors.New(fmt.Sprintf("invalid data - data : (%#v)", sampleStruct.Test1Struct))
+		return fmt.Errorf("invalid data - data : (%#v)", sampleStruct.Test1Struct)
 	}
 
 	if sampleStruct.Test2Struct.Test1Struct.Bool != true ||
 		sampleStruct.Test2Struct.Test1Struct.Int != 222 ||
 		sampleStruct.Test2Struct.Test1Struct.String != "bbb" {
-		return errors.New(fmt.Sprintf("invalid data - data : (%#v)", sampleStruct.Test2Struct.Test1Struct))
+		return fmt.Errorf("invalid data - data : (%#v)", sampleStruct.Test2Struct.Test1Struct)
 	}
 
 	if len(sampleStruct.Test2Struct.ArrayString) != 3 ||
 		sampleStruct.Test2Struct.ArrayString[0] != "abc" ||
 		sampleStruct.Test2Struct.ArrayString[1] != "def" ||
 		sampleStruct.Test2Struct.ArrayString[2] != "ghi" {
-		return errors.New(fmt.Sprintf("invalid data - size : (%d), data : (%#v)", len(sampleStruct.Test2Struct.ArrayString), sampleStruct.Test2Struct.ArrayString))
+		return fmt.Errorf("invalid data - size : (%d), data : (%#v)", len(sampleStruct.Test2Struct.ArrayString), sampleStruct.Test2Struct.ArrayString)
 	}
 
 	if len(sampleStruct.Test2Struct.ArrayTest1Struct) != 2 ||
@@ -83,7 +82,7 @@ func checkTestData(sampleStruct sampleStruct) error {
 		sampleStruct.Test2Struct.ArrayTest1Struct[1].Bool != false ||
 		sampleStruct.Test2Struct.ArrayTest1Struct[1].Int != 444 ||
 		sampleStruct.Test2Struct.ArrayTest1Struct[1].String != "ddd" {
-		return errors.New(fmt.Sprintf("invalid data - size : (%d), data : (%#v)", len(sampleStruct.Test2Struct.ArrayTest1Struct), sampleStruct.Test2Struct.ArrayTest1Struct))
+		return fmt.Errorf("invalid data - size : (%d), data : (%#v)", len(sampleStruct.Test2Struct.ArrayTest1Struct), sampleStruct.Test2Struct.ArrayTest1Struct)
 	}
 
 	return nil

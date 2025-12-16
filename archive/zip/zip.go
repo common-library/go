@@ -19,9 +19,7 @@ func Compress(name string, paths []string) error {
 		if result, err := file.List(path, true); err != nil {
 			return err
 		} else {
-			for _, filePath := range result {
-				filePaths = append(filePaths, filePath)
-			}
+			filePaths = append(filePaths, result...)
 		}
 	}
 

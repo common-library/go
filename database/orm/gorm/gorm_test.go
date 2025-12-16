@@ -1,16 +1,19 @@
 package gorm_test
 
 import (
+	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
+	"github.com/common-library/go/testutil"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	mysqlDriver "gorm.io/driver/mysql"
+	postgresDriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -44,35 +47,35 @@ type Table03ForGorm struct {
 	Field02 *string
 }
 
-func (this *Table01ForGorm) BeforeSave(tx *gorm.DB) error {
+func (t *Table01ForGorm) BeforeSave(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) AfterSave(tx *gorm.DB) error {
+func (t *Table01ForGorm) AfterSave(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) BeforeCreate(tx *gorm.DB) error {
+func (t *Table01ForGorm) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) AfterCreate(tx *gorm.DB) error {
+func (t *Table01ForGorm) AfterCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) BeforeUpdate(tx *gorm.DB) error {
+func (t *Table01ForGorm) BeforeUpdate(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) AfterUpdate(tx *gorm.DB) error {
+func (t *Table01ForGorm) AfterUpdate(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) BeforeDelete(tx *gorm.DB) error {
+func (t *Table01ForGorm) BeforeDelete(tx *gorm.DB) error {
 	return nil
 }
 
-func (this *Table01ForGorm) AfterDelete(tx *gorm.DB) error {
+func (t *Table01ForGorm) AfterDelete(tx *gorm.DB) error {
 	return nil
 }
 
@@ -94,26 +97,93 @@ func prepareData(t *testing.T) {
 	t.Parallel()
 }
 
+var containers = []testcontainers.Container{}
+
 func TestMain(m *testing.M) {
+	ctx := context.Background()
+
 	setup := func() {
-		dialectors := []gorm.Dialector{}
-
-		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
-			dialectors = append(dialectors, mysql.Open(dsn))
+		mysqlContainer, err := mysql.Run(ctx, testutil.MySQLImage,
+			mysql.WithDatabase("testdb"),
+			mysql.WithUsername("testuser"),
+			mysql.WithPassword("testpass"),
+		)
+		if err != nil {
+			panic(err)
 		}
-		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
-			dialectors = append(dialectors, postgres.Open(dsn))
+		containers = append(containers, mysqlContainer)
+
+		mysqlHost, err := mysqlContainer.Host(ctx)
+		if err != nil {
+			panic(err)
 		}
 
-		for _, dialector := range dialectors {
-			if db, err := gorm.Open(dialector, &gorm.Config{}); err != nil {
-				panic(err)
-			} else {
-				dbs[db.Name()] = db
+		mysqlPort, err := mysqlContainer.MappedPort(ctx, "3306")
+		if err != nil {
+			panic(err)
+		}
+
+		mysqlDSN := fmt.Sprintf("testuser:testpass@tcp(%s:%s)/testdb?charset=utf8&parseTime=True&loc=Local", mysqlHost, mysqlPort.Port())
+
+		var db *gorm.DB
+		maxRetries := 10
+		for i := 0; i < maxRetries; i++ {
+			db, err = gorm.Open(mysqlDriver.Open(mysqlDSN), &gorm.Config{})
+			if err == nil {
+				sqlDB, sqlErr := db.DB()
+				if sqlErr == nil {
+					if pingErr := sqlDB.Ping(); pingErr == nil {
+						break
+					}
+				}
 			}
+			if i == maxRetries-1 {
+				panic(fmt.Errorf("failed to connect to MySQL after %d retries: %w", maxRetries, err))
+			}
+			time.Sleep(500 * time.Millisecond)
 		}
+		dbs["mysql"] = db
+
+		postgresContainer, err := postgres.Run(ctx, testutil.PostgresImage,
+			postgres.WithDatabase("testdb"),
+			postgres.WithUsername("testuser"),
+			postgres.WithPassword("testpass"),
+			postgres.BasicWaitStrategies(),
+		)
+		if err != nil {
+			panic(err)
+		}
+		containers = append(containers, postgresContainer)
+
+		postgresHost, err := postgresContainer.Host(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		postgresPort, err := postgresContainer.MappedPort(ctx, "5432")
+		if err != nil {
+			panic(err)
+		}
+
+		postgresDSN := fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", postgresHost, postgresPort.Port())
+
+		maxRetries = 10
+		for i := 0; i < maxRetries; i++ {
+			db, err = gorm.Open(postgresDriver.Open(postgresDSN), &gorm.Config{})
+			if err == nil {
+				sqlDB, sqlErr := db.DB()
+				if sqlErr == nil {
+					if pingErr := sqlDB.Ping(); pingErr == nil {
+						break
+					}
+				}
+			}
+			if i == maxRetries-1 {
+				panic(fmt.Errorf("failed to connect to PostgreSQL after %d retries: %w", maxRetries, err))
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		dbs["postgres"] = db
 
 		tables := []any{
 			&Table01ForGorm{},
@@ -140,6 +210,12 @@ func TestMain(m *testing.M) {
 				}
 			}
 		}
+
+		for _, container := range containers {
+			if err := container.Terminate(ctx); err != nil {
+				panic(err)
+			}
+		}
 	}
 
 	setup()
@@ -151,10 +227,10 @@ func TestMain(m *testing.M) {
 func TestCreate(t *testing.T) {
 	for _, db := range dbs {
 		name := t.Name()
-		table01 := Table01ForGorm{}
-		table01_map := map[string]any{}
-		table01s := []*Table01ForGorm{}
-		table01s_map := []map[string]any{}
+		var table01 Table01ForGorm
+		var table01_map map[string]any
+		var table01s []*Table01ForGorm
+		var table01s_map []map[string]any
 
 		table01 = Table01ForGorm{Field01: "a", Field02: &name, Field03: 1}
 		if result := db.Create(&table01); result.Error != nil {
@@ -515,9 +591,6 @@ func TestDistinct(t *testing.T) {
 }
 
 func TestJoins(t *testing.T) {
-	// https://gorm.io/ko_KR/docs/query.html#Joins
-	// https://gorm.io/ko_KR/docs/query.html#Joins-Preloading
-	// https://gorm.io/ko_KR/docs/query.html#Joins-a-Derived-Table
 }
 
 func TestScan(t *testing.T) {
@@ -724,7 +797,7 @@ func TestUpdateSubQuery(t *testing.T) {
 	prepareData(t)
 
 	for kind, db := range dbs {
-		if kind == mysql.DefaultDriverName {
+		if kind == "mysql" {
 			continue
 		}
 
@@ -903,7 +976,7 @@ func TestConnection(t *testing.T) {
 				if result := tx.First(&table01, "field02 = ?", t.Name()); result.Error != nil {
 					return result.Error
 				} else if table01.Field01 != "a" || table01.Field03 != 1 {
-					return errors.New(fmt.Sprintf("%#v", table01))
+					return fmt.Errorf("%#v", table01)
 				}
 			}
 

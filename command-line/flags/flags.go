@@ -2,7 +2,6 @@
 package flags
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"time"
@@ -56,7 +55,7 @@ func Parse(flagInfos []FlagInfo) error {
 		case uint:
 			flagInfos[index].valueOriginal = flag.Uint(flagInfo.FlagName, flagInfo.DefaultValue.(uint), flagInfo.Usage)
 		default:
-			return errors.New(fmt.Sprintf("this data type is not supported. - (%s)", utility.GetTypeName(flagInfo.DefaultValue)))
+			return fmt.Errorf("this data type is not supported. - (%s)", utility.GetTypeName(flagInfo.DefaultValue))
 		}
 
 		result[flagInfo.FlagName] = &flagInfos[index]

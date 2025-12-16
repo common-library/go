@@ -8,5 +8,5 @@ import (
 
 // GetConnection is get connection of grpc.
 func GetConnection(address string) (*grpc.ClientConn, error) {
-	return grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	return grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 }

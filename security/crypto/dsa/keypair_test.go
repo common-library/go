@@ -1,6 +1,7 @@
 package dsa_test
 
 import (
+	//lint:ignore SA1019 DSA is deprecated but kept for compatibility testing
 	crypto_dsa "crypto/dsa"
 	"testing"
 

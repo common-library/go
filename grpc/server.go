@@ -3,6 +3,7 @@ package grpc
 
 import (
 	"net"
+	"sync"
 
 	"google.golang.org/grpc"
 )
@@ -13,42 +14,53 @@ type implementServer interface {
 
 // Server is struct that provides server common infomation.
 type Server struct {
-	listener net.Listener
-
+	mutex      sync.RWMutex
+	listener   net.Listener
 	grpcServer *grpc.Server
 }
 
 // Start is start the server.
 //
 // ex) err := server.Start(":10000", &Sample.Server{})
-func (this *Server) Start(address string, server implementServer) error {
-	this.Stop()
+func (grpcSrv *Server) Start(address string, server implementServer) error {
+	if err := func() error {
+		grpcSrv.mutex.Lock()
+		defer grpcSrv.mutex.Unlock()
 
-	this.grpcServer = grpc.NewServer()
+		grpcServer := grpc.NewServer()
+		server.RegisterServer(grpcServer)
 
-	server.RegisterServer(this.grpcServer)
+		listener, err := net.Listen("tcp", address)
+		if err != nil {
+			return err
+		}
+		grpcSrv.grpcServer = grpcServer
+		grpcSrv.listener = listener
 
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
+		return nil
+	}(); err != nil {
 		return err
 	}
-	this.listener = listener
 
-	return this.grpcServer.Serve(this.listener)
+	// Serve는 blocking 함수이므로 뮤텍스 해제 후 호출
+	return grpcSrv.grpcServer.Serve(grpcSrv.listener)
 }
 
 // Stop is stop the server.
 //
 // ex) err := server.Stop()
-func (this *Server) Stop() error {
-	if this.grpcServer != nil {
-		this.grpcServer.Stop()
-		this.grpcServer = nil
+func (grpcSrv *Server) Stop() error {
+	grpcSrv.mutex.Lock()
+	defer grpcSrv.mutex.Unlock()
+
+	if grpcSrv.grpcServer != nil {
+		grpcSrv.grpcServer.Stop()
+		grpcSrv.grpcServer = nil
 	}
 
-	if this.listener != nil {
-		this.listener.Close()
-		this.listener = nil
+	if grpcSrv.listener != nil {
+		grpcSrv.listener.Close()
+		grpcSrv.listener = nil
 	}
 
 	return nil

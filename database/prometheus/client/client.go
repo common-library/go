@@ -67,11 +67,11 @@ type client struct {
 //
 //	c, err := client.NewClient(address)
 //	value, warnings, err := c.Query("up", time.Now(), 10*time.Second)
-func (this *client) Query(query string, when time.Time, timeout time.Duration) (model.Value, v1.Warnings, error) {
+func (c *client) Query(query string, when time.Time, timeout time.Duration) (model.Value, v1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	return v1.NewAPI(this.prometheusClient).Query(ctx, query, when, v1.WithTimeout(timeout))
+	return v1.NewAPI(c.prometheusClient).Query(ctx, query, when, v1.WithTimeout(timeout))
 }
 
 // QueryRange perform PromQL queries over a given period of range.
@@ -80,9 +80,9 @@ func (this *client) Query(query string, when time.Time, timeout time.Duration) (
 //
 //	c, err := client.NewClient(address)
 //	value, warnings, err := c.QueryRange("rate(process_cpu_seconds_total[5m])", r, 10*time.Second)
-func (this *client) QueryRange(query string, r v1.Range, timeout time.Duration) (model.Value, v1.Warnings, error) {
+func (c *client) QueryRange(query string, r v1.Range, timeout time.Duration) (model.Value, v1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	return v1.NewAPI(this.prometheusClient).QueryRange(ctx, query, r)
+	return v1.NewAPI(c.prometheusClient).QueryRange(ctx, query, r)
 }

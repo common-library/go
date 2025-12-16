@@ -40,7 +40,7 @@ type Server struct {
 // Start is start the server.
 //
 // ex) err := server.Start(ServerInfo{...}, FilePersistorInfo{...}, nil)
-func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInfo, listenAndServeFailureFunc func(err error)) error {
+func (s *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInfo, listenAndServeFailureFunc func(err error)) error {
 	option := golongpoll.Options{
 		LoggingEnabled:            false,
 		MaxLongpollTimeoutSeconds: serverInfo.TimeoutSeconds,
@@ -62,7 +62,7 @@ func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistor
 	if err != nil {
 		return err
 	}
-	this.longpollManager = longpollManager
+	s.longpollManager = longpollManager
 
 	router := mux.NewRouter()
 
@@ -75,11 +75,11 @@ func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistor
 	subscriptionHandler := func() func(net_http.ResponseWriter, *net_http.Request) {
 		return func(w net_http.ResponseWriter, r *net_http.Request) {
 			if serverInfo.HandlerToRunBeforeSubscription != nil &&
-				serverInfo.HandlerToRunBeforeSubscription(w, r) == false {
+				!serverInfo.HandlerToRunBeforeSubscription(w, r) {
 				return
 			}
 
-			this.longpollManager.SubscriptionHandler(w, r)
+			s.longpollManager.SubscriptionHandler(w, r)
 		}
 	}
 	router.HandleFunc(serverInfo.SubscriptionURI, subscriptionHandler()).Methods(net_http.MethodGet)
@@ -87,29 +87,29 @@ func (this *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistor
 	publishHandler := func() func(net_http.ResponseWriter, *net_http.Request) {
 		return func(w net_http.ResponseWriter, r *net_http.Request) {
 			if serverInfo.HandlerToRunBeforePublish != nil &&
-				serverInfo.HandlerToRunBeforePublish(w, r) == false {
+				!serverInfo.HandlerToRunBeforePublish(w, r) {
 				return
 			}
 
-			this.longpollManager.PublishHandler(w, r)
+			s.longpollManager.PublishHandler(w, r)
 		}
 	}
 	router.HandleFunc(serverInfo.PublishURI, publishHandler()).Methods(net_http.MethodPost)
 
-	this.server.SetRouter(router)
+	s.server.SetRouter(router)
 
-	return this.server.Start(serverInfo.Address, listenAndServeFailureFunc)
+	return s.server.Start(serverInfo.Address, listenAndServeFailureFunc)
 }
 
 // Stop is stop the server.
 //
 // ex) err := server.Stop(10)
-func (this *Server) Stop(shutdownTimeout time.Duration) error {
-	if this.longpollManager != nil {
-		defer this.longpollManager.Shutdown()
+func (s *Server) Stop(shutdownTimeout time.Duration) error {
+	if s.longpollManager != nil {
+		defer s.longpollManager.Shutdown()
 	}
 
-	err := this.server.Stop(shutdownTimeout)
+	err := s.server.Stop(shutdownTimeout)
 	if err != nil {
 		return err
 	}

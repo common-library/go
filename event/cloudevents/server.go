@@ -18,7 +18,7 @@ type Server struct {
 // Start is start the server.
 //
 // ex) err := server.Start(address, handler, listenAndServeFailureFunc)
-func (this *Server) Start(address string, handler func(Event) (*Event, Result), listenAndServeFailureFunc func(error)) error {
+func (s *Server) Start(address string, handler func(Event) (*Event, Result), listenAndServeFailureFunc func(error)) error {
 	finalHandler := func(requestEvent Event) (*Event, protocol.Result) {
 		responseEvent, result := handler(requestEvent)
 		return responseEvent, result.result
@@ -30,15 +30,15 @@ func (this *Server) Start(address string, handler func(Event) (*Event, Result), 
 
 		return err
 	} else {
-		this.server.RegisterPathPrefixHandler("/", eventReceiver)
+		s.server.RegisterPathPrefixHandler("/", eventReceiver)
 
-		return this.server.Start(address, listenAndServeFailureFunc)
+		return s.server.Start(address, listenAndServeFailureFunc)
 	}
 }
 
 // Stop is stop the server.
 //
 // ex) err := server.Stop(10)
-func (this *Server) Stop(shutdownTimeout time.Duration) error {
-	return this.server.Stop(shutdownTimeout)
+func (s *Server) Stop(shutdownTimeout time.Duration) error {
+	return s.server.Stop(shutdownTimeout)
 }

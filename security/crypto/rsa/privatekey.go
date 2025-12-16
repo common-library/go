@@ -17,15 +17,15 @@ type PrivateKey struct {
 // EncryptPKCS1v15 is encrypt plaintext.
 //
 // ex) ciphertext, err := privateKey.EncryptPKCS1v15(plaintext)
-func (this *PrivateKey) EncryptPKCS1v15(plaintext string) ([]byte, error) {
-	return rsa.EncryptPKCS1v15(rand.Reader, &this.privateKey.PublicKey, []byte(plaintext))
+func (pk *PrivateKey) EncryptPKCS1v15(plaintext string) ([]byte, error) {
+	return rsa.EncryptPKCS1v15(rand.Reader, &pk.privateKey.PublicKey, []byte(plaintext))
 }
 
 // DecryptPKCS1v15 is decrypt ciphertext.
 //
 // ex) plaintext, err := privateKey.DecryptPKCS1v15(ciphertext)
-func (this *PrivateKey) DecryptPKCS1v15(ciphertext []byte) (string, error) {
-	if plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, this.privateKey, ciphertext); err != nil {
+func (pk *PrivateKey) DecryptPKCS1v15(ciphertext []byte) (string, error) {
+	if plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, pk.privateKey, ciphertext); err != nil {
 		return "", err
 	} else {
 		return string(plaintext), nil
@@ -35,15 +35,15 @@ func (this *PrivateKey) DecryptPKCS1v15(ciphertext []byte) (string, error) {
 // EncryptOAEP is encrypt plaintext.
 //
 // ex) ciphertext, err := privateKey.EncryptOAEP(plaintext)
-func (this *PrivateKey) EncryptOAEP(plaintext string) ([]byte, error) {
-	return rsa.EncryptOAEP(sha256.New(), rand.Reader, &this.privateKey.PublicKey, []byte(plaintext), nil)
+func (pk *PrivateKey) EncryptOAEP(plaintext string) ([]byte, error) {
+	return rsa.EncryptOAEP(sha256.New(), rand.Reader, &pk.privateKey.PublicKey, []byte(plaintext), nil)
 }
 
 // DecryptOAEP is decrypt ciphertext.
 //
 // ex) plaintext, err := privateKey.DecryptOAEP(ciphertext)
-func (this *PrivateKey) DecryptOAEP(ciphertext []byte) (string, error) {
-	if plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, this.privateKey, ciphertext, nil); err != nil {
+func (pk *PrivateKey) DecryptOAEP(ciphertext []byte) (string, error) {
+	if plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, pk.privateKey, ciphertext, nil); err != nil {
 		return "", err
 	} else {
 		return string(plaintext), nil
@@ -53,25 +53,25 @@ func (this *PrivateKey) DecryptOAEP(ciphertext []byte) (string, error) {
 // Get is to get a *rsa.PrivateKey.
 //
 // ex) key := privateKey.Get()
-func (this *PrivateKey) Get() *rsa.PrivateKey {
-	return this.privateKey
+func (pk *PrivateKey) Get() *rsa.PrivateKey {
+	return pk.privateKey
 }
 
 // Set is to set a *rsa.PrivateKey.
 //
 // ex) privateKey.Set(key)
-func (this *PrivateKey) Set(privateKey *rsa.PrivateKey) {
-	this.privateKey = privateKey
+func (pk *PrivateKey) Set(privateKey *rsa.PrivateKey) {
+	pk.privateKey = privateKey
 }
 
 // SetBits is to set the primary key using bits.
 //
 // ex) err := privateKey.SetBits(4096)
-func (this *PrivateKey) SetBits(bits int) error {
+func (pk *PrivateKey) SetBits(bits int) error {
 	if privateKey, err := rsa.GenerateKey(rand.Reader, bits); err != nil {
 		return err
 	} else {
-		this.Set(privateKey)
+		pk.Set(privateKey)
 		return nil
 	}
 }
@@ -79,25 +79,25 @@ func (this *PrivateKey) SetBits(bits int) error {
 // GetPemPKCS1 is to get a string in Pem/PKCS1 format.
 //
 // ex) pemPKCS1 := privateKey.GetPemPKCS1()
-func (this *PrivateKey) GetPemPKCS1() string {
+func (pk *PrivateKey) GetPemPKCS1() string {
 	return string(pem.EncodeToMemory(
 		&pem.Block{
 			Type:    "RSA PRIVATE KEY",
 			Headers: nil,
-			Bytes:   x509.MarshalPKCS1PrivateKey(this.privateKey),
+			Bytes:   x509.MarshalPKCS1PrivateKey(pk.privateKey),
 		}))
 }
 
 // SetPemPKCS1 is to set the primary key using a string in Pem/PKCS1 format.
 //
 // ex) err := privateKey.SetPemPKCS1(pemPKCS1)
-func (this *PrivateKey) SetPemPKCS1(pemPKCS1 string) error {
+func (pk *PrivateKey) SetPemPKCS1(pemPKCS1 string) error {
 	block, _ := pem.Decode([]byte(pemPKCS1))
 
 	if key, err := x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
 		return err
 	} else {
-		this.Set(key)
+		pk.Set(key)
 		return nil
 	}
 }
@@ -105,8 +105,8 @@ func (this *PrivateKey) SetPemPKCS1(pemPKCS1 string) error {
 // GetPemPKCS8 is to get a string in Pem/PKCS8 format.
 //
 // ex) pemPKCS8, err := privateKey.GetPemPKCS8()
-func (this *PrivateKey) GetPemPKCS8() (string, error) {
-	if bytes, err := x509.MarshalPKCS8PrivateKey(this.privateKey); err != nil {
+func (pk *PrivateKey) GetPemPKCS8() (string, error) {
+	if bytes, err := x509.MarshalPKCS8PrivateKey(pk.privateKey); err != nil {
 		return "", err
 	} else {
 		return string(pem.EncodeToMemory(
@@ -121,13 +121,13 @@ func (this *PrivateKey) GetPemPKCS8() (string, error) {
 // SetPemPKCS8 is to set the primary key using a string in Pem/PKCS8 format.
 //
 // ex) err := privateKey.SetPemPKCS8(pemPKCS8)
-func (this *PrivateKey) SetPemPKCS8(pemPKCS8 string) error {
+func (pk *PrivateKey) SetPemPKCS8(pemPKCS8 string) error {
 	block, _ := pem.Decode([]byte(pemPKCS8))
 
 	if key, err := x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
 		return err
 	} else {
-		this.Set(key.(*rsa.PrivateKey))
+		pk.Set(key.(*rsa.PrivateKey))
 		return nil
 	}
 
@@ -136,10 +136,10 @@ func (this *PrivateKey) SetPemPKCS8(pemPKCS8 string) error {
 // GetPublicKey is to get a PublicKey.
 //
 // ex) key := privateKey.GetPublicKey()
-func (this *PrivateKey) GetPublicKey() PublicKey {
+func (pk *PrivateKey) GetPublicKey() PublicKey {
 	publicKey := PublicKey{}
 
-	publicKey.Set(this.privateKey.PublicKey)
+	publicKey.Set(pk.privateKey.PublicKey)
 
 	return publicKey
 }

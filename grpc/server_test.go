@@ -22,7 +22,8 @@ func TestStart(t *testing.T) {
 
 	go func() {
 		if err := server.Start(":"+strconv.Itoa(10000+rand.IntN(10000)), &sample.Server{}); err != nil {
-			t.Fatal(err)
+			t.Errorf("server.Start failed: %v", err)
+			return
 		}
 	}()
 	time.Sleep(200 * time.Millisecond)

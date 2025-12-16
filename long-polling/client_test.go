@@ -89,8 +89,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestSubscription(t *testing.T) {
-	t.Parallel()
-
 	category := "category-" + uuid.New().String()
 	data := "data-" + uuid.New().String()
 

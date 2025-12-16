@@ -6,12 +6,9 @@ import (
 	"github.com/common-library/go/security/crypto/rsa"
 )
 
-var keyPairForPublicKey rsa.KeyPair
-
 func publickey_instance(t *testing.T) (rsa.PrivateKey, rsa.PublicKey) {
-	keyPairForPublicKey = keypair_instance(t)
-
-	return keyPairForPublicKey.GetKeyPair()
+	keyPair := keypair_instance(t)
+	return keyPair.GetKeyPair()
 }
 
 func publickey_test(t *testing.T, privateKey rsa.PrivateKey, publicKey rsa.PublicKey) {

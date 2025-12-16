@@ -1,7 +1,12 @@
 // Package dsa provides dsa crypto related implementations.
+//
+// Deprecated: DSA is a legacy algorithm and should not be used for new applications.
+// Use Ed25519 (crypto/ed25519) or other modern alternatives instead.
+// DSA keys with 1024-bit moduli are cryptographically weak.
 package dsa
 
 import (
+	//lint:ignore SA1019 DSA is deprecated but kept for compatibility
 	"crypto/dsa"
 	"crypto/sha256"
 	"encoding/asn1"
@@ -18,31 +23,31 @@ type PublicKey struct {
 // Verify is verifies the signature.
 //
 // ex) result := publicKey.Verify(message, signature)
-func (this *PublicKey) Verify(message string, signature Signature) bool {
+func (pub *PublicKey) Verify(message string, signature Signature) bool {
 	hash := sha256.Sum256([]byte(message))
 
-	return dsa.Verify(&this.publicKey, hash[:], signature.R, signature.S)
+	return dsa.Verify(&pub.publicKey, hash[:], signature.R, signature.S)
 }
 
 // Get is to get a dsa.PublicKey.
 //
 // ex) key := publicKey.Get()
-func (this *PublicKey) Get() dsa.PublicKey {
-	return this.publicKey
+func (pub *PublicKey) Get() dsa.PublicKey {
+	return pub.publicKey
 }
 
 // Set is to set a dsa.PublicKey.
 //
 // ex) publicKey.Set(key)
-func (this *PublicKey) Set(publicKey dsa.PublicKey) {
-	this.publicKey = publicKey
+func (pub *PublicKey) Set(publicKey dsa.PublicKey) {
+	pub.publicKey = publicKey
 }
 
 // GetPemAsn1 is to get a string in Pem/Asn1 format.
 //
 // ex) pemAsn1, err := publicKey.GetPemAsn1()
-func (this *PublicKey) GetPemAsn1() (string, error) {
-	if blockBytes, err := asn1.Marshal(this.publicKey); err != nil {
+func (pub *PublicKey) GetPemAsn1() (string, error) {
+	if blockBytes, err := asn1.Marshal(pub.publicKey); err != nil {
 		return "", err
 	} else {
 		return string(pem.EncodeToMemory(
@@ -57,9 +62,9 @@ func (this *PublicKey) GetPemAsn1() (string, error) {
 // SetPemAsn1 is to set the public key using a string in Pem/Asn1 format.
 //
 // ex) err := publicKey.SetPemAsn1(pemAsn1)
-func (this *PublicKey) SetPemAsn1(pemAsn1 string) error {
+func (pub *PublicKey) SetPemAsn1(pemAsn1 string) error {
 	block, _ := pem.Decode([]byte(pemAsn1))
-	if _, err := asn1.Unmarshal(block.Bytes, &this.publicKey); err != nil {
+	if _, err := asn1.Unmarshal(block.Bytes, &pub.publicKey); err != nil {
 		return err
 	} else {
 		return nil
@@ -70,8 +75,8 @@ func (this *PublicKey) SetPemAsn1(pemAsn1 string) error {
 // GetSsh is to get a string in ssh format.
 //
 // ex) sshKey, err := publicKey.GetSsh()
-func (this *PublicKey) GetSsh() (string, error) {
-	if publicKey, err := ssh.NewPublicKey(&this.publicKey); err != nil {
+func (pub *PublicKey) GetSsh() (string, error) {
+	if publicKey, err := ssh.NewPublicKey(&pub.publicKey); err != nil {
 		return "", err
 	} else {
 		return string(ssh.MarshalAuthorizedKey(publicKey)), nil
@@ -81,29 +86,29 @@ func (this *PublicKey) GetSsh() (string, error) {
 // SetSsh is to set the public key using a string in ssh format.
 //
 // ex) err := publicKey.SetSsh(sshKey)
-func (this *PublicKey) SetSsh(sshKey string) error {
+func (pub *PublicKey) SetSsh(sshKey string) error {
 	if key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(sshKey)); err != nil {
 		return err
 	} else {
-		return this.SetSshPublicKey(key)
+		return pub.SetSshPublicKey(key)
 	}
 }
 
 // GetSshPublicKey is to get a ssh.PublicKey.
 //
 // ex) key, err := publicKey.GetSshPublicKey()
-func (this *PublicKey) GetSshPublicKey() (ssh.PublicKey, error) {
-	return ssh.NewPublicKey(&this.publicKey)
+func (pub *PublicKey) GetSshPublicKey() (ssh.PublicKey, error) {
+	return ssh.NewPublicKey(&pub.publicKey)
 }
 
 // SetSshPublicKey is to set the public key using ssh.PublicKey.
 //
 // ex) err := publicKey.SetSshPublicKey(key)
-func (this *PublicKey) SetSshPublicKey(publicKey ssh.PublicKey) error {
+func (pub *PublicKey) SetSshPublicKey(publicKey ssh.PublicKey) error {
 	if key, err := ssh.ParsePublicKey(publicKey.Marshal()); err != nil {
 		return err
 	} else {
-		this.publicKey = *key.(ssh.CryptoPublicKey).CryptoPublicKey().(*dsa.PublicKey)
+		pub.publicKey = *key.(ssh.CryptoPublicKey).CryptoPublicKey().(*dsa.PublicKey)
 		return nil
 	}
 }

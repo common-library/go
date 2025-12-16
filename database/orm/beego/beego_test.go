@@ -3,13 +3,18 @@ package beego_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/beego/beego/v2/client/orm"
+	"github.com/common-library/go/testutil"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 type dataBaseInfo struct {
@@ -19,6 +24,7 @@ type dataBaseInfo struct {
 }
 
 var dataBaseInfos = []dataBaseInfo{}
+var containers = []testcontainers.Container{}
 
 type Table01ForBeego struct {
 	Field01 string `orm:"pk;size(512)"`
@@ -41,29 +47,74 @@ func getOrmers(t *testing.T) []orm.Ormer {
 }
 
 func TestMain(m *testing.M) {
+	ctx := context.Background()
+
 	setup := func() {
 		models := []any{
 			new(Table01ForBeego),
 		}
 		orm.RegisterModel(models...)
 
-		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
-			dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "mysql", driverName: "mysql", dataSource: dsn})
+		mysqlContainer, err := mysql.Run(ctx, testutil.MySQLImage,
+			mysql.WithDatabase("testdb"),
+			mysql.WithUsername("testuser"),
+			mysql.WithPassword("testpass"),
+		)
+		if err != nil {
+			panic(err)
 		}
-		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
-			dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "postgres", driverName: "postgres", dataSource: dsn})
+		containers = append(containers, mysqlContainer)
+
+		mysqlHost, err := mysqlContainer.Host(ctx)
+		if err != nil {
+			panic(err)
 		}
 
-		if len(dataBaseInfos) != 0 {
-			dataBaseInfos[0].aliasName = "default"
+		mysqlPort, err := mysqlContainer.MappedPort(ctx, "3306")
+		if err != nil {
+			panic(err)
 		}
+
+		mysqlDSN := fmt.Sprintf("testuser:testpass@tcp(%s:%s)/testdb?charset=utf8&parseTime=True&loc=Local", mysqlHost, mysqlPort.Port())
+		dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "default", driverName: "mysql", dataSource: mysqlDSN})
+
+		postgresContainer, err := postgres.Run(ctx, testutil.PostgresImage,
+			postgres.WithDatabase("testdb"),
+			postgres.WithUsername("testuser"),
+			postgres.WithPassword("testpass"),
+			postgres.BasicWaitStrategies(),
+		)
+		if err != nil {
+			panic(err)
+		}
+		containers = append(containers, postgresContainer)
+
+		postgresHost, err := postgresContainer.Host(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		postgresPort, err := postgresContainer.MappedPort(ctx, "5432")
+		if err != nil {
+			panic(err)
+		}
+
+		postgresDSN := fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", postgresHost, postgresPort.Port())
+		dataBaseInfos = append(dataBaseInfos, dataBaseInfo{aliasName: "postgres", driverName: "postgres", dataSource: postgresDSN})
 
 		for _, dataBaseInfo := range dataBaseInfos {
-			if err := orm.RegisterDataBase(dataBaseInfo.aliasName, dataBaseInfo.driverName, dataBaseInfo.dataSource); err != nil {
-				panic(err)
-			} else if err := orm.RunSyncdb(dataBaseInfo.aliasName, true, true); err != nil {
+			var err error
+			for i := 0; i < 10; i++ {
+				err = orm.RegisterDataBase(dataBaseInfo.aliasName, dataBaseInfo.driverName, dataBaseInfo.dataSource)
+				if err == nil {
+					err = orm.RunSyncdb(dataBaseInfo.aliasName, true, true)
+					if err == nil {
+						break
+					}
+				}
+				time.Sleep(500 * time.Millisecond)
+			}
+			if err != nil {
 				panic(err)
 			}
 		}
@@ -80,6 +131,12 @@ func TestMain(m *testing.M) {
 				if _, err := rawSeter.Exec(); err != nil {
 					panic(err)
 				}
+			}
+		}
+
+		for _, container := range containers {
+			if err := container.Terminate(ctx); err != nil {
+				panic(err)
 			}
 		}
 	}
@@ -332,7 +389,7 @@ func TestBegin(t *testing.T) {
 	for _, ormer := range getOrmers(t) {
 		if txOrmer, err := ormer.Begin(); err != nil {
 			t.Fatal(err)
-		} else if err := func() error { return nil }; err != nil {
+		} else if err := func() error { return nil }(); err != nil {
 			if err := txOrmer.Rollback(); err != nil {
 				t.Fatal(err)
 			}
