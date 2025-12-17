@@ -1,5 +1,13 @@
 # Common Library for Go
 
+[![CI](https://github.com/common-library/go/workflows/CI/badge.svg)](https://github.com/common-library/go/actions)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/heaven-chp/c7e11ff6ca6c490bd028e4a6d9b79c92/raw/coverage.json)](https://github.com/common-library/go/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/common-library/go)](https://goreportcard.com/report/github.com/common-library/go)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/common-library/go?logo=go)](https://github.com/common-library/go)
+[![Reference](https://pkg.go.dev/badge/github.com/common-library/go.svg)](https://pkg.go.dev/github.com/common-library/go)
+[![License](https://img.shields.io/github/license/common-library/go)](https://github.com/common-library/go/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/common-library/go)](https://github.com/common-library/go/stargazers)
+
 ## Installation
 ```bash
 go get -u github.com/common-library/go
