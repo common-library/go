@@ -1,4 +1,21 @@
-// Package sql provides a database client implementation that uses SQL.
+// Package sql provides a unified SQL database client supporting multiple database drivers.
+//
+// This package offers a consistent interface for interacting with various SQL databases
+// including MySQL, PostgreSQL, SQLite, ClickHouse, DynamoDB, SQL Server, and Oracle.
+//
+// Features:
+//   - Support for 7 database drivers (MySQL, PostgreSQL, SQLite, ClickHouse, DynamoDB, SQL Server, Oracle)
+//   - Transaction management with Begin/End pattern
+//   - Prepared statement support for both regular and transactional queries
+//   - Connection pooling configuration
+//   - Consistent API across all database types
+//
+// Example:
+//
+//	var client sql.Client
+//	client.Open(sql.DriverMySQL, "user:pass@tcp(localhost)/db", 10)
+//	defer client.Close()
+//	client.Execute("INSERT INTO users (name) VALUES (?)", "Alice")
 package sql
 
 import (
@@ -38,9 +55,23 @@ type Client struct {
 	connection *sql.DB
 }
 
-// Open opens the database.
+// Open establishes a connection to the specified database.
+// This method initializes the database connection pool and validates the connection with a ping.
 //
-// ex) err := client.Open(sql.DriverMySQL, `id:password@tcp(address)/table`, 1)
+// Parameters:
+//   - driver: Database driver (DriverMySQL, DriverPostgreSQL, DriverSQLite, etc.)
+//   - dsn: Data Source Name - connection string specific to the driver
+//   - maxOpenConnection: Maximum number of open connections in the pool
+//
+// Returns:
+//   - error: Returns an error if the connection cannot be established or ping fails
+//
+// Example:
+//
+//	err := client.Open(sql.DriverMySQL, "user:pass@tcp(localhost:3306)/database", 10)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
 func (c *Client) Open(driver Driver, dsn string, maxOpenConnection int) error {
 	c.driver = driver
 
@@ -57,9 +88,15 @@ func (c *Client) Open(driver Driver, dsn string, maxOpenConnection int) error {
 	return c.connection.Ping()
 }
 
-// Close closes the database.
+// Close closes the database connection and releases all resources.
+// It is safe to call Close multiple times.
 //
-// ex) err := client.Close()
+// Returns:
+//   - error: Returns an error if closing the connection fails, nil otherwise
+//
+// Example:
+//
+//	defer client.Close()
 func (c *Client) Close() error {
 	if c.connection == nil {
 		return nil
@@ -71,17 +108,33 @@ func (c *Client) Close() error {
 	return err
 }
 
-// Query executes a query and returns the result rows.
+// Query executes a SQL query and returns the result rows.
+// The caller is responsible for closing the returned rows.
 //
-// ex)
+// Parameters:
+//   - query: SQL query string (use ? for parameter placeholders)
+//   - args: Optional query parameters
 //
-//	rows, err := client.Query(`SELECT field ...;`)
+// Returns:
+//   - *sql.Rows: Result set that can be iterated
+//   - error: Returns an error if the query fails
 //
+// Example:
+//
+//	rows, err := client.Query("SELECT id, name FROM users WHERE age > ?", 18)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
 //	defer rows.Close()
 //
 //	for rows.Next() {
-//	    field := 0
-//	    err := rows.Scan(&field)
+//		var id int
+//		var name string
+//		err := rows.Scan(&id, &name)
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//		fmt.Printf("ID: %d, Name: %s\n", id, name)
 //	}
 func (c *Client) Query(query string, args ...any) (*sql.Rows, error) {
 	if c.connection == nil {
@@ -91,9 +144,25 @@ func (c *Client) Query(query string, args ...any) (*sql.Rows, error) {
 	return c.connection.Query(query, args...)
 }
 
-// QueryRow executes a query and copies the values of matched rows.
+// QueryRow executes a query and scans the first row into the provided variables.
+// This is a convenience method for queries that return a single row.
 //
-// ex) err := client.QueryRow(`SELECT field FROM ...;`, &field)
+// Parameters:
+//   - query: SQL query string
+//   - result: Pointers to variables where column values will be stored
+//
+// Returns:
+//   - error: Returns an error if the query fails or scanning fails
+//
+// Example:
+//
+//	var name string
+//	var age int
+//	err := client.QueryRow("SELECT name, age FROM users WHERE id = ?", &name, &age, 1)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("Name: %s, Age: %d\n", name, age)
 func (c *Client) QueryRow(query string, result ...any) error {
 	if c.connection == nil {
 		return errors.New("please call Open first")
@@ -102,10 +171,26 @@ func (c *Client) QueryRow(query string, result ...any) error {
 	return c.connection.QueryRow(query).Scan(result...)
 }
 
-// Execute executes the query.
+// Execute executes a SQL statement (INSERT, UPDATE, DELETE, etc.) that doesn't return rows.
+// This method is used for data modification operations.
 //
-// ex 1) err := client.Execute(`INSERT INTO ... VALUES(value);`)
-// ex 2) err := client.Execute(`INSERT INTO ... VALUES(?);`, value)
+// Parameters:
+//   - query: SQL statement string (use ? for parameter placeholders)
+//   - args: Optional statement parameters
+//
+// Returns:
+//   - error: Returns an error if the statement execution fails
+//
+// Example:
+//
+//	// Insert
+//	err := client.Execute("INSERT INTO users (name, age) VALUES (?, ?)", "Alice", 30)
+//
+//	// Update
+//	err = client.Execute("UPDATE users SET age = ? WHERE name = ?", 31, "Alice")
+//
+//	// Delete
+//	err = client.Execute("DELETE FROM users WHERE age < ?", 18)
 func (c *Client) Execute(query string, args ...any) error {
 	if c.connection == nil {
 		return errors.New("please call Open first")
@@ -119,12 +204,22 @@ func (c *Client) Execute(query string, args ...any) error {
 	}
 }
 
-// SetPrepare is set prepared statement.
+// SetPrepare creates a prepared statement for later execution.
+// Prepared statements improve performance when executing the same query multiple times
+// and provide protection against SQL injection.
 //
-// ex)
+// Parameters:
+//   - query: SQL query string with ? placeholders for parameters
 //
-//	err := client.SetPrepare(`SELECT field ... WHERE field=?;`)
-//	err := client.ExecutePrepare(value)
+// Returns:
+//   - error: Returns an error if statement preparation fails
+//
+// Example:
+//
+//	err := client.SetPrepare("SELECT id, name FROM users WHERE age > ?")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
 func (c *Client) SetPrepare(query string) error {
 	if c.connection == nil {
 		return errors.New("please call Open first")
@@ -138,19 +233,30 @@ func (c *Client) SetPrepare(query string) error {
 	}
 }
 
-// QueryPrepare query a prepared statement.
+// QueryPrepare executes a prepared statement and returns the result rows.
+// Must be called after SetPrepare.
 //
-// ex)
+// Parameters:
+//   - args: Parameters to bind to the prepared statement
 //
-//	err := client.SetPrepare(`SELECT field ... WHERE field=?;`)
+// Returns:
+//   - *sql.Rows: Result set that can be iterated
+//   - error: Returns an error if the query fails
 //
-//	rows, err := client.QueryPrepare(value)
+// Example:
 //
+//	err := client.SetPrepare("SELECT id, name FROM users WHERE age > ?")
+//	rows, err := client.QueryPrepare(18)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
 //	defer rows.Close()
 //
 //	for rows.Next() {
-//	    field := 0
-//	    err := rows.Scan(&field)
+//		var id int
+//		var name string
+//		rows.Scan(&id, &name)
+//		fmt.Printf("ID: %d, Name: %s\n", id, name)
 //	}
 func (c *Client) QueryPrepare(args ...any) (*sql.Rows, error) {
 	if c.stmt == nil {
@@ -160,16 +266,27 @@ func (c *Client) QueryPrepare(args ...any) (*sql.Rows, error) {
 	return c.stmt.Query(args...)
 }
 
-// QueryRowPrepare query a prepared statement about row.
+// QueryRowPrepare executes a prepared statement and returns a single row.
+// Must be called after SetPrepare.
 //
-// ex)
+// Parameters:
+//   - args: Parameters to bind to the prepared statement
 //
-//	err := client.SetPrepare(`SELECT field ... WHERE field=?;`)
+// Returns:
+//   - *sql.Row: Single row result
+//   - error: Returns an error if the query fails
 //
-//	row, err := client.QueryRowPrepare(value)
+// Example:
 //
-//	field := 0
-//	err := row.Scan(&field)
+//	err := client.SetPrepare("SELECT name, age FROM users WHERE id = ?")
+//	row, err := client.QueryRowPrepare(1)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+//	var name string
+//	var age int
+//	err = row.Scan(&name, &age)
 func (c *Client) QueryRowPrepare(args ...any) (*sql.Row, error) {
 	if c.stmt == nil {
 		return nil, errors.New("please call SetPrepare first")
@@ -180,13 +297,25 @@ func (c *Client) QueryRowPrepare(args ...any) (*sql.Row, error) {
 	return row, row.Err()
 }
 
-// ExecutePrepare  executes a prepared statement.
+// ExecutePrepare executes a prepared statement that doesn't return rows.
+// Must be called after SetPrepare. Use for INSERT, UPDATE, DELETE operations.
 //
-// ex)
+// Parameters:
+//   - args: Parameters to bind to the prepared statement
 //
-//	err := client.SetPrepare(`INSERT INTO ` + table + `(field) VALUE(?);`)
+// Returns:
+//   - error: Returns an error if the execution fails
 //
-//	err = client.ExecutePrepare(value)
+// Example:
+//
+//	err := client.SetPrepare("INSERT INTO users (name, age) VALUES (?, ?)")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+//	err = client.ExecutePrepare("Alice", 30)
+//	err = client.ExecutePrepare("Bob", 25)
+//	err = client.ExecutePrepare("Charlie", 35)
 func (c *Client) ExecutePrepare(args ...any) error {
 	if c.stmt == nil {
 		return errors.New("please call SetPrepare first")
@@ -196,16 +325,24 @@ func (c *Client) ExecutePrepare(args ...any) error {
 	return err
 }
 
-// BeginTransaction begins a transaction.
+// BeginTransaction starts a new database transaction.
+// All subsequent operations using *Transaction methods will be part of this transaction
+// until EndTransaction is called. Transactions ensure atomicity - all operations succeed or all fail.
 //
-// finally, you must call EndTransaction.
+// Returns:
+//   - error: Returns an error if beginning the transaction fails
 //
-// ex)
+// Example:
 //
 //	err := client.BeginTransaction()
+//	if err != nil {
+//		log.Fatal(err)
+//	}
 //
-//	err = client.ExecuteTransaction(`...`)
+//	err = client.ExecuteTransaction("INSERT INTO users (name) VALUES (?)", "Alice")
+//	err = client.ExecuteTransaction("INSERT INTO logs (message) VALUES (?)", "User created")
 //
+//	// Commit if no errors, rollback otherwise
 //	err = client.EndTransaction(err)
 func (c *Client) BeginTransaction() error {
 	if c.connection == nil {
@@ -220,17 +357,26 @@ func (c *Client) BeginTransaction() error {
 	}
 }
 
-// EndTransaction ends a transaction.
+// EndTransaction commits or rolls back a transaction based on the error argument.
+// If err is nil, the transaction is committed. If err is not nil, the transaction is rolled back.
+// This method must be called after BeginTransaction to complete the transaction.
 //
-// if the argument is nil, commit is performed; otherwise, rollback is performed.
+// Parameters:
+//   - err: If nil, commits the transaction; otherwise rolls back
 //
-// ex)
+// Returns:
+//   - error: Returns an error if commit or rollback fails
+//
+// Example:
 //
 //	err := client.BeginTransaction()
-//
-//	err = client.ExecuteTransaction(`...`)
-//
-//	err = client.EndTransaction(err)
+//	err = client.ExecuteTransaction("INSERT INTO users (name) VALUES (?)", "Alice")
+//	if err != nil {
+//		client.EndTransaction(err) // Rollback
+//		return err
+//	}
+//	err = client.ExecuteTransaction("UPDATE counters SET value = value + 1")
+//	err = client.EndTransaction(err) // Commit if no error, rollback if error
 func (c *Client) EndTransaction(err error) error {
 	if c.tx == nil {
 		return errors.New("please call BeginTransaction first")
@@ -243,17 +389,34 @@ func (c *Client) EndTransaction(err error) error {
 	}
 }
 
-// QueryTransaction executes a query and returns the result rows.
+// QueryTransaction executes a query within the current transaction and returns result rows.
+// Must be called after BeginTransaction and before EndTransaction.
 //
-// ex 1) rows, err := client.QueryTransaction(`SELECT field ... WHERE field=value;`)
-// ex 2) rows, err := client.QueryTransaction(`SELECT field ... WHERE field=?;`, "value")
+// Parameters:
+//   - query: SQL query string (use ? for parameter placeholders)
+//   - args: Optional query parameters
 //
+// Returns:
+//   - *sql.Rows: Result set that can be iterated
+//   - error: Returns an error if the query fails
+//
+// Example:
+//
+//	err := client.BeginTransaction()
+//	rows, err := client.QueryTransaction("SELECT id, balance FROM accounts WHERE user_id = ?", 123)
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
 //	defer rows.Close()
 //
 //	for rows.Next() {
-//	    field := 0
-//	    err := rows.Scan(&field)
+//		var id int
+//		var balance float64
+//		err := rows.Scan(&id, &balance)
+//		// Process row...
 //	}
+//	err = client.EndTransaction(err)
 func (c *Client) QueryTransaction(query string, args ...any) (*sql.Rows, error) {
 	if c.tx == nil {
 		return nil, errors.New("please call BeginTransaction first")
@@ -262,9 +425,26 @@ func (c *Client) QueryTransaction(query string, args ...any) (*sql.Rows, error) 
 	return c.tx.Query(query, args...)
 }
 
-// QueryRowTransaction executes a query and copies the values of matched rows.
+// QueryRowTransaction executes a query within the current transaction and scans the first row.
+// Must be called after BeginTransaction and before EndTransaction.
 //
-// ex) err := client.QueryRowTransaction(`SELECT field ...;`, &field)
+// Parameters:
+//   - query: SQL query string
+//   - result: Pointers to variables where column values will be stored
+//
+// Returns:
+//   - error: Returns an error if the query fails or scanning fails
+//
+// Example:
+//
+//	err := client.BeginTransaction()
+//	var balance float64
+//	err = client.QueryRowTransaction("SELECT balance FROM accounts WHERE id = ?", &balance, 1)
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
+//	err = client.EndTransaction(err)
 func (c *Client) QueryRowTransaction(query string, result ...any) error {
 	if c.tx == nil {
 		return errors.New("please call BeginTransaction first")
@@ -273,11 +453,29 @@ func (c *Client) QueryRowTransaction(query string, result ...any) error {
 	return c.tx.QueryRow(query).Scan(result...)
 }
 
-// ExecuteTransaction executes a query.
+// ExecuteTransaction executes a SQL statement within the current transaction.
+// Must be called after BeginTransaction and before EndTransaction.
+// Use for INSERT, UPDATE, DELETE operations that should be part of a transaction.
 //
-// ex 1) err := client.ExecuteTransaction(`...`)
+// Parameters:
+//   - query: SQL statement string (use ? for parameter placeholders)
+//   - args: Optional statement parameters
 //
-// ex 2) err := client.ExecuteTransaction(`... WHERE field=?;`, value)
+// Returns:
+//   - error: Returns an error if the execution fails
+//
+// Example:
+//
+//	err := client.BeginTransaction()
+//	// Debit from one account
+//	err = client.ExecuteTransaction("UPDATE accounts SET balance = balance - ? WHERE id = ?", 100.0, 1)
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
+//	// Credit to another account
+//	err = client.ExecuteTransaction("UPDATE accounts SET balance = balance + ? WHERE id = ?", 100.0, 2)
+//	err = client.EndTransaction(err) // Commit both or rollback both
 func (c *Client) ExecuteTransaction(query string, args ...any) error {
 	if c.tx == nil {
 		return errors.New("please call BeginTransaction first")
@@ -291,9 +489,23 @@ func (c *Client) ExecuteTransaction(query string, args ...any) error {
 	}
 }
 
-// SetPrepareTransaction is set prepared statement.
+// SetPrepareTransaction creates a prepared statement within the current transaction.
+// Must be called after BeginTransaction and before EndTransaction.
 //
-// ex) err := client.SetPrepareTransaction(`SELECT field ... WHERE field=?;`)
+// Parameters:
+//   - query: SQL query string with ? placeholders for parameters
+//
+// Returns:
+//   - error: Returns an error if statement preparation fails
+//
+// Example:
+//
+//	err := client.BeginTransaction()
+//	err = client.SetPrepareTransaction("INSERT INTO logs (message, timestamp) VALUES (?, ?)")
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
 func (c *Client) SetPrepareTransaction(query string) error {
 	if c.tx == nil {
 		return errors.New("please call BeginTransaction first")
@@ -307,20 +519,33 @@ func (c *Client) SetPrepareTransaction(query string) error {
 	}
 }
 
-// QueryPrepareTransaction is query a prepared statement.
+// QueryPrepareTransaction executes a prepared statement within a transaction and returns result rows.
+// Must be called after SetPrepareTransaction.
 //
-// ex)
+// Parameters:
+//   - args: Parameters to bind to the prepared statement
 //
-//	err := client.SetPrepareTransaction(`SELECT field ... WHERE field=?;`)
+// Returns:
+//   - *sql.Rows: Result set that can be iterated
+//   - error: Returns an error if the query fails
 //
-//	rows, err := client.QueryPrepareTransaction(value)
+// Example:
 //
+//	err := client.BeginTransaction()
+//	err = client.SetPrepareTransaction("SELECT id, name FROM users WHERE age > ?")
+//	rows, err := client.QueryPrepareTransaction(18)
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
 //	defer rows.Close()
 //
 //	for rows.Next() {
-//	    field := 0
-//	    err := rows.Scan(&field)
+//		var id int
+//		var name string
+//		rows.Scan(&id, &name)
 //	}
+//	err = client.EndTransaction(err)
 func (c *Client) QueryPrepareTransaction(args ...any) (*sql.Rows, error) {
 	if c.txStmt == nil {
 		return nil, errors.New("please call SetPrepareTransaction first")
@@ -329,16 +554,29 @@ func (c *Client) QueryPrepareTransaction(args ...any) (*sql.Rows, error) {
 	return c.txStmt.Query(args...)
 }
 
-// QueryPrepareTransaction query a prepared statement about row.
+// QueryRowPrepareTransaction executes a prepared statement within a transaction and returns a single row.
+// Must be called after SetPrepareTransaction.
 //
-// ex)
+// Parameters:
+//   - args: Parameters to bind to the prepared statement
 //
-//	err := client.SetPrepareTransaction(`SELECT field ... WHERE field=?;`)
+// Returns:
+//   - *sql.Row: Single row result
+//   - error: Returns an error if the query fails
 //
-//	row, err := client.QueryRowPrepareTransaction(value)
+// Example:
 //
-//	field := 0
-//	err := row.Scan(&field)
+//	err := client.BeginTransaction()
+//	err = client.SetPrepareTransaction("SELECT balance FROM accounts WHERE id = ?")
+//	row, err := client.QueryRowPrepareTransaction(1)
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
+//
+//	var balance float64
+//	err = row.Scan(&balance)
+//	err = client.EndTransaction(err)
 func (c *Client) QueryRowPrepareTransaction(args ...any) (*sql.Row, error) {
 	if c.txStmt == nil {
 		return nil, errors.New("please call SetPrepareTransaction first")
@@ -349,13 +587,28 @@ func (c *Client) QueryRowPrepareTransaction(args ...any) (*sql.Row, error) {
 	return row, row.Err()
 }
 
-// ExecutePrepareTransaction executes a prepared statement.
+// ExecutePrepareTransaction executes a prepared statement within a transaction.
+// Must be called after SetPrepareTransaction. Use for batch INSERT, UPDATE, DELETE operations.
 //
-// ex)
+// Parameters:
+//   - args: Parameters to bind to the prepared statement
 //
-//	err := client.SetPrepareTransaction(`INSERT INTO ` + table + ` VALUE(field=?);`)
+// Returns:
+//   - error: Returns an error if the execution fails
 //
-//	err = client.ExecutePrepareTransaction(value)
+// Example:
+//
+//	err := client.BeginTransaction()
+//	err = client.SetPrepareTransaction("INSERT INTO logs (level, message) VALUES (?, ?)")
+//	if err != nil {
+//		client.EndTransaction(err)
+//		return err
+//	}
+//
+//	err = client.ExecutePrepareTransaction("INFO", "Server started")
+//	err = client.ExecutePrepareTransaction("DEBUG", "Connection established")
+//	err = client.ExecutePrepareTransaction("INFO", "Request processed")
+//	err = client.EndTransaction(err)
 func (c *Client) ExecutePrepareTransaction(args ...any) error {
 	if c.txStmt == nil {
 		return errors.New("please call SetPrepareTransaction first")
@@ -365,6 +618,20 @@ func (c *Client) ExecutePrepareTransaction(args ...any) error {
 	return err
 }
 
+// GetDriver returns the database driver currently in use.
+// This can be used to implement driver-specific behavior.
+//
+// Returns:
+//   - Driver: The current database driver
+//
+// Example:
+//
+//	driver := client.GetDriver()
+//	if driver == sql.DriverMySQL {
+//		// MySQL-specific logic
+//	} else if driver == sql.DriverPostgreSQL {
+//		// PostgreSQL-specific logic
+//	}
 func (c *Client) GetDriver() Driver {
 	return c.driver
 }
