@@ -92,6 +92,59 @@ jobs:
             echo "⚠️ No coverage data available" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Update Coverage Badge
+        if: github.ref == 'refs/heads/main' && success()
+        env:
+          GIST_SECRET: ${{ secrets.GIST_SECRET }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+        run: |
+          if [ ! -f coverage.out ]; then
+            echo "⚠️ No coverage data available, skipping badge update"
+            exit 0
+          fi
+          
+          # Extract coverage percentage
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Coverage: ${COVERAGE}%"
+          
+          # Determine badge color based on coverage
+          COLOR=$(awk -v cov="$COVERAGE" 'BEGIN {
+            if (cov >= 80) print "brightgreen"
+            else if (cov >= 60) print "yellow"
+            else if (cov >= 40) print "orange"
+            else print "red"
+          }')
+          echo "Badge color: $COLOR"
+          
+          # Create JSON for Gist update
+          JSON=$(jq -n \
+            --arg coverage "${COVERAGE}%" \
+            --arg color "${COLOR}" \
+            '{
+              "description": "Code coverage badge for common-library/go",
+              "files": {
+                "coverage.json": {
+                  "content": "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"\($coverage)\", \"color\": \"\($color)\"}"
+                }
+              }
+            }')
+          
+          # Update Gist
+          RESPONSE=$(curl -s -X PATCH \
+            -H "Authorization: token ${GIST_SECRET}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "$JSON" \
+            "https://api.github.com/gists/${GIST_ID}")
+          
+          if echo "$RESPONSE" | jq -e '.id' > /dev/null; then
+            echo "✅ Coverage badge updated successfully"
+            echo "Coverage: ${COVERAGE}% (${COLOR})"
+          else
+            echo "❌ Failed to update coverage badge"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v6
         if: always()
