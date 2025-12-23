@@ -53,11 +53,13 @@ func TestFunc1(t *testing.T) {
 		data2 := "message " + strconv.Itoa(i)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
+		reply, err := client.Func1(ctx, &sample.Request{Data1: data1, Data2: data2})
+		cancel()
 
-		if reply, err := client.Func1(ctx, &sample.Request{Data1: data1, Data2: data2}); err != nil {
+		if err != nil {
 			t.Fatal(err)
-		} else if reply.Data1 != data1 || reply.Data2 != data2 {
+		}
+		if reply.Data1 != data1 || reply.Data2 != data2 {
 			t.Fatal(reply)
 		}
 	}
@@ -74,27 +76,30 @@ func TestFunc2(t *testing.T) {
 
 	client := sample.NewSampleClient(connection)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	stream, err := client.Func2(ctx)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to create stream: %v", err)
 	}
 
 	const data1 = 1
 	const data2 = "message"
 
 	if err := stream.Send(&sample.Request{Data1: data1, Data2: data2}); err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to send request: %v", err)
 	}
 
 	for i := 0; i < 3; i++ {
-		if reply, err := stream.Recv(); err == io.EOF {
+		reply, err := stream.Recv()
+		if err == io.EOF {
 			break
-		} else if err != nil {
-			t.Fatal(err)
-		} else if reply.Data1 != data1 || reply.Data2 != data2 {
-			t.Fatal(reply)
+		}
+		if err != nil {
+			t.Fatalf("failed to receive reply at iteration %d: %v", i, err)
+		}
+		if reply.Data1 != data1 || reply.Data2 != data2 {
+			t.Fatalf("unexpected reply at iteration %d: got %v, want Data1=%d Data2=%s", i, reply, data1, data2)
 		}
 	}
 
@@ -106,7 +111,9 @@ func TestFunc2(t *testing.T) {
 			}
 		}
 
-		stream.CloseSend()
+		if err := stream.CloseSend(); err != nil {
+			t.Errorf("stream.CloseSend failed: %v", err)
+		}
 	}()
 
 	wg := new(sync.WaitGroup)

@@ -72,6 +72,30 @@ jobs:
       - name: Test
         run: go test -race -timeout=300s -parallel=4 -coverprofile=coverage.out -cover -v ./...
 
+      - name: Filter Coverage (Exclude Generated Code)
+        if: always()
+        run: |
+          if [ -f coverage.out ]; then
+            ORIGINAL_LINES=$(wc -l < coverage.out)
+            echo "📊 Original coverage: ${ORIGINAL_LINES} lines"
+            
+            # Exclude auto-generated files from coverage (single pass with extended regex)
+            grep -vE "(database/orm/ent/|database/orm/sqlc/|\.pb\.go:|\.pb\.gw\.go:)" coverage.out > coverage.filtered.out || true
+            
+            # Use filtered coverage if it has content, otherwise keep original
+            if [ -s coverage.filtered.out ]; then
+              FILTERED_LINES=$(wc -l < coverage.filtered.out)
+              REMOVED=$((ORIGINAL_LINES - FILTERED_LINES))
+              PERCENT=$(awk "BEGIN {printf \"%.1f\", ($REMOVED / $ORIGINAL_LINES) * 100}")
+              echo "✅ Filtered coverage: ${FILTERED_LINES} lines (removed ${REMOVED} lines, ${PERCENT}%)"
+              mv coverage.filtered.out coverage.out
+            else
+              echo "⚠️  Filtered coverage is empty, keeping original"
+              rm -f coverage.filtered.out
+            fi
+          fi
+        continue-on-error: true
+
       - name: Coverage Summary
         if: always()
         run: |

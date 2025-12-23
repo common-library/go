@@ -85,11 +85,11 @@ func main() {
   - SQLite
 
 #### ORM & Query Builders
-- **[beego ORM](database/orm/beego)** - Beego ORM wrapper
-- **[ent](database/orm/ent)** - Entity framework for Go
-- **[GORM](database/orm/gorm)** - Feature-rich ORM library
-- **[sqlc](database/orm/sqlc)** - Compile-time SQL query generator
-- **[sqlx](database/orm/sqlx)** - Extensions to database/sql
+- **[beego ORM](database/orm/beego/README.md)** - Beego ORM wrapper
+- **[ent](database/orm/ent/README.md)** - Entity framework for Go
+- **[GORM](database/orm/gorm/README.md)** - Feature-rich ORM library
+- **[sqlc](database/orm/sqlc/README.md)** - Compile-time SQL query generator
+- **[sqlx](database/orm/sqlx/README.md)** - Extensions to database/sql
 
 #### Database Tools
 - **[dbmate](database/dbmate)** - Database migration tool
@@ -228,9 +228,9 @@ protoc/bin/protoc \
 **Implementation Steps:**
 1. Create `.proto` file with service definition ([example](grpc/sample/sample.proto))
 2. Generate Go code using protoc
-3. Implement the service interface ([example](grpc/sample/Server.go))
+3. Implement the service interface ([example](grpc/sample/server.go))
 4. Register service with gRPC server (implement `RegisterServer` method)
-5. Write tests ([example](grpc/sample/Server_test.go))
+5. Write tests ([example](grpc/sample/server_test.go))
 
 ## 📖 Documentation
 
