@@ -28,6 +28,11 @@ func (s *Server) Func1(context context.Context, request *Request) (*Reply, error
 // Func2 is implementation of the function defined in protobuf IDL.
 func (s *Server) Func2(stream Sample_Func2Server) error {
 	for {
+		// Check context cancellation
+		if err := stream.Context().Err(); err != nil {
+			return err
+		}
+
 		request, err := stream.Recv()
 		if err == io.EOF {
 			return nil
