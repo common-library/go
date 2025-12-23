@@ -1,4 +1,22 @@
-// Package ed25519 provides ed25519 crypto related implementations.
+// Package ed25519 provides Ed25519 digital signature cryptography.
+//
+// This package implements Ed25519 public-key signature system based on the
+// elliptic curve Ed25519. It provides key generation, signing, and verification
+// operations with simplified interfaces for key pair management.
+//
+// # Features
+//
+//   - Ed25519 key pair generation
+//   - Digital signature creation and verification
+//   - PEM/PKCS8/PKIX format support
+//   - SSH public key format conversion
+//   - Type-safe key management
+//
+// # Basic Example
+//
+//	privateKey := &ed25519.PrivateKey{}
+//	err := privateKey.SetDefault()
+//	signature := privateKey.Sign("message")
 package ed25519
 
 import (
@@ -14,52 +32,98 @@ type PrivateKey struct {
 	publicKey  ed25519.PublicKey
 }
 
-// Sign is create a signature for message.
+// Sign creates a digital signature for the message.
 //
-// ex) signature := privateKey.Sign(message)
-func (this *PrivateKey) Sign(message string) []byte {
-	return ed25519.Sign(this.privateKey, []byte(message))
+// # Parameters
+//
+//   - message: Text message to sign
+//
+// # Returns
+//
+//   - []byte: 64-byte Ed25519 signature
+//
+// # Examples
+//
+//	signature := privateKey.Sign("Hello, World!")
+func (pk *PrivateKey) Sign(message string) []byte {
+	return ed25519.Sign(pk.privateKey, []byte(message))
 }
 
-// Verify is verifies the signature.
+// Verify verifies a digital signature using the public key.
 //
-// ex) result := privateKey.Verify(message, signature)
-func (this *PrivateKey) Verify(message string, signature []byte) bool {
-	return ed25519.Verify(this.publicKey, []byte(message), signature)
+// # Parameters
+//
+//   - message: Original text message
+//   - signature: 64-byte signature to verify
+//
+// # Returns
+//
+//   - bool: true if signature is valid, false otherwise
+//
+// # Examples
+//
+//	valid := privateKey.Verify("message", signature)
+func (pk *PrivateKey) Verify(message string, signature []byte) bool {
+	return ed25519.Verify(pk.publicKey, []byte(message), signature)
 }
 
-// Get is to get a ed25519.PrivateKey.
+// Get retrieves the underlying ed25519.PrivateKey.
 //
-// ex) key := privateKey.Get()
-func (this *PrivateKey) Get() ed25519.PrivateKey {
-	return this.privateKey
+// # Returns
+//
+//   - ed25519.PrivateKey: Raw private key (64 bytes)
+//
+// # Examples
+//
+//	key := privateKey.Get()
+func (pk *PrivateKey) Get() ed25519.PrivateKey {
+	return pk.privateKey
 }
 
-// Set is to set a ed25519.PrivateKey.
+// Set sets the private key from an ed25519.PrivateKey.
 //
-// ex) privateKey.Set(key)
-func (this *PrivateKey) Set(privateKey ed25519.PrivateKey) {
-	this.privateKey = privateKey
-	this.publicKey = privateKey.Public().(ed25519.PublicKey)
+// # Parameters
+//
+//   - privateKey: Ed25519 private key to set
+//
+// # Examples
+//
+//	privateKey.Set(key)
+func (pk *PrivateKey) Set(privateKey ed25519.PrivateKey) {
+	pk.privateKey = privateKey
+	pk.publicKey = privateKey.Public().(ed25519.PublicKey)
 }
 
-// SetDefault is to set the primary key.
+// SetDefault generates a new random private key.
 //
-// ex) err := privateKey.SetDefault()
-func (this *PrivateKey) SetDefault() error {
+// # Returns
+//
+//   - error: Error if key generation fails, nil on success
+//
+// # Examples
+//
+//	err := privateKey.SetDefault()
+func (pk *PrivateKey) SetDefault() error {
 	if _, privateKey, err := ed25519.GenerateKey(rand.Reader); err != nil {
 		return err
 	} else {
-		this.Set(privateKey)
+		pk.Set(privateKey)
 		return nil
 	}
 }
 
-// GetPemPKCS8 is to get a string in Pem/PKCS8 format.
+// GetPemPKCS8 returns the private key in PEM-encoded PKCS#8 format.
 //
-// ex) pemPKCS8, err := privateKey.GetPemPKCS8()
-func (this *PrivateKey) GetPemPKCS8() (string, error) {
-	if blockBytes, err := x509.MarshalPKCS8PrivateKey(this.privateKey); err != nil {
+// # Returns
+//
+//   - string: PEM-encoded private key
+//   - error: Error if encoding fails, nil on success
+//
+// # Examples
+//
+//	pemString, err := privateKey.GetPemPKCS8()
+func (pk *PrivateKey) GetPemPKCS8() (string, error) {
+	if blockBytes, err := x509.MarshalPKCS8PrivateKey(pk.privateKey); err != nil {
 		return "", err
 	} else {
 		return string(pem.EncodeToMemory(
@@ -71,27 +135,43 @@ func (this *PrivateKey) GetPemPKCS8() (string, error) {
 	}
 }
 
-// SetPemPKCS8 is to set the primary key using a string in Pem/PKCS8 format.
+// SetPemPKCS8 sets the private key from a PEM-encoded PKCS#8 string.
 //
-// ex) err := privateKey.SetPemPKCS8(pemPKCS8)
-func (this *PrivateKey) SetPemPKCS8(pemPKCS8 string) error {
+// # Parameters
+//
+//   - pemPKCS8: PEM-encoded private key string
+//
+// # Returns
+//
+//   - error: Error if decoding or parsing fails, nil on success
+//
+// # Examples
+//
+//	err := privateKey.SetPemPKCS8(pemString)
+func (pk *PrivateKey) SetPemPKCS8(pemPKCS8 string) error {
 	block, _ := pem.Decode([]byte(pemPKCS8))
 
 	if key, err := x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
 		return err
 	} else {
-		this.Set(key.(ed25519.PrivateKey))
+		pk.Set(key.(ed25519.PrivateKey))
 		return nil
 	}
 }
 
-// GetPublicKey is to get a PublicKey.
+// GetPublicKey derives the public key from the private key.
 //
-// ex) key := privateKey.GetPublicKey()
-func (this *PrivateKey) GetPublicKey() PublicKey {
+// # Returns
+//
+//   - PublicKey: Corresponding public key
+//
+// # Examples
+//
+//	publicKey := privateKey.GetPublicKey()
+func (pk *PrivateKey) GetPublicKey() PublicKey {
 	publicKey := PublicKey{}
 
-	publicKey.Set(this.publicKey)
+	publicKey.Set(pk.publicKey)
 
 	return publicKey
 }

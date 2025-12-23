@@ -17,7 +17,7 @@ var address string
 type handler struct {
 }
 
-func (this handler) ServeHTTP(w net_http.ResponseWriter, r *net_http.Request) {
+func (h handler) ServeHTTP(w net_http.ResponseWriter, r *net_http.Request) {
 	w.WriteHeader(net_http.StatusOK)
 	w.Write([]byte(`{"field_1":1}`))
 }

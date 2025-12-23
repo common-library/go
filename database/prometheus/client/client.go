@@ -1,4 +1,25 @@
-// Package client provides prometheus client implementations.
+// Package client provides a wrapper around the official Prometheus Go client library
+// for querying Prometheus metrics with support for basic authentication, bearer token
+// authentication, and PromQL queries.
+//
+// Features:
+//   - Simple client creation with various authentication methods
+//   - Instant vector queries with Query()
+//   - Range vector queries with QueryRange()
+//   - Configurable timeout for all operations
+//   - Support for basic auth and bearer token authentication
+//
+// Example:
+//
+//	client, err := client.NewClient("http://localhost:9090")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	value, warnings, err := client.Query("up", time.Now(), 10*time.Second)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 package client
 
 import (
@@ -13,9 +34,21 @@ import (
 
 type Range = v1.Range
 
-// NewClient creates a client.
+// NewClient creates a new Prometheus client with the specified server address.
 //
-// ex) c, err := client.NewClient("http://:9090")
+// Parameters:
+//   - address: Prometheus server URL (e.g., "http://localhost:9090")
+//
+// Returns:
+//   - *client: Configured Prometheus client
+//   - error: Error if client creation fails
+//
+// Example:
+//
+//	c, err := client.NewClient("http://localhost:9090")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func NewClient(address string) (*client, error) {
 	if prometheusClient, err := api.NewClient(api.Config{Address: address}); err != nil {
 		return nil, err
@@ -24,9 +57,27 @@ func NewClient(address string) (*client, error) {
 	}
 }
 
-// NewClientWithBasicAuth creates a client with basic authentication.
+// NewClientWithBasicAuth creates a new Prometheus client with HTTP basic authentication.
 //
-// ex) c, err := client.NewClientWithBasicAuth("http://:9090", "username", "password")
+// Parameters:
+//   - address: Prometheus server URL (e.g., "http://localhost:9090")
+//   - username: Basic auth username
+//   - password: Basic auth password
+//
+// Returns:
+//   - *client: Configured Prometheus client with basic auth
+//   - error: Error if client creation fails
+//
+// Example:
+//
+//	c, err := client.NewClientWithBasicAuth(
+//	    "http://localhost:9090",
+//	    "admin",
+//	    "secret",
+//	)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func NewClientWithBasicAuth(address, username string, password string) (*client, error) {
 	config := api.Config{
 		Address:      address,
@@ -40,9 +91,25 @@ func NewClientWithBasicAuth(address, username string, password string) (*client,
 	}
 }
 
-// NewClientWithBearerToken creates a client that performs bearer token authentication.
+// NewClientWithBearerToken creates a new Prometheus client with bearer token authentication.
 //
-// ex) c, err := client.NewClientWithBearerToken("http://:9090", "token")
+// Parameters:
+//   - address: Prometheus server URL (e.g., "http://localhost:9090")
+//   - token: Bearer token for authentication
+//
+// Returns:
+//   - *client: Configured Prometheus client with bearer token auth
+//   - error: Error if client creation fails
+//
+// Example:
+//
+//	c, err := client.NewClientWithBearerToken(
+//	    "http://localhost:9090",
+//	    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+//	)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func NewClientWithBearerToken(address string, token string) (*client, error) {
 	config := api.Config{
 		Address:      address,
@@ -61,28 +128,85 @@ type client struct {
 	prometheusClient api.Client
 }
 
-// Queries perform PromQL queries over a given period of time.
+// Query executes an instant PromQL query at a specific point in time.
 //
-// ex)
+// This method performs a query evaluation at a single timestamp, useful for
+// retrieving the current state of metrics or evaluating expressions at a
+// specific moment.
 //
-//	c, err := client.NewClient(address)
+// Parameters:
+//   - query: PromQL query string (e.g., "up", "rate(http_requests_total[5m])")
+//   - when: Timestamp for query evaluation
+//   - timeout: Maximum duration to wait for query completion
+//
+// Returns:
+//   - model.Value: Query result (can be scalar, vector, matrix, or string)
+//   - v1.Warnings: Warnings returned by Prometheus
+//   - error: Error if query fails or times out
+//
+// Example:
+//
+//	c, err := client.NewClient("http://localhost:9090")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
 //	value, warnings, err := c.Query("up", time.Now(), 10*time.Second)
-func (this *client) Query(query string, when time.Time, timeout time.Duration) (model.Value, v1.Warnings, error) {
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	for _, warning := range warnings {
+//	    log.Println("Warning:", warning)
+//	}
+func (c *client) Query(query string, when time.Time, timeout time.Duration) (model.Value, v1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	return v1.NewAPI(this.prometheusClient).Query(ctx, query, when, v1.WithTimeout(timeout))
+	return v1.NewAPI(c.prometheusClient).Query(ctx, query, when, v1.WithTimeout(timeout))
 }
 
-// QueryRange perform PromQL queries over a given period of range.
+// QueryRange executes a PromQL query over a time range with a specified step interval.
 //
-// ex)
+// This method performs a range query evaluation, useful for retrieving time series
+// data over a period of time. The query is evaluated at regular intervals (steps)
+// between the start and end times.
 //
-//	c, err := client.NewClient(address)
-//	value, warnings, err := c.QueryRange("rate(process_cpu_seconds_total[5m])", r, 10*time.Second)
-func (this *client) QueryRange(query string, r v1.Range, timeout time.Duration) (model.Value, v1.Warnings, error) {
+// Parameters:
+//   - query: PromQL query string (e.g., "rate(http_requests_total[5m])")
+//   - r: Time range with start, end, and step interval
+//   - timeout: Maximum duration to wait for query completion
+//
+// Returns:
+//   - model.Value: Query result as a matrix with time series data
+//   - v1.Warnings: Warnings returned by Prometheus
+//   - error: Error if query fails or times out
+//
+// Example:
+//
+//	c, err := client.NewClient("http://localhost:9090")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	now := time.Now()
+//	r := client.Range{
+//	    Start: now.Add(-1 * time.Hour),
+//	    End:   now,
+//	    Step:  time.Minute,
+//	}
+//
+//	value, warnings, err := c.QueryRange(
+//	    "rate(process_cpu_seconds_total[5m])",
+//	    r,
+//	    10*time.Second,
+//	)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+func (c *client) QueryRange(query string, r v1.Range, timeout time.Duration) (model.Value, v1.Warnings, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	return v1.NewAPI(this.prometheusClient).QueryRange(ctx, query, r)
+	return v1.NewAPI(c.prometheusClient).QueryRange(ctx, query, r)
 }

@@ -1,4 +1,25 @@
-// Package slog provides slog logging.
+// Package slog provides structured logging with asynchronous output and flexible configuration.
+//
+// This package wraps Go's standard log/slog with additional features including
+// asynchronous logging, file rotation, multiple output destinations, and caller
+// information tracking.
+//
+// Features:
+//   - Structured logging with key-value pairs
+//   - Multiple log levels (Trace, Debug, Info, Warn, Error, Fatal)
+//   - Asynchronous logging with queue-based buffering
+//   - Output to stdout, stderr, or files
+//   - Daily log file rotation
+//   - Caller information tracking
+//   - Thread-safe operations
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.SetLevel(slog.LevelInfo)
+//	logger.SetOutputToFile("app", "log", true)
+//	logger.Info("Server started", "port", 8080)
+//	logger.Flush()
 package slog
 
 import (
@@ -58,141 +79,417 @@ type Log struct {
 	queueForLogging collection.Queue[func()]
 }
 
-// Trace means recording trace level logs.
+// Trace logs a message at trace level with optional key-value pairs.
 //
-// ex) testLog.Trace("message-01", "key-01", "value-01", "key-02", 1)
-func (this *Log) Trace(message string, arguments ...any) {
-	this.producer(LevelTrace, message, arguments...)
+// Trace is the lowest log level, typically used for very detailed debugging
+// information that is rarely needed in production.
+//
+// Parameters:
+//   - message: The log message
+//   - arguments: Optional key-value pairs (must be even number of arguments)
+//
+// The arguments are interpreted as alternating keys and values.
+// Keys should be strings, values can be any type.
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.Trace("Function entered", "function", "processData", "params", 3)
+//
+// Example with multiple pairs:
+//
+//	logger.Trace("Processing request",
+//	    "requestID", "req-123",
+//	    "userID", 456,
+//	    "timestamp", time.Now(),
+//	)
+func (l *Log) Trace(message string, arguments ...any) {
+	l.producer(LevelTrace, message, arguments...)
 }
 
-// Debug means recording debug level logs.
+// Debug logs a message at debug level with optional key-value pairs.
 //
-// ex) testLog.Debug("message-02", "key-01", "value-02", "key-02", 2)
-func (this *Log) Debug(message string, arguments ...any) {
-	this.producer(LevelDebug, message, arguments...)
+// Debug level is used for detailed diagnostic information useful during
+// development and troubleshooting.
+//
+// Parameters:
+//   - message: The log message
+//   - arguments: Optional key-value pairs (must be even number of arguments)
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.Debug("Query executed", "sql", "SELECT * FROM users", "duration", 45)
+//
+// Example with error context:
+//
+//	logger.Debug("Retrying connection",
+//	    "attempt", 2,
+//	    "maxAttempts", 3,
+//	    "error", lastErr.Error(),
+//	)
+func (l *Log) Debug(message string, arguments ...any) {
+	l.producer(LevelDebug, message, arguments...)
 }
 
-// Info means recording info level logs.
+// Info logs a message at info level with optional key-value pairs.
 //
-// ex) testLog.Info("message-03", "key-01", "value-03", "key-02", 3)
-func (this *Log) Info(message string, arguments ...any) {
-	this.producer(LevelInfo, message, arguments...)
+// Info level is used for general informational messages about application
+// operation, such as startup, shutdown, and significant state changes.
+//
+// Parameters:
+//   - message: The log message
+//   - arguments: Optional key-value pairs (must be even number of arguments)
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.Info("Server started", "port", 8080, "environment", "production")
+//
+// Example for lifecycle events:
+//
+//	logger.Info("Database connection established",
+//	    "host", "localhost",
+//	    "database", "myapp",
+//	    "poolSize", 10,
+//	)
+func (l *Log) Info(message string, arguments ...any) {
+	l.producer(LevelInfo, message, arguments...)
 }
 
-// Warn means recording warn level logs.
+// Warn logs a message at warning level with optional key-value pairs.
 //
-// ex) testLog.Warn("message-04", "key-01", "value-04", "key-02", 4)
-func (this *Log) Warn(message string, arguments ...any) {
-	this.producer(LevelWarn, message, arguments...)
+// Warn level indicates potentially harmful situations that don't prevent
+// the application from functioning but should be investigated.
+//
+// Parameters:
+//   - message: The log message
+//   - arguments: Optional key-value pairs (must be even number of arguments)
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.Warn("High memory usage", "used", "85%", "threshold", "80%")
+//
+// Example for degraded performance:
+//
+//	logger.Warn("Slow query detected",
+//	    "query", "SELECT * FROM large_table",
+//	    "duration", "5.2s",
+//	    "threshold", "1s",
+//	)
+func (l *Log) Warn(message string, arguments ...any) {
+	l.producer(LevelWarn, message, arguments...)
 }
 
-// Error means recording error level logs.
+// Error logs a message at error level with optional key-value pairs.
 //
-// ex) testLog.Error("message-05", "key-01", "value-05", "key-02", 5)
-func (this *Log) Error(message string, arguments ...any) {
-	this.producer(LevelError, message, arguments...)
+// Error level is used for errors that prevent specific operations from
+// completing successfully but don't crash the application.
+//
+// Parameters:
+//   - message: The log message
+//   - arguments: Optional key-value pairs (must be even number of arguments)
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.Error("Failed to save user", "userID", 123, "error", err.Error())
+//
+// Example with context:
+//
+//	logger.Error("API request failed",
+//	    "endpoint", "/api/users",
+//	    "method", "POST",
+//	    "statusCode", 500,
+//	    "error", err.Error(),
+//	)
+func (l *Log) Error(message string, arguments ...any) {
+	l.producer(LevelError, message, arguments...)
 }
 
-// Fatal means recording fatal level logs.
+// Fatal logs a message at fatal level with optional key-value pairs.
 //
-// ex) testLog.Fatal("message-06", "key-01", "value-06", "key-02", 6)
-func (this *Log) Fatal(message string, arguments ...any) {
-	this.producer(LevelFatal, message, arguments...)
+// Fatal level indicates critical errors that require immediate attention.
+// Note: Unlike some logging libraries, this does NOT terminate the application.
+//
+// Parameters:
+//   - message: The log message
+//   - arguments: Optional key-value pairs (must be even number of arguments)
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.Fatal("Database connection lost", "error", err.Error())
+//
+// Example for critical failures:
+//
+//	logger.Fatal("Configuration file corrupt",
+//	    "file", "config.yaml",
+//	    "error", err.Error(),
+//	    "action", "manual intervention required",
+//	)
+func (l *Log) Fatal(message string, arguments ...any) {
+	l.producer(LevelFatal, message, arguments...)
 }
 
-// Flush waits to record the logs accumulated up to the time it was called.
+// Flush blocks until all queued log entries are written.
 //
-// ex) testLog.Flush()
-func (this *Log) Flush() {
+// This method ensures all pending asynchronous log writes are completed
+// before returning. It's essential to call this before application shutdown
+// to ensure no logs are lost.
+//
+// Behavior:
+//   - Blocks the calling goroutine until all queued logs are written
+//   - Processes the internal logging queue completely
+//   - Thread-safe and can be called concurrently
+//
+// Example at application shutdown:
+//
+//	var logger slog.Log
+//	defer logger.Flush()
+//
+//	logger.Info("Application starting")
+//	// ... application logic ...
+//	logger.Info("Application shutting down")
+//	// Flush ensures shutdown message is written
+//
+// Example in tests:
+//
+//	func TestLogging(t *testing.T) {
+//	    var logger slog.Log
+//	    logger.SetOutputToFile("test", "log", false)
+//
+//	    logger.Info("Test message")
+//	    logger.Flush() // Ensure log is written before test ends
+//
+//	    // Verify log file contents
+//	}
+func (l *Log) Flush() {
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	defer wg.Wait()
 
-	this.queueForLogging.Push(func() { wg.Done() })
-	go this.cosumer()
+	l.queueForLogging.Push(func() { wg.Done() })
+	go l.cosumer()
 }
 
-// GetLevel gets the level.
+// GetLevel returns the current minimum log level.
 //
-// ex) level := testLog.GetLevel()
-func (this *Log) GetLevel() Level {
-	return this.level
+// Returns:
+//   - Level: Current log level threshold
+//
+// Only log messages at or above this level will be written.
+// The returned value is one of: LevelTrace, LevelDebug, LevelInfo,
+// LevelWarn, LevelError, or LevelFatal.
+//
+// Example:
+//
+//	var logger slog.Log
+//	currentLevel := logger.GetLevel()
+//
+//	if currentLevel == slog.LevelDebug {
+//	    fmt.Println("Debug logging is enabled")
+//	}
+//
+// Example for conditional logging:
+//
+//	if logger.GetLevel() <= slog.LevelDebug {
+//	    // Perform expensive debug data collection
+//	    debugData := collectDebugInfo()
+//	    logger.Debug("Debug info", "data", debugData)
+//	}
+func (l *Log) GetLevel() Level {
+	return l.level
 }
 
-// SetLevel sets the level.
+// SetLevel sets the minimum log level threshold.
 //
-// ex) testLog.SetLevel(log.LevelInfo)
-func (this *Log) SetLevel(level Level) {
-	this.queueForLogging.Push(func() {
-		this.setLogger(level, this.outputLocation, this.fileName, this.fileExtensionName, this.addDate)
+// Parameters:
+//   - level: New minimum log level (LevelTrace, LevelDebug, LevelInfo, LevelWarn, LevelError, LevelFatal)
+//
+// Only log messages at or above this level will be written.
+// This operation is asynchronous and queued for processing.
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.SetLevel(slog.LevelInfo)
+//
+//	logger.Debug("This will not be logged")
+//	logger.Info("This will be logged")
+//
+// Example for dynamic level adjustment:
+//
+//	if os.Getenv("DEBUG") == "true" {
+//	    logger.SetLevel(slog.LevelDebug)
+//	} else {
+//	    logger.SetLevel(slog.LevelInfo)
+//	}
+//
+// Example for production:
+//
+//	logger.SetLevel(slog.LevelWarn) // Only warnings and errors in production
+func (l *Log) SetLevel(level Level) {
+	l.queueForLogging.Push(func() {
+		l.setLogger(level, l.outputLocation, l.fileName, l.fileExtensionName, l.addDate)
 	})
 }
 
-// SetOutputToStdout sets the output to standard output.
+// SetOutputToStdout configures logging output to standard output.
 //
-// ex) testLog.SetOutputToStdout()
-func (this *Log) SetOutputToStdout() {
-	this.queueForLogging.Push(func() { this.setLogger(this.level, outPutStdout, "", "", this.addDate) })
+// All subsequent log messages will be written to stdout (os.Stdout).
+// This operation is asynchronous and queued for processing.
+//
+// Behavior:
+//   - Switches output destination to stdout
+//   - Maintains current log level
+//   - Logs are written in JSON format
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.SetOutputToStdout()
+//	logger.Info("This goes to stdout")
+//
+// Example for development:
+//
+//	if os.Getenv("ENV") == "development" {
+//	    logger.SetOutputToStdout()
+//	} else {
+//	    logger.SetOutputToFile("app", "log", true)
+//	}
+func (l *Log) SetOutputToStdout() {
+	l.queueForLogging.Push(func() { l.setLogger(l.level, outPutStdout, "", "", l.addDate) })
 }
 
-// SetOutputToStderr sets the output to standard error.
+// SetOutputToStderr configures logging output to standard error.
 //
-// ex) testLog.SetOutputToStderr()
-func (this *Log) SetOutputToStderr() {
-	this.queueForLogging.Push(func() { this.setLogger(this.level, outPutStderr, "", "", this.addDate) })
+// All subsequent log messages will be written to stderr (os.Stderr).
+// This operation is asynchronous and queued for processing.
+//
+// Behavior:
+//   - Switches output destination to stderr
+//   - Maintains current log level
+//   - Logs are written in JSON format
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.SetOutputToStderr()
+//	logger.Error("This goes to stderr")
+//
+// Example for error-only logging:
+//
+//	errorLogger := &slog.Log{}
+//	errorLogger.SetOutputToStderr()
+//	errorLogger.SetLevel(slog.LevelError)
+func (l *Log) SetOutputToStderr() {
+	l.queueForLogging.Push(func() { l.setLogger(l.level, outPutStderr, "", "", l.addDate) })
 }
 
-// SetOutputToFile sets the output to file.
+// SetOutputToFile configures logging output to a file.
 //
-// ex) testLog.SetOutputToFile(fileName, fileExtensionName, true)
-func (this *Log) SetOutputToFile(fileName, fileExtensionName string, addDate bool) {
-	this.queueForLogging.Push(func() {
-		this.setLogger(this.level, outPutFile, fileName, fileExtensionName, addDate)
+// Parameters:
+//   - fileName: Base name of the log file (without extension)
+//   - fileExtensionName: File extension (e.g., "log", "txt")
+//   - addDate: If true, appends current date (YYYYMMDD) to filename
+//
+// Behavior:
+//   - Creates or appends to the specified file
+//   - If addDate is true, filename becomes: fileName_YYYYMMDD.extension
+//   - If addDate is false, filename becomes: fileName.extension
+//   - Automatic daily rotation when addDate is true
+//   - Falls back to stdout if file cannot be opened
+//   - Logs are written in JSON format
+//
+// Example without date:
+//
+//	var logger slog.Log
+//	logger.SetOutputToFile("application", "log", false)
+//	// Writes to: application.log
+//
+// Example with daily rotation:
+//
+//	logger.SetOutputToFile("app", "log", true)
+//	// Writes to: app_20231218.log
+//	// Automatically creates new file next day: app_20231219.log
+//
+// Example for different environments:
+//
+//	env := os.Getenv("ENV")
+//	logger.SetOutputToFile(env+"-app", "log", true)
+//	// production-app_20231218.log or development-app_20231218.log
+func (l *Log) SetOutputToFile(fileName, fileExtensionName string, addDate bool) {
+	l.queueForLogging.Push(func() {
+		l.setLogger(l.level, outPutFile, fileName, fileExtensionName, addDate)
 	})
 }
 
-// SetWithCallerInfo also records caller information.
+// SetWithCallerInfo enables or disables caller information in log entries.
 //
-// ex) testLog.SetWithCallerInfo(true)
-func (this *Log) SetWithCallerInfo(withCallerInfo bool) {
-	this.queueForLogging.Push(func() { this.withCallerInfo = withCallerInfo })
+// Parameters:
+//   - withCallerInfo: If true, includes file name, line number, and function name in logs
+//
+// When enabled, each log entry will include a "CallerInfo" field with:
+//   - File: Source file name
+//   - Line: Line number
+//   - Function: Function name
+//
+// This operation is asynchronous and queued for processing.
+//
+// Example:
+//
+//	var logger slog.Log
+//	logger.SetWithCallerInfo(true)
+//	logger.Info("User logged in", "userID", 123)
+//	// Log includes: {"CallerInfo":{"File":"main.go","Line":45,"Function":"handleLogin"},...}
+//
+// Example for debugging:
+//
+//	if os.Getenv("DEBUG") == "true" {
+//	    logger.SetWithCallerInfo(true) // Enable in debug mode
+//	} else {
+//	    logger.SetWithCallerInfo(false) // Disable in production for performance
+//	}
+func (l *Log) SetWithCallerInfo(withCallerInfo bool) {
+	l.queueForLogging.Push(func() { l.withCallerInfo = withCallerInfo })
 }
 
-func (this *Log) getLogger() *slog.Logger {
-	this.mutexForLogger.Lock()
-	defer this.mutexForLogger.Unlock()
+func (l *Log) getLogger() *slog.Logger {
+	l.mutexForLogger.Lock()
+	defer l.mutexForLogger.Unlock()
 
-	if this.logger == nil {
-		this.logger = slog.Default()
+	if l.logger == nil {
+		l.logger = slog.Default()
 	}
 
-	return this.logger
+	return l.logger
 }
 
-func (this *Log) setLogger(level Level, outputLocation outPut, fileName, fileExtensionName string, addDate bool) {
-	this.mutexForLogger.Lock()
-	defer this.mutexForLogger.Unlock()
+func (l *Log) setLogger(level Level, outputLocation outPut, fileName, fileExtensionName string, addDate bool) {
+	l.mutexForLogger.Lock()
+	defer l.mutexForLogger.Unlock()
 
-	this.level = level
-	this.outputLocation = outputLocation
-	this.fileName = fileName
-	this.fileExtensionName = fileExtensionName
-	this.addDate = addDate
+	l.level = level
+	l.outputLocation = outputLocation
+	l.fileName = fileName
+	l.fileExtensionName = fileExtensionName
+	l.addDate = addDate
 
 	opts := &slog.HandlerOptions{
 		Level: slog.Level(level),
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.LevelKey {
+			switch a.Key {
+			case slog.LevelKey:
 				level := a.Value.Any().(slog.Level)
 				if levelLabel, exists := levelNames[level]; exists {
 					a.Value = slog.StringValue(levelLabel)
-				} else {
-					levelLabel = level.String()
 				}
 
-			} else if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(this.queueForTime.Front().String())
-				this.queueForTime.Pop()
+			case slog.TimeKey:
+				a.Value = slog.StringValue(l.queueForTime.Front().String())
+				l.queueForTime.Pop()
 			}
 
 			return a
@@ -209,10 +506,10 @@ func (this *Log) setLogger(level Level, outputLocation outPut, fileName, fileExt
 	case outPutFile:
 		options := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 
-		if this.addDate {
-			fileName = this.fileName + "_" + time.Now().Format("20060102") + "." + this.fileExtensionName
+		if l.addDate {
+			fileName = l.fileName + "_" + time.Now().Format("20060102") + "." + l.fileExtensionName
 		} else {
-			fileName = this.fileName + "." + this.fileExtensionName
+			fileName = l.fileName + "." + l.fileExtensionName
 		}
 
 		if file, err := os.OpenFile(fileName, options, os.FileMode(0644)); err != nil {
@@ -223,44 +520,44 @@ func (this *Log) setLogger(level Level, outputLocation outPut, fileName, fileExt
 		}
 	}
 
-	this.logger = slog.New(slog.NewJSONHandler(writer, opts))
+	l.logger = slog.New(slog.NewJSONHandler(writer, opts))
 }
 
-func (this *Log) producer(level Level, message string, arguments ...any) {
+func (l *Log) producer(level Level, message string, arguments ...any) {
 	t := time.Now()
 	callerInfo, errForCallerInfo := utility.GetCallerInfo(3)
-	logger := this.getLogger()
+	logger := l.getLogger()
 
 	f := func() {
-		if this.lastDay != t.Day() {
-			this.lastDay = t.Day()
-			this.setLogger(this.level, this.outputLocation, this.fileName, this.fileExtensionName, this.addDate)
+		if l.lastDay != t.Day() {
+			l.lastDay = t.Day()
+			l.setLogger(l.level, l.outputLocation, l.fileName, l.fileExtensionName, l.addDate)
 		}
 
-		logger = this.getLogger()
-		if this.withCallerInfo && errForCallerInfo == nil {
+		logger = l.getLogger()
+		if l.withCallerInfo && errForCallerInfo == nil {
 			logger = logger.With(slog.Any("CallerInfo", callerInfo))
-		} else if this.withCallerInfo && errForCallerInfo != nil {
+		} else if l.withCallerInfo && errForCallerInfo != nil {
 			logger.Error("utility.GetCallerInfo fail", "error", errForCallerInfo)
 		}
 
 		logger.Log(context.Background(), slog.Level(level), message, arguments...)
 	}
 
-	this.queueForTime.Push(t)
-	this.queueForLogging.Push(f)
+	l.queueForTime.Push(t)
+	l.queueForLogging.Push(f)
 
-	go this.cosumer()
+	go l.cosumer()
 }
 
-func (this *Log) cosumer() {
-	if this.mutexForLogging.TryLock() == false {
+func (l *Log) cosumer() {
+	if !l.mutexForLogging.TryLock() {
 		return
 	}
-	defer this.mutexForLogging.Unlock()
+	defer l.mutexForLogging.Unlock()
 
-	for this.queueForLogging.Size() != 0 {
-		this.queueForLogging.Front()()
-		this.queueForLogging.Pop()
+	for l.queueForLogging.Size() != 0 {
+		l.queueForLogging.Front()()
+		l.queueForLogging.Pop()
 	}
 }

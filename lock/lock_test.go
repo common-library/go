@@ -12,9 +12,6 @@ func TestMutex(t *testing.T) {
 
 	mutex := lock.Mutex{}
 
-	mutex.Lock()
-	mutex.Unlock()
-
 	if mutex.TryLock() == false {
 		t.Fatal("invalid")
 	}

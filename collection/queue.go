@@ -1,4 +1,20 @@
-// Package collection provides data structure related implementations.
+// Package collection provides thread-safe data structure implementations.
+//
+// This package offers generic data structures with built-in synchronization
+// using the common-library lock package.
+//
+// Features:
+//   - Thread-safe Queue (FIFO) with generics
+//   - Thread-safe Deque (double-ended queue) with generics
+//   - Automatic mutex-based synchronization
+//   - Type-safe operations using Go generics
+//
+// Example usage:
+//
+//	var q collection.Queue[int]
+//	q.Push(1)
+//	front := q.Front()
+//	q.Pop()
 package collection
 
 import "github.com/common-library/go/lock"
@@ -9,76 +25,124 @@ type Queue[T any] struct {
 	datas []T
 }
 
-// Front returns front data.
+// Front returns the front element of the queue without removing it.
 //
-// ex) t := queue.Front()
-func (this *Queue[T]) Front() T {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. The caller should ensure the queue is not empty
+// before calling this method to avoid index out of range panics.
+//
+// Returns the element at the front of the queue.
+//
+// Example:
+//
+//	front := queue.Front()
+func (q *Queue[T]) Front() T {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	return this.datas[0]
+	return q.datas[0]
 }
 
-// Back returns back data.
+// Back returns the back element of the queue without removing it.
 //
-// ex) t := queue.Back()
-func (this *Queue[T]) Back() T {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. The caller should ensure the queue is not empty
+// before calling this method to avoid index out of range panics.
+//
+// Returns the element at the back of the queue.
+//
+// Example:
+//
+//	back := queue.Back()
+func (q *Queue[T]) Back() T {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	return this.datas[len(this.datas)-1]
+	return q.datas[len(q.datas)-1]
 }
 
-// Empty returns whether the queue is empty.
+// Empty returns true if the queue contains no elements.
 //
-// ex) empty := queue.Empty()
-func (this *Queue[T]) Empty() bool {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation.
+//
+// Returns true if the queue is empty, false otherwise.
+//
+// Example:
+//
+//	if queue.Empty() {
+//	    fmt.Println("Queue is empty")
+//	}
+func (q *Queue[T]) Empty() bool {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	return len(this.datas) == 0
+	return len(q.datas) == 0
 }
 
-// Size returns the queue size.
+// Size returns the number of elements in the queue.
 //
-// ex) size := queue.Size()
-func (this *Queue[T]) Size() int {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation.
+//
+// Returns the current size of the queue.
+//
+// Example:
+//
+//	size := queue.Size()
+//	fmt.Printf("Queue has %d elements\n", size)
+func (q *Queue[T]) Size() int {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	return len(this.datas)
+	return len(q.datas)
 }
 
-// Clear clears the queue.
+// Clear removes all elements from the queue.
 //
-// ex) queue.Clear()
-func (this *Queue[T]) Clear() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. After calling Clear, the queue will be empty
+// and Size will return 0.
+//
+// Example:
+//
+//	queue.Clear()
+func (q *Queue[T]) Clear() {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	this.datas = []T{}
+	q.datas = []T{}
 }
 
-// Push inserts data.
+// Push inserts an element at the back of the queue.
 //
-// ex) queue.Push(1)
-func (this *Queue[T]) Push(data T) {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. Elements are added to the back and removed
+// from the front, implementing FIFO (First In First Out) behavior.
+//
+// Parameters:
+//   - data: the element to add to the queue
+//
+// Example:
+//
+//	queue.Push(42)
+//	queue.Push("hello")
+func (q *Queue[T]) Push(data T) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	this.datas = append(this.datas, data)
+	q.datas = append(q.datas, data)
 }
 
-// Pop removes front data.
+// Pop removes the element at the front of the queue.
 //
-// ex) queue.Pop()
-func (this *Queue[T]) Pop() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. If the queue is empty, this method does nothing.
+// Elements are removed from the front, implementing FIFO (First In First Out) behavior.
+//
+// Example:
+//
+//	queue.Pop()
+func (q *Queue[T]) Pop() {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
-	if len(this.datas) == 0 {
+	if len(q.datas) == 0 {
 		return
 	}
 
-	this.datas = this.datas[1:]
+	q.datas = q.datas[1:]
 }

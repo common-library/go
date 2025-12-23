@@ -1,8 +1,29 @@
-// Package http provides http client and server implementations.
+// Package http provides simplified HTTP client and server utilities.
+//
+// This package wraps Go's standard net/http and gorilla/mux packages, offering convenient
+// functions for making HTTP requests and managing HTTP servers with routing capabilities.
+//
+// Features:
+//   - Simplified HTTP client with authentication support
+//   - HTTP server with routing (powered by gorilla/mux)
+//   - Handler and middleware registration
+//   - Path prefix routing
+//   - Graceful server shutdown
+//   - Custom transport configuration
+//
+// Example:
+//
+//	// Client
+//	resp, _ := http.Request("http://api.example.com", http.MethodGet, nil, "", 10, "", "", nil)
+//
+//	// Server
+//	var server http.Server
+//	server.RegisterHandlerFunc("/api", handler)
+//	server.Start(":8080", nil)
 package http
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -15,9 +36,61 @@ type Response struct {
 	StatusCode int
 }
 
-// Request is request.
+// Request performs an HTTP request and returns the response.
 //
-// ex) response, err := http.Request("http://127.0.0.1:10000/test/id-01", http.MethodGet, map[string][]string{"header-1": {"value-1"}}, "", 10, "", "", nil)
+// Parameters:
+//   - url: Target URL for the HTTP request
+//   - method: HTTP method (http.MethodGet, http.MethodPost, etc.)
+//   - header: HTTP headers as a map of header names to value slices
+//   - body: Request body as a string
+//   - timeout: Request timeout in seconds
+//   - username: Username for HTTP Basic Authentication (empty string for no auth)
+//   - password: Password for HTTP Basic Authentication (empty string for no auth)
+//   - transport: Custom HTTP transport configuration (nil for default)
+//
+// Returns:
+//   - Response: HTTP response containing headers, body, and status code
+//   - error: Error if request fails, nil on success
+//
+// The function creates an HTTP client with the specified timeout and transport settings,
+// performs the request, and returns the complete response. The response body is read
+// entirely into memory.
+//
+// Example:
+//
+//	// Simple GET request
+//	resp, err := http.Request(
+//	    "https://api.example.com/users",
+//	    http.MethodGet,
+//	    nil,  // no headers
+//	    "",   // no body
+//	    10,   // 10 second timeout
+//	    "",   // no username
+//	    "",   // no password
+//	    nil,  // default transport
+//	)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Printf("Status: %d\n", resp.StatusCode)
+//	fmt.Printf("Body: %s\n", resp.Body)
+//
+//	// POST request with headers and authentication
+//	headers := map[string][]string{
+//	    "Content-Type": {"application/json"},
+//	    "X-API-Key":    {"secret123"},
+//	}
+//	body := `{"name": "Alice", "email": "alice@example.com"}`
+//	resp, err = http.Request(
+//	    "https://api.example.com/users",
+//	    http.MethodPost,
+//	    headers,
+//	    body,
+//	    30,
+//	    "admin",
+//	    "password123",
+//	    nil,
+//	)
 func Request(url, method string, header map[string][]string, body string, timeout time.Duration, username, password string, transport *http.Transport) (Response, error) {
 	if request, err := getRequest(url, method, header, body, username, password); err != nil {
 		return Response{}, err
@@ -54,7 +127,7 @@ func getResponse(request *http.Request, timeout time.Duration, transport *http.T
 	} else {
 		defer response.Body.Close()
 
-		if responseBody, err := ioutil.ReadAll(response.Body); err != nil {
+		if responseBody, err := io.ReadAll(response.Body); err != nil {
 			return Response{}, err
 		} else {
 			return Response{Header: response.Header, Body: string(responseBody), StatusCode: response.StatusCode}, nil

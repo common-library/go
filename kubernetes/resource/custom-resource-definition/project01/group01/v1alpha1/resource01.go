@@ -21,26 +21,25 @@ var Resource01 = apiextensionsV1.CustomResourceDefinition{
 			Kind:     "Resource01",
 		},
 		Scope: apiextensionsV1.ResourceScope("Namespaced"),
-		Versions: []apiextensionsV1.CustomResourceDefinitionVersion{
-			apiextensionsV1.CustomResourceDefinitionVersion{
-				Name:    Version,
-				Served:  true,
-				Storage: true,
-				Schema: &apiextensionsV1.CustomResourceValidation{
-					OpenAPIV3Schema: &apiextensionsV1.JSONSchemaProps{
-						Type: "object",
-						Properties: map[string]apiextensionsV1.JSONSchemaProps{
-							"spec": apiextensionsV1.JSONSchemaProps{
-								Type: "object",
-								Properties: map[string]apiextensionsV1.JSONSchemaProps{
-									"field01": apiextensionsV1.JSONSchemaProps{Type: "integer"},
-									"field02": apiextensionsV1.JSONSchemaProps{Type: "string"},
-								},
+		Versions: []apiextensionsV1.CustomResourceDefinitionVersion{{
+			Name:    Version,
+			Served:  true,
+			Storage: true,
+			Schema: &apiextensionsV1.CustomResourceValidation{
+				OpenAPIV3Schema: &apiextensionsV1.JSONSchemaProps{
+					Type: "object",
+					Properties: map[string]apiextensionsV1.JSONSchemaProps{
+						"spec": {
+							Type: "object",
+							Properties: map[string]apiextensionsV1.JSONSchemaProps{
+								"field01": {Type: "integer"},
+								"field02": {Type: "string"},
 							},
 						},
 					},
 				},
 			},
+		},
 		},
 	},
 }

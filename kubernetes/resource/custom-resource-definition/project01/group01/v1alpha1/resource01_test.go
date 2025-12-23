@@ -2,7 +2,7 @@ package v1alpha1_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -32,7 +32,7 @@ func TestResource01(t *testing.T) {
 		case http.MethodPost:
 			fallthrough
 		case http.MethodPut:
-			if body, err := ioutil.ReadAll(r.Body); err != nil {
+			if body, err := io.ReadAll(r.Body); err != nil {
 				t.Fatal(err)
 			} else if answer, err := json.ToString(v1alpha1.Resource01); err != nil {
 				t.Fatal(err)

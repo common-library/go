@@ -1,20 +1,23 @@
-package main
+package dbmate_test
 
 import (
+	"context"
+	"fmt"
 	"net/url"
-	"os"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/amacneil/dbmate/v2/pkg/dbmate"
 	_ "github.com/amacneil/dbmate/v2/pkg/driver/clickhouse"
 	_ "github.com/amacneil/dbmate/v2/pkg/driver/mysql"
 	_ "github.com/amacneil/dbmate/v2/pkg/driver/postgres"
+	"github.com/common-library/go/testutil"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func getDb(t *testing.T, rawURL string) *dbmate.DB {
-	t.Parallel()
-
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatal(err)
@@ -23,13 +26,8 @@ func getDb(t *testing.T, rawURL string) *dbmate.DB {
 	return dbmate.New(u)
 }
 
-func test(t *testing.T, url, migrationsDir string) {
-	if len(url) == 0 {
-		return
-	}
-
-	url = strings.Replace(url, "${database}", "dbmate_test", 1)
-	db := getDb(t, url)
+func test(t *testing.T, dbURL, migrationsDir string) {
+	db := getDb(t, dbURL)
 	db.AutoDumpSchema = false
 	db.MigrationsDir = []string{migrationsDir}
 
@@ -85,13 +83,113 @@ func test(t *testing.T, url, migrationsDir string) {
 }
 
 func TestClickHouse(t *testing.T) {
-	test(t, os.Getenv("CLICKHOUSE_URL"), "./clickhouse/migrations")
+	t.Parallel()
+
+	ctx := context.Background()
+
+	req := testcontainers.ContainerRequest{
+		Image:        testutil.ClickHouseImage,
+		ExposedPorts: []string{"8123/tcp", "9000/tcp"},
+		Env: map[string]string{
+			"CLICKHOUSE_DB":                        "default",
+			"CLICKHOUSE_USER":                      "default",
+			"CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT": "1",
+		},
+		WaitingFor: wait.ForHTTP("/ping").WithPort("8123").WithStartupTimeout(60 * time.Second),
+	}
+
+	clickhouseContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clickhouseContainer.Terminate(ctx)
+
+	host, err := clickhouseContainer.Host(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port, err := clickhouseContainer.MappedPort(ctx, "9000")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dbURL := fmt.Sprintf("clickhouse://%s:%s/testdb", host, port.Port())
+
+	test(t, dbURL, "./clickhouse/migrations")
 }
 
 func TestMySQL(t *testing.T) {
-	test(t, os.Getenv("MYSQL_URL"), "./mysql/migrations")
+	t.Parallel()
+
+	ctx := context.Background()
+
+	mysqlContainer, err := mysql.Run(ctx,
+		testutil.MySQLImage,
+		mysql.WithDatabase("tmp_db"),
+		mysql.WithUsername("root"),
+		mysql.WithPassword("password"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mysqlContainer.Terminate(ctx)
+
+	host, err := mysqlContainer.Host(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port, err := mysqlContainer.MappedPort(ctx, "3306")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dbURL := fmt.Sprintf("mysql://root:password@%s:%s/testdb?parseTime=true", host, port.Port())
+
+	test(t, dbURL, "./mysql/migrations")
 }
 
 func TestPostgresql(t *testing.T) {
-	test(t, os.Getenv("POSTGRESQL_URL"), "./postgresql/migrations")
+	t.Parallel()
+
+	ctx := context.Background()
+
+	req := testcontainers.ContainerRequest{
+		Image:        testutil.PostgresImage,
+		ExposedPorts: []string{"5432/tcp"},
+		Env: map[string]string{
+			"POSTGRES_USER":     "postgres",
+			"POSTGRES_PASSWORD": "password",
+		},
+		WaitingFor: wait.ForLog("database system is ready to accept connections").
+			WithOccurrence(2).
+			WithStartupTimeout(60 * time.Second),
+	}
+
+	postgresContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer postgresContainer.Terminate(ctx)
+
+	host, err := postgresContainer.Host(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port, err := postgresContainer.MappedPort(ctx, "5432")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dbURL := fmt.Sprintf("postgres://postgres:password@%s:%s/testdb?sslmode=disable", host, port.Port())
+
+	test(t, dbURL, "./postgresql/migrations")
 }

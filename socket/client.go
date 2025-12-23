@@ -1,4 +1,24 @@
-// Package socket provides socket client and server implementations.
+// Package socket provides TCP/UDP socket client and server implementations.
+//
+// This package simplifies network programming with high-level abstractions
+// for socket servers and clients, supporting concurrent connection handling
+// and automatic resource management.
+//
+// # Features
+//
+//   - TCP and UDP socket client
+//   - Simple connect, read, write operations
+//   - Automatic connection management
+//   - Local and remote address access
+//   - Resource cleanup
+//
+// # Basic Client Example
+//
+//	client := &socket.Client{}
+//	err := client.Connect("tcp", "localhost:8080")
+//	client.Write("Hello")
+//	data, _ := client.Read(1024)
+//	client.Close()
 package socket
 
 import (
@@ -11,30 +31,57 @@ type Client struct {
 	connnetion net.Conn
 }
 
-// Connect is connect to the address.
+// Connect establishes a connection to the remote address.
 //
-// ex) err := client.Connect("tcp", "127.0.0.1:10000")
-func (this *Client) Connect(network, address string) error {
+// # Parameters
+//
+//   - network: Network type ("tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "unix")
+//   - address: Remote address (e.g., "localhost:8080", "192.168.1.1:9000")
+//
+// # Returns
+//
+//   - error: Error if connection fails, nil on success
+//
+// # Examples
+//
+//	client := &socket.Client{}
+//	err := client.Connect("tcp", "localhost:8080")
+func (c *Client) Connect(network, address string) error {
 	connnetion, err := net.Dial(network, address)
 	if err != nil {
 		return err
 	}
-	this.connnetion = connnetion
+	c.connnetion = connnetion
 
 	return nil
 }
 
-// Read is read data from connection.
+// Read reads data from the connection.
 //
-// ex) readData, err := client.Read(1024)
-func (this *Client) Read(recvSize int) (string, error) {
-	if this.connnetion == nil {
+// # Parameters
+//
+//   - recvSize: Maximum bytes to read (buffer size)
+//
+// # Returns
+//
+//   - string: Received data
+//   - error: Error if read fails, nil on success
+//
+// # Examples
+//
+//	data, err := client.Read(1024)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Println(data)
+func (c *Client) Read(recvSize int) (string, error) {
+	if c.connnetion == nil {
 		return "", errors.New("please call the Connect function first")
 	}
 
 	buffer := make([]byte, recvSize)
 
-	recvLen, err := this.connnetion.Read(buffer)
+	recvLen, err := c.connnetion.Read(buffer)
 	if err != nil {
 		return "", err
 	}
@@ -42,49 +89,88 @@ func (this *Client) Read(recvSize int) (string, error) {
 	return string(buffer[:recvLen]), nil
 }
 
-// Write is write data to connection.
+// Write writes data to the connection.
 //
-// ex) writeLen, err := client.Write("example")
-func (this *Client) Write(data string) (int, error) {
-	if this.connnetion == nil {
+// # Parameters
+//
+//   - data: Text data to write
+//
+// # Returns
+//
+//   - int: Number of bytes written
+//   - error: Error if write fails, nil on success
+//
+// # Examples
+//
+//	n, err := client.Write("Hello, Server!")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Printf("Wrote %d bytes\n", n)
+func (c *Client) Write(data string) (int, error) {
+	if c.connnetion == nil {
 		return -1, errors.New("please call the Connect function first")
 	}
 
-	return this.connnetion.Write([]byte(data))
+	return c.connnetion.Write([]byte(data))
 }
 
-// Close is close the connection.
+// Close closes the connection.
 //
-// ex) err := client.Close()
-func (this *Client) Close() error {
-	if this.connnetion == nil {
+// # Returns
+//
+//   - error: Error if close fails, nil on success
+//
+// # Examples
+//
+//	err := client.Close()
+func (c *Client) Close() error {
+	if c.connnetion == nil {
 		return nil
 	}
 
-	err := this.connnetion.Close()
-	this.connnetion = nil
+	err := c.connnetion.Close()
+	c.connnetion = nil
 
 	return err
 }
 
-// GetRemoteAddr is get the local Addr
+// GetLocalAddr returns the local network address.
 //
-// ex) addr := client.GetLocalAddr()
-func (this *Client) GetLocalAddr() net.Addr {
-	if this.connnetion == nil {
+// # Returns
+//
+//   - net.Addr: Local address, or nil if not connected
+//
+// # Examples
+//
+//	addr := client.GetLocalAddr()
+//	if addr != nil {
+//	    fmt.Println(addr.String())
+//	}
+func (c *Client) GetLocalAddr() net.Addr {
+	if c.connnetion == nil {
 		return nil
 	}
 
-	return this.connnetion.LocalAddr()
+	return c.connnetion.LocalAddr()
 }
 
-// GetRemoteAddr is get the remote Addr
+// GetRemoteAddr returns the remote network address.
 //
-// ex) addr := client.GetRemoteAddr()
-func (this *Client) GetRemoteAddr() net.Addr {
-	if this.connnetion == nil {
+// # Returns
+//
+//   - net.Addr: Remote address, or nil if not connected
+//
+// # Examples
+//
+//	addr := client.GetRemoteAddr()
+//	if addr != nil {
+//	    fmt.Println(addr.String())
+//	}
+func (c *Client) GetRemoteAddr() net.Addr {
+	if c.connnetion == nil {
 		return nil
 	}
 
-	return this.connnetion.RemoteAddr()
+	return c.connnetion.RemoteAddr()
 }

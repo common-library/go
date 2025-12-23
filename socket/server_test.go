@@ -79,6 +79,7 @@ func TestStart2(t *testing.T) {
 		}
 	}()
 
+	errorChan := make(chan error, 1000)
 	clientJob := func(wg *sync.WaitGroup) {
 		defer wg.Done()
 
@@ -86,26 +87,33 @@ func TestStart2(t *testing.T) {
 		defer client.Close()
 
 		if err := client.Connect(network, address); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		}
 
 		if readData, err := client.Read(1024); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if readData != greeting {
-			t.Fatal(readData, ",", greeting)
+			errorChan <- err
+			return
 		}
 
 		writeData := "test"
 		if writeLen, err := client.Write(writeData); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if writeLen != len(writeData) {
-			t.Fatal(writeLen, ",", len(writeData))
+			errorChan <- err
+			return
 		}
 
 		if readData, err := client.Read(1024); err != nil {
-			t.Fatal(err)
+			errorChan <- err
+			return
 		} else if readData != prefixOfResponse+writeData {
-			t.Fatal(writeData, ",", prefixOfResponse+readData)
+			errorChan <- err
+			return
 		}
 	}
 
@@ -115,6 +123,11 @@ func TestStart2(t *testing.T) {
 		go clientJob(&wg)
 	}
 	wg.Wait()
+
+	close(errorChan)
+	for err := range errorChan {
+		t.Fatal(err)
+	}
 }
 
 func TestStop(t *testing.T) {

@@ -1,4 +1,18 @@
-// Package zip provides zip implementations.
+// Package zip provides utilities for creating and extracting zip archives.
+//
+// This package wraps the archive/zip standard library to provide convenient
+// functions for working with zip compressed files.
+//
+// Features:
+//   - Compress multiple files and directories into zip
+//   - Extract zip archives while preserving structure
+//   - Recursive directory processing
+//   - File mode preservation
+//
+// Example usage:
+//
+//	err := zip.Compress("archive.zip", []string{"./docs", "./images"})
+//	err := zip.Decompress("archive.zip", "./extracted")
 package zip
 
 import (
@@ -10,18 +24,24 @@ import (
 	"github.com/common-library/go/file"
 )
 
-// Compress is compression.
+// Compress compresses multiple files and directories into zip format.
 //
-// ex) err := zip.Compress("test.zip", []string{"./test", "./test.txt"})
+// Parameters:
+//   - name: output zip file path (e.g., "test.zip")
+//   - paths: slice of file/directory paths to compress
+//
+// The function recursively processes directories and preserves file modes.
+//
+// Example:
+//
+//	err := zip.Compress("test.zip", []string{"./test", "./test.txt"})
 func Compress(name string, paths []string) error {
 	filePaths := []string{}
 	for _, path := range paths {
 		if result, err := file.List(path, true); err != nil {
 			return err
 		} else {
-			for _, filePath := range result {
-				filePaths = append(filePaths, filePath)
-			}
+			filePaths = append(filePaths, result...)
 		}
 	}
 
@@ -63,9 +83,17 @@ func Compress(name string, paths []string) error {
 	return nil
 }
 
-// Decompress is decompression.
+// Decompress extracts a zip archive to the specified directory.
 //
-// ex) err := zip.Decompress("test.zip", "./output")
+// Parameters:
+//   - name: input zip file path (e.g., "test.zip")
+//   - outputPath: output directory path where files will be extracted
+//
+// The function preserves directory structure and file modes.
+//
+// Example:
+//
+//	err := zip.Decompress("test.zip", "./output")
 func Decompress(name, outputPath string) error {
 	write := func(zipFile *zip.File) error {
 		filePath := filepath.Join(outputPath, zipFile.Name)

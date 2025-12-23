@@ -1,4 +1,20 @@
-// Package collection provides data structure related implementations.
+// Package collection provides thread-safe data structure implementations.
+//
+// This package offers generic data structures with built-in synchronization
+// using the common-library lock package.
+//
+// Features:
+//   - Thread-safe Queue (FIFO) with generics
+//   - Thread-safe Deque (double-ended queue) with generics
+//   - Automatic mutex-based synchronization
+//   - Type-safe operations using Go generics
+//
+// Example usage:
+//
+//	var d collection.Deque[string]
+//	d.PushBack("hello")
+//	back := d.Back()
+//	d.PopBack()
 package collection
 
 import "github.com/common-library/go/lock"
@@ -9,101 +25,161 @@ type Deque[T any] struct {
 	datas []T
 }
 
-// Front returns front data.
+// Front returns the front element of the deque without removing it.
 //
-// ex) t := deque.Front()
-func (this *Deque[T]) Front() T {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. The caller should ensure the deque is not empty
+// before calling this method to avoid index out of range panics.
+//
+// Returns the element at the front of the deque.
+//
+// Example:
+//
+//	front := deque.Front()
+func (d *Deque[T]) Front() T {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	return this.datas[0]
+	return d.datas[0]
 
 }
 
-// Back returns back data.
+// Back returns the back element of the deque without removing it.
 //
-// ex) t := deque.Back()
-func (this *Deque[T]) Back() T {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. The caller should ensure the deque is not empty
+// before calling this method to avoid index out of range panics.
+//
+// Returns the element at the back of the deque.
+//
+// Example:
+//
+//	back := deque.Back()
+func (d *Deque[T]) Back() T {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	return this.datas[len(this.datas)-1]
+	return d.datas[len(d.datas)-1]
 }
 
-// Empty returns whether the queue is empty.
+// Empty returns true if the deque contains no elements.
 //
-// ex) empty := deque.Empty()
-func (this *Deque[T]) Empty() bool {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation.
+//
+// Returns true if the deque is empty, false otherwise.
+//
+// Example:
+//
+//	if deque.Empty() {
+//	    fmt.Println("Deque is empty")
+//	}
+func (d *Deque[T]) Empty() bool {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	return len(this.datas) == 0
+	return len(d.datas) == 0
 }
 
-// Size returns the queue size.
+// Size returns the number of elements in the deque.
 //
-// ex) size := deque.Size()
-func (this *Deque[T]) Size() int {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation.
+//
+// Returns the current size of the deque.
+//
+// Example:
+//
+//	size := deque.Size()
+//	fmt.Printf("Deque has %d elements\n", size)
+func (d *Deque[T]) Size() int {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	return len(this.datas)
+	return len(d.datas)
 }
 
-// Clear clears the queue.
+// Clear removes all elements from the deque.
 //
-// ex) deque.Clear()
-func (this *Deque[T]) Clear() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. After calling Clear, the deque will be empty
+// and Size will return 0.
+//
+// Example:
+//
+//	deque.Clear()
+func (d *Deque[T]) Clear() {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	this.datas = []T{}
+	d.datas = []T{}
 }
 
-// PushFront inserts data into the front.
+// PushFront inserts an element at the front of the deque.
 //
-// ex) deque.PushFront(1)
-func (this *Deque[T]) PushFront(data T) {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. Elements can be added to either end of the deque.
+//
+// Parameters:
+//   - data: the element to add to the front of the deque
+//
+// Example:
+//
+//	deque.PushFront(42)
+//	deque.PushFront("hello")
+func (d *Deque[T]) PushFront(data T) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	this.datas = append([]T{data}, this.datas...)
+	d.datas = append([]T{data}, d.datas...)
 }
 
-// PopFront removes front data.
+// PopFront removes the element at the front of the deque.
 //
-// ex) deque.PopFront()
-func (this *Deque[T]) PopFront() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. If the deque is empty, this method does nothing.
+// Elements can be removed from either end of the deque.
+//
+// Example:
+//
+//	deque.PopFront()
+func (d *Deque[T]) PopFront() {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	if len(this.datas) == 0 {
+	if len(d.datas) == 0 {
 		return
 	}
 
-	this.datas = this.datas[1:]
+	d.datas = d.datas[1:]
 }
 
-// PushBack inserts data into the back.
+// PushBack inserts an element at the back of the deque.
 //
-// ex) deque.PushBack(1)
-func (this *Deque[T]) PushBack(data T) {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. Elements can be added to either end of the deque.
+//
+// Parameters:
+//   - data: the element to add to the back of the deque
+//
+// Example:
+//
+//	deque.PushBack(42)
+//	deque.PushBack("hello")
+func (d *Deque[T]) PushBack(data T) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	this.datas = append(this.datas, data)
+	d.datas = append(d.datas, data)
 }
 
-// PopBack removes back data.
+// PopBack removes the element at the back of the deque.
 //
-// ex) deque.PopBack()
-func (this *Deque[T]) PopBack() {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
+// This is a thread-safe operation. If the deque is empty, this method does nothing.
+// Elements can be removed from either end of the deque.
+//
+// Example:
+//
+//	deque.PopBack()
+func (d *Deque[T]) PopBack() {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	if len(this.datas) == 0 {
+	if len(d.datas) == 0 {
 		return
 	}
 
-	this.datas = this.datas[0 : len(this.datas)-1]
+	d.datas = d.datas[0 : len(d.datas)-1]
 }

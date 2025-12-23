@@ -65,8 +65,9 @@ func TestStartReceiver(t *testing.T) {
 	} else {
 		receiveClient.StartReceiver(handler, failureFunc)
 
+		address := "localhost:" + strconv.Itoa(port)
 		for i := 0; i < 100; i++ {
-			if sendCient, err := cloudevents.NewHttp("http://:"+strconv.Itoa(port), nil, nil); err != nil {
+			if sendCient, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
 				t.Fatal(err)
 			} else if result := sendCient.Send(getEvent(t)); result.IsUndelivered() {
 				t.Fatal(result.Error())

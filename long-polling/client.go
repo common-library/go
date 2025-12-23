@@ -1,4 +1,28 @@
-// Package long_polling provides long polling client and server implementations.
+// Package long_polling provides HTTP long polling server and client implementations.
+//
+// This package enables real-time communication using HTTP long polling patterns,
+// allowing clients to receive server-side events with minimal latency without
+// WebSocket connections. It wraps golongpoll for easy server setup and client communication.
+//
+// # Features
+//
+//   - Long polling server with configurable timeouts
+//   - Event subscription and publishing
+//   - File-based persistence for event durability
+//   - Custom middleware support for authentication and validation
+//   - Client helpers for subscription and publishing
+//
+// # Basic Client Example
+//
+//	response, err := long_polling.Subscription(
+//	    "http://localhost:8080/events",
+//	    nil,
+//	    long_polling.SubscriptionRequest{
+//	        Category: "notifications",
+//	        TimeoutSeconds: 60,
+//	    },
+//	    "", "", nil,
+//	)
 package long_polling
 
 import (
@@ -38,9 +62,52 @@ type PublishRequest struct {
 	Data     string `json:"data"`
 }
 
-// Subscription is subscribes to event.
+// Subscription subscribes to server events using HTTP long polling.
 //
-// ex) response, err := long_polling.Subscription("http://127.0.0.1:10000/subscription", nil, request, "", "", nil)
+// This function sends a long polling request to the server and waits for
+// events in the specified category. The request blocks until an event occurs
+// or the timeout expires.
+//
+// # Parameters
+//
+//   - url: Server subscription endpoint URL (e.g., "http://localhost:8080/events")
+//   - header: Optional HTTP headers (e.g., custom headers or authorization)
+//   - request: Subscription parameters (category, timeout, since_time, last_id)
+//   - username: Optional HTTP basic authentication username
+//   - password: Optional HTTP basic authentication password
+//   - transport: Optional custom HTTP transport for connection pooling or proxies
+//
+// # Returns
+//
+//   - SubscriptionResponse: Response containing events and metadata
+//   - error: Error if request fails or response parsing fails, nil on success
+//
+// # Behavior
+//
+// The subscription request includes:
+//   - category: Event category to subscribe to
+//   - timeout: Maximum seconds to wait for events
+//   - since_time: Optional timestamp to retrieve events since (Unix milliseconds)
+//   - last_id: Optional last event ID to retrieve events after
+//
+// The response includes:
+//   - Header: HTTP response headers
+//   - StatusCode: HTTP status code (200 for events, 204 for timeout)
+//   - Events: Array of events (empty if timeout)
+//
+// # Examples
+//
+// Basic subscription:
+//
+//	response, err := long_polling.Subscription(
+//	    "http://localhost:8080/events",
+//	    nil,
+//	    long_polling.SubscriptionRequest{
+//	        Category: "notifications",
+//	        TimeoutSeconds: 60,
+//	    },
+//	    "", "", nil,
+//	)
 func Subscription(url string, header map[string][]string, request SubscriptionRequest, username, password string, transport *net_http.Transport) (SubscriptionResponse, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {
@@ -71,9 +138,48 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 	return subscriptionResponse, nil
 }
 
-// Publish is publish an event.
+// Publish publishes an event to the long polling server.
 //
-// ex) response, err := long_polling.Publish("http://127.0.0.1:10000/publish", 10, nil, request, "", "", nil)
+// This function sends an event to the server, which distributes it to all
+// subscribed clients in the specified category.
+//
+// # Parameters
+//
+//   - url: Server publish endpoint URL (e.g., "http://localhost:8080/publish")
+//   - timeout: Maximum duration to wait for publish operation
+//   - header: Optional HTTP headers (e.g., custom headers or authorization)
+//   - publishRequest: Event data (category and data payload)
+//   - username: Optional HTTP basic authentication username
+//   - password: Optional HTTP basic authentication password
+//   - transport: Optional custom HTTP transport for connection pooling or proxies
+//
+// # Returns
+//
+//   - http.Response: HTTP response with headers, status code, and body
+//   - error: Error if request fails, nil on successful publish
+//
+// # Behavior
+//
+// The publish request:
+//   - Sends event to server via POST request
+//   - Server assigns unique event ID and timestamp
+//   - Event is queued for subscribed clients
+//   - Returns immediately (non-blocking)
+//
+// # Examples
+//
+// Publish notification:
+//
+//	response, err := long_polling.Publish(
+//	    "http://localhost:8080/publish",
+//	    10 * time.Second,
+//	    nil,
+//	    long_polling.PublishRequest{
+//	        Category: "notifications",
+//	        Data: `{"message": "Hello"}`
+//	    },
+//	    "", "", nil,
+//	)
 func Publish(url string, timeout time.Duration, header map[string][]string, publishRequest PublishRequest, username, password string, transport *net_http.Transport) (http.Response, error) {
 	u, err := net_url.Parse(url)
 	if err != nil {

@@ -3,20 +3,26 @@ package ent_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	ent_sql "entgo.io/ent/dialect/sql"
 	"github.com/common-library/go/database/orm/ent"
 	"github.com/common-library/go/database/orm/ent/table01forent"
+	"github.com/common-library/go/testutil"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var clients = []*ent.Client{}
+var containers = []testcontainers.Container{}
 
 var databaseInfo = map[string]string{}
 
@@ -70,28 +76,79 @@ func dropTables() error {
 }
 
 func TestMain(m *testing.M) {
-	setup := func() {
-		ctx := context.Background()
+	ctx := context.Background()
 
-		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
-			databaseInfo["mysql"] = dsn
+	setup := func() {
+		mysqlContainer, err := mysql.Run(ctx, testutil.MySQLImage,
+			mysql.WithDatabase("testdb"),
+			mysql.WithUsername("testuser"),
+			mysql.WithPassword("testpass"),
+		)
+		if err != nil {
+			panic(err)
 		}
-		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
-			databaseInfo["postgres"] = dsn
+		containers = append(containers, mysqlContainer)
+
+		mysqlHost, err := mysqlContainer.Host(ctx)
+		if err != nil {
+			panic(err)
 		}
+
+		mysqlPort, err := mysqlContainer.MappedPort(ctx, "3306")
+		if err != nil {
+			panic(err)
+		}
+
+		mysqlDSN := fmt.Sprintf("testuser:testpass@tcp(%s:%s)/testdb?charset=utf8&parseTime=True&loc=Local", mysqlHost, mysqlPort.Port())
+		databaseInfo["mysql"] = mysqlDSN
+
+		postgresContainer, err := postgres.Run(ctx, testutil.PostgresImage,
+			postgres.WithDatabase("testdb"),
+			postgres.WithUsername("testuser"),
+			postgres.WithPassword("testpass"),
+			postgres.BasicWaitStrategies(),
+		)
+		if err != nil {
+			panic(err)
+		}
+		containers = append(containers, postgresContainer)
+
+		postgresHost, err := postgresContainer.Host(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		postgresPort, err := postgresContainer.MappedPort(ctx, "5432")
+		if err != nil {
+			panic(err)
+		}
+
+		postgresDSN := fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", postgresHost, postgresPort.Port())
+		databaseInfo["postgres"] = postgresDSN
 
 		for driverName, dataSourceName := range databaseInfo {
-			if client, err := ent.Open(driverName, dataSourceName); err != nil {
-				panic(err)
-			} else if err := client.Schema.Create(ctx); err != nil {
-				panic(err)
-			} else if _, err := client.Table01ForEnt.Delete().Exec(ctx); err != nil {
-				panic(err)
-			} else {
-				clients = append(clients, client)
+			var client *ent.Client
+			var err error
+			for i := 0; i < 10; i++ {
+				client, err = ent.Open(driverName, dataSourceName)
+				if err == nil {
+					err = client.Schema.Create(ctx)
+					if err == nil {
+						_, err = client.Table01ForEnt.Delete().Exec(ctx)
+						if err == nil {
+							break
+						}
+					}
+				}
+				if client != nil {
+					client.Close()
+				}
+				time.Sleep(500 * time.Millisecond)
 			}
+			if err != nil {
+				panic(err)
+			}
+			clients = append(clients, client)
 		}
 	}
 
@@ -102,6 +159,12 @@ func TestMain(m *testing.M) {
 
 		for _, client := range clients {
 			if err := client.Close(); err != nil {
+				panic(err)
+			}
+		}
+
+		for _, container := range containers {
+			if err := container.Terminate(ctx); err != nil {
 				panic(err)
 			}
 		}
@@ -119,9 +182,9 @@ func TestCreate(t *testing.T) {
 	prepareData(t, ctx)
 
 	wg := new(sync.WaitGroup)
-	defer wg.Wait()
+	errCh := make(chan error, len(clients)*5)
 	for _, client := range clients {
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			wg.Add(1)
 			go func(client *ent.Client, i int) {
 				defer wg.Done()
@@ -129,11 +192,20 @@ func TestCreate(t *testing.T) {
 				field01 := t.Name() + strconv.Itoa(i)
 
 				if table01, err := client.Table01ForEnt.Create().SetField01(field01).SetField02(1).Save(ctx); err != nil {
-					t.Fatal(err)
+					errCh <- err
+					return
 				} else if table01.Field01 != field01 || table01.Field02 != 1 {
-					t.Fatal(table01)
+					errCh <- err
+					return
 				}
 			}(client, i)
+		}
+	}
+	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
@@ -224,9 +296,9 @@ func TestUpsertOne(t *testing.T) {
 	prepareData(t, ctx)
 
 	wg := new(sync.WaitGroup)
-	defer wg.Wait()
+	errCh := make(chan error, len(clients)*5)
 	for _, client := range clients {
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			wg.Add(1)
 			go func(client *ent.Client, i int) {
 				defer wg.Done()
@@ -240,16 +312,26 @@ func TestUpsertOne(t *testing.T) {
 						OnConflictColumns(table01forent.FieldField01).
 						UpdateNewValues().
 						Exec(ctx); err != nil {
-						t.Fatal(err)
+						errCh <- err
+						return
 					}
 
 					if table01, err := client.Table01ForEnt.Query().Where(table01forent.Field01(field01)).Only(ctx); err != nil {
-						t.Fatal(err)
+						errCh <- err
+						return
 					} else if table01.Field01 != field01 || table01.Field02 != j {
-						t.Fatal(table01)
+						errCh <- err
+						return
 					}
 				}
 			}(client, i)
+		}
+	}
+	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
@@ -445,7 +527,7 @@ func TestCommit(t *testing.T) {
 			t.Fatal(table01)
 		} else if table01.Field01 != t.Name() || table01.Field02 != 1 {
 			t.Fatal(table01)
-		} else if tx.Commit(); err != nil {
+		} else if err := tx.Commit(); err != nil {
 			t.Fatal(err)
 		} else if table01, err := getTable01(client); err != nil {
 			t.Fatal(table01)
@@ -477,7 +559,7 @@ func TestRollback(t *testing.T) {
 			t.Fatal(table01)
 		} else if table01.Field01 != t.Name() || table01.Field02 != 1 {
 			t.Fatal(table01)
-		} else if tx.Rollback(); err != nil {
+		} else if err := tx.Rollback(); err != nil {
 			t.Fatal(err)
 		} else if table01, err := getTable01(client); err != nil {
 			t.Fatal(table01)

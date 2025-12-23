@@ -1,7 +1,12 @@
 // Package dsa provides dsa crypto related implementations.
+//
+// Deprecated: DSA is a legacy algorithm and should not be used for new applications.
+// Use Ed25519 (crypto/ed25519) or other modern alternatives instead.
+// DSA keys with 1024-bit moduli are cryptographically weak.
 package dsa
 
 import (
+	//lint:ignore SA1019 DSA is deprecated but kept for compatibility
 	"crypto/dsa"
 	"crypto/sha256"
 	"encoding/asn1"
@@ -15,34 +20,69 @@ type PublicKey struct {
 	publicKey dsa.PublicKey
 }
 
-// Verify is verifies the signature.
+// Verify verifies a digital signature against the message.
 //
-// ex) result := publicKey.Verify(message, signature)
-func (this *PublicKey) Verify(message string, signature Signature) bool {
+// Deprecated: DSA is cryptographically weak and should not be used.
+// Use Ed25519 or ECDSA for new applications.
+//
+// This method verifies that a signature was created by the corresponding private key.
+// The message is hashed with SHA-256 before verification.
+//
+// Parameters:
+//   - message: The original message that was signed
+//   - signature: The signature to verify
+//
+// Returns:
+//   - bool: true if signature is valid, false otherwise
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	valid := publicKey.Verify("legacy message", signature)
+func (pub *PublicKey) Verify(message string, signature Signature) bool {
 	hash := sha256.Sum256([]byte(message))
 
-	return dsa.Verify(&this.publicKey, hash[:], signature.R, signature.S)
+	return dsa.Verify(&pub.publicKey, hash[:], signature.R, signature.S)
 }
 
-// Get is to get a dsa.PublicKey.
+// Get returns the underlying dsa.PublicKey.
 //
-// ex) key := publicKey.Get()
-func (this *PublicKey) Get() dsa.PublicKey {
-	return this.publicKey
+// Deprecated: DSA is cryptographically weak and should not be used.
+//
+// This method provides direct access to the Go standard library dsa.PublicKey.
+//
+// Returns:
+//   - dsa.PublicKey: The underlying public key
+func (pub *PublicKey) Get() dsa.PublicKey {
+	return pub.publicKey
 }
 
-// Set is to set a dsa.PublicKey.
+// Set assigns an existing dsa.PublicKey to this PublicKey instance.
 //
-// ex) publicKey.Set(key)
-func (this *PublicKey) Set(publicKey dsa.PublicKey) {
-	this.publicKey = publicKey
+// Deprecated: DSA is cryptographically weak and should not be used.
+//
+// Parameters:
+//   - publicKey: The dsa.PublicKey to assign
+func (pub *PublicKey) Set(publicKey dsa.PublicKey) {
+	pub.publicKey = publicKey
 }
 
-// GetPemAsn1 is to get a string in Pem/Asn1 format.
+// GetPemAsn1 encodes the public key as a PEM-encoded ASN.1 string.
 //
-// ex) pemAsn1, err := publicKey.GetPemAsn1()
-func (this *PublicKey) GetPemAsn1() (string, error) {
-	if blockBytes, err := asn1.Marshal(this.publicKey); err != nil {
+// Deprecated: DSA is cryptographically weak and should not be used.
+//
+// This method converts the DSA public key to PEM format using ASN.1 encoding.
+//
+// Returns:
+//   - string: PEM-encoded DSA public key
+//   - error: Error if encoding fails
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	pemString, err := publicKey.GetPemAsn1()
+func (pub *PublicKey) GetPemAsn1() (string, error) {
+	if blockBytes, err := asn1.Marshal(pub.publicKey); err != nil {
 		return "", err
 	} else {
 		return string(pem.EncodeToMemory(
@@ -54,12 +94,27 @@ func (this *PublicKey) GetPemAsn1() (string, error) {
 	}
 }
 
-// SetPemAsn1 is to set the public key using a string in Pem/Asn1 format.
+// SetPemAsn1 loads a public key from a PEM-encoded ASN.1 string.
 //
-// ex) err := publicKey.SetPemAsn1(pemAsn1)
-func (this *PublicKey) SetPemAsn1(pemAsn1 string) error {
+// Deprecated: DSA is cryptographically weak and should not be used.
+//
+// This method decodes a PEM-encoded DSA public key and sets it as the current key.
+//
+// Parameters:
+//   - pemAsn1: PEM-encoded ASN.1 DSA public key string
+//
+// Returns:
+//   - error: Error if decoding fails
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	pemData, _ := os.ReadFile("dsa_public.pem")
+//	publicKey := &dsa.PublicKey{}
+//	err := publicKey.SetPemAsn1(string(pemData))
+func (pub *PublicKey) SetPemAsn1(pemAsn1 string) error {
 	block, _ := pem.Decode([]byte(pemAsn1))
-	if _, err := asn1.Unmarshal(block.Bytes, &this.publicKey); err != nil {
+	if _, err := asn1.Unmarshal(block.Bytes, &pub.publicKey); err != nil {
 		return err
 	} else {
 		return nil
@@ -67,43 +122,91 @@ func (this *PublicKey) SetPemAsn1(pemAsn1 string) error {
 
 }
 
-// GetSsh is to get a string in ssh format.
+// GetSsh encodes the public key as an SSH authorized_keys format string.
 //
-// ex) sshKey, err := publicKey.GetSsh()
-func (this *PublicKey) GetSsh() (string, error) {
-	if publicKey, err := ssh.NewPublicKey(&this.publicKey); err != nil {
+// Deprecated: DSA is cryptographically weak and should not be used.
+// Modern SSH implementations are removing DSA support.
+//
+// This method converts the DSA public key to SSH format.
+//
+// Returns:
+//   - string: SSH authorized_keys format string
+//   - error: Error if encoding fails
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	sshKey, err := publicKey.GetSsh()
+func (pub *PublicKey) GetSsh() (string, error) {
+	if publicKey, err := ssh.NewPublicKey(&pub.publicKey); err != nil {
 		return "", err
 	} else {
 		return string(ssh.MarshalAuthorizedKey(publicKey)), nil
 	}
 }
 
-// SetSsh is to set the public key using a string in ssh format.
+// SetSsh loads a public key from an SSH authorized_keys format string.
 //
-// ex) err := publicKey.SetSsh(sshKey)
-func (this *PublicKey) SetSsh(sshKey string) error {
+// Deprecated: DSA is cryptographically weak and should not be used.
+// Modern SSH implementations are removing DSA support.
+//
+// Parameters:
+//   - sshKey: SSH authorized_keys format string
+//
+// Returns:
+//   - error: Error if parsing fails
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	sshData, _ := os.ReadFile("id_dsa.pub")
+//	publicKey := &dsa.PublicKey{}
+//	err := publicKey.SetSsh(string(sshData))
+func (pub *PublicKey) SetSsh(sshKey string) error {
 	if key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(sshKey)); err != nil {
 		return err
 	} else {
-		return this.SetSshPublicKey(key)
+		return pub.SetSshPublicKey(key)
 	}
 }
 
-// GetSshPublicKey is to get a ssh.PublicKey.
+// GetSshPublicKey converts the public key to an ssh.PublicKey.
 //
-// ex) key, err := publicKey.GetSshPublicKey()
-func (this *PublicKey) GetSshPublicKey() (ssh.PublicKey, error) {
-	return ssh.NewPublicKey(&this.publicKey)
+// Deprecated: DSA is cryptographically weak and should not be used.
+//
+// Returns:
+//   - ssh.PublicKey: The SSH public key instance
+//   - error: Error if conversion fails
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	sshPubKey, err := publicKey.GetSshPublicKey()
+func (pub *PublicKey) GetSshPublicKey() (ssh.PublicKey, error) {
+	return ssh.NewPublicKey(&pub.publicKey)
 }
 
-// SetSshPublicKey is to set the public key using ssh.PublicKey.
+// SetSshPublicKey loads a public key from an ssh.PublicKey.
 //
-// ex) err := publicKey.SetSshPublicKey(key)
-func (this *PublicKey) SetSshPublicKey(publicKey ssh.PublicKey) error {
+// Deprecated: DSA is cryptographically weak and should not be used.
+//
+// Parameters:
+//   - publicKey: The ssh.PublicKey to convert
+//
+// Returns:
+//   - error: Error if conversion fails or key is not DSA
+//
+// Example:
+//
+//	// For legacy compatibility only
+//	sshPubKey, _ := ssh.ParsePublicKey(sshKeyBytes)
+//	publicKey := &dsa.PublicKey{}
+//	err := publicKey.SetSshPublicKey(sshPubKey)
+func (pub *PublicKey) SetSshPublicKey(publicKey ssh.PublicKey) error {
 	if key, err := ssh.ParsePublicKey(publicKey.Marshal()); err != nil {
 		return err
 	} else {
-		this.publicKey = *key.(ssh.CryptoPublicKey).CryptoPublicKey().(*dsa.PublicKey)
+		pub.publicKey = *key.(ssh.CryptoPublicKey).CryptoPublicKey().(*dsa.PublicKey)
 		return nil
 	}
 }

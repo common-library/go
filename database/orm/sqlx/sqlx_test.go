@@ -1,14 +1,20 @@
 package sqlx_test
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"os"
-	"strings"
 	"testing"
+	"time"
 
+	"github.com/common-library/go/testutil"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var create_schema = `
@@ -25,6 +31,7 @@ DROP TABLE IF EXISTS table01_for_sqlx;
 `
 
 var dbs = map[string]*sqlx.DB{}
+var containers = []testcontainers.Container{}
 
 const (
 	MySQL      string = "mysql"
@@ -44,32 +51,107 @@ func getDbs(t *testing.T) map[string]*sqlx.DB {
 }
 
 func TestMain(m *testing.M) {
+	ctx := context.Background()
+
 	setup := func() {
-		databaseInfo := map[string]string{}
-		if len(os.Getenv("MYSQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("MYSQL_DSN"), "${database}", "mysql", 1)
-			databaseInfo[MySQL] = dsn
+		mysqlContainer, err := mysql.Run(ctx, testutil.MySQLImage,
+			mysql.WithDatabase("testdb"),
+			mysql.WithUsername("testuser"),
+			mysql.WithPassword("testpass"),
+		)
+		if err != nil {
+			panic(err)
 		}
-		if len(os.Getenv("POSTGRESQL_DSN")) != 0 {
-			dsn := strings.Replace(os.Getenv("POSTGRESQL_DSN"), "${database}", "postgres", 1)
-			databaseInfo[PostgreSQL] = dsn
+		containers = append(containers, mysqlContainer)
+
+		mysqlHost, err := mysqlContainer.Host(ctx)
+		if err != nil {
+			panic(err)
 		}
 
-		for driverName, dataSource := range databaseInfo {
-			if db, err := sqlx.Connect(driverName, dataSource); err != nil {
-				panic(err)
-			} else {
-				dbs[driverName] = db
+		mysqlPort, err := mysqlContainer.MappedPort(ctx, "3306")
+		if err != nil {
+			panic(err)
+		}
 
-				db.MustExec(drop_schema)
-				db.MustExec(create_schema)
+		mysqlDSN := fmt.Sprintf("testuser:testpass@tcp(%s:%s)/testdb?charset=utf8&parseTime=True&loc=Local", mysqlHost, mysqlPort.Port())
+
+		var db *sqlx.DB
+		maxRetries := 10
+		for i := 0; i < maxRetries; i++ {
+			db, err = sqlx.Connect("mysql", mysqlDSN)
+			if err == nil {
+				break
 			}
+			if i < maxRetries-1 {
+				backoff := time.Duration(50<<uint(i)) * time.Millisecond
+				if backoff > time.Second {
+					backoff = time.Second
+				}
+				time.Sleep(backoff)
+			}
+		}
+		if err != nil {
+			panic(err)
+		}
+		dbs["mysql"] = db
+
+		postgresContainer, err := postgres.Run(ctx, testutil.PostgresImage,
+			postgres.WithDatabase("testdb"),
+			postgres.WithUsername("testuser"),
+			postgres.WithPassword("testpass"),
+			postgres.BasicWaitStrategies(),
+		)
+		if err != nil {
+			panic(err)
+		}
+		containers = append(containers, postgresContainer)
+
+		postgresHost, err := postgresContainer.Host(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		postgresPort, err := postgresContainer.MappedPort(ctx, "5432")
+		if err != nil {
+			panic(err)
+		}
+
+		postgresDSN := fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", postgresHost, postgresPort.Port())
+
+		for i := 0; i < maxRetries; i++ {
+			db, err = sqlx.Connect("postgres", postgresDSN)
+			if err == nil {
+				break
+			}
+			if i < maxRetries-1 {
+				backoff := time.Duration(50<<uint(i)) * time.Millisecond
+				if backoff > time.Second {
+					backoff = time.Second
+				}
+				time.Sleep(backoff)
+			}
+		}
+		if err != nil {
+			panic(err)
+		}
+		dbs["postgres"] = db
+
+		for _, db := range dbs {
+			db.MustExec(drop_schema)
+			db.MustExec(create_schema)
 		}
 	}
 
 	teardown := func() {
 		for _, db := range dbs {
 			db.MustExec(drop_schema)
+		}
+
+		for _, container := range containers {
+			if err := container.Terminate(ctx); err != nil {
+				panic(err)
+			}
 		}
 	}
 

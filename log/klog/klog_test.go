@@ -106,39 +106,12 @@ func TestErrorln(t *testing.T) {
 }
 
 func TestFatal(t *testing.T) {
-	return
-
-	defer klog.Flush()
-
-	klog.SetWithCallerInfo(false)
-	klog.Fatal("message-01")
-
-	klog.SetWithCallerInfo(true)
-	klog.Fatal("message-02")
 }
 
 func TestFatalf(t *testing.T) {
-	return
-
-	defer klog.Flush()
-
-	klog.SetWithCallerInfo(false)
-	klog.Fatalf("%s", "message-01")
-
-	klog.SetWithCallerInfo(true)
-	klog.Fatalf("%s", "message-02")
 }
 
 func TestFatalln(t *testing.T) {
-	return
-
-	defer klog.Flush()
-
-	klog.SetWithCallerInfo(false)
-	klog.Fatalln("message-01")
-
-	klog.SetWithCallerInfo(true)
-	klog.Fatalln("message-02")
 }
 
 func TestFlush(t *testing.T) {

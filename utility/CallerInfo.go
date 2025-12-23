@@ -1,4 +1,17 @@
-// Package utility provides utility implementations.
+// Package utility provides general-purpose utility functions.
+//
+// This package offers various helper functions for common tasks including
+// runtime introspection, type information, and network utilities.
+//
+// Features:
+//   - Caller information retrieval (file, line, function, goroutine ID)
+//   - Type name extraction
+//   - CIDR network utilities
+//
+// Example:
+//
+//	callerInfo, _ := utility.GetCallerInfo(1)
+//	fmt.Printf("Called from %s:%d\n", callerInfo.FileName, callerInfo.Line)
 package utility
 
 import (
@@ -18,12 +31,64 @@ type CallerInfo struct {
 	GoroutineID  int
 }
 
-// GetCallerInfo is get the caller information.
+// GetCallerInfo retrieves information about the calling function.
 //
-// ex) callerInfo, err := utility.GetCallerInfo()
+// This function uses runtime introspection to gather details about the
+// function that called it, including package, file, function name, line
+// number, and goroutine ID.
+//
+// Parameters:
+//   - numberOfStackFramesToAscend: Number of stack frames to skip
+//     0 = GetCallerInfo itself
+//     1 = Direct caller of GetCallerInfo
+//     2 = Caller's caller, etc.
+//
+// Returns:
+//   - CallerInfo: Struct containing caller details
+//   - error: Error if stack frame retrieval fails
+//
+// The returned CallerInfo contains:
+//   - PackageName: Full package path (e.g., "github.com/user/project/pkg")
+//   - FileName: Base file name (e.g., "main.go")
+//   - FunctionName: Function name (e.g., "main" or "(*Type).Method")
+//   - Line: Line number
+//   - GoroutineID: ID of the current goroutine
+//
+// Example:
+//
+//	func myFunction() {
+//	    callerInfo, err := utility.GetCallerInfo(1)
+//	    if err != nil {
+//	        log.Fatal(err)
+//	    }
+//
+//	    fmt.Printf("Called from: %s\n", callerInfo.FileName)
+//	    fmt.Printf("Line: %d\n", callerInfo.Line)
+//	    fmt.Printf("Function: %s\n", callerInfo.FunctionName)
+//	    fmt.Printf("Goroutine: %d\n", callerInfo.GoroutineID)
+//	}
+//
+// Example in logging:
+//
+//	func logWithCaller(message string) {
+//	    info, _ := utility.GetCallerInfo(1)
+//	    log.Printf("[%s:%d] %s", info.FileName, info.Line, message)
+//	}
+//
+// Example for debugging:
+//
+//	func debugStack() {
+//	    for i := 0; i < 5; i++ {
+//	        info, err := utility.GetCallerInfo(i)
+//	        if err != nil {
+//	            break
+//	        }
+//	        fmt.Printf("#%d %s:%d %s\n", i, info.FileName, info.Line, info.FunctionName)
+//	    }
+//	}
 func GetCallerInfo(numberOfStackFramesToAscend int) (CallerInfo, error) {
 	pc, file, line, ok := runtime.Caller(numberOfStackFramesToAscend)
-	if ok == false {
+	if !ok {
 		return CallerInfo{}, errors.New("runtime.Caller() call fail")
 	}
 

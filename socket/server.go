@@ -1,4 +1,29 @@
-// Package socket provides socket client and server implementations.
+// Package socket provides TCP/UDP socket client and server implementations.
+//
+// This package simplifies network programming with high-level abstractions
+// for socket servers and clients, supporting concurrent connection handling
+// and automatic resource management.
+//
+// # Features
+//
+//   - TCP and UDP socket server
+//   - Concurrent client connection handling
+//   - Client connection pooling
+//   - Automatic resource cleanup
+//   - Custom accept success/failure handlers
+//
+// # Basic Server Example
+//
+//	server := &socket.Server{}
+//	err := server.Start("tcp", ":8080", 100,
+//	    func(client socket.Client) {
+//	        data, _ := client.Read(1024)
+//	        client.Write("Response: " + data)
+//	    },
+//	    func(err error) {
+//	        log.Printf("Accept error: %v", err)
+//	    },
+//	)
 package socket
 
 import (
@@ -21,11 +46,50 @@ type Server struct {
 	jobWaitGroup sync.WaitGroup
 }
 
-// Start is start the server.
+// Start initializes and starts the socket server.
 //
-// ex) err := server.Start("tcp", "127.0.0.1:10000", 1024, func(client Client) {...}, func(err error) {...})
-func (this *Server) Start(network, address string, clientPoolSize int, acceptSuccessFunc func(client Client), acceptFailureFunc func(err error)) error {
-	this.Stop()
+// This method creates a listener on the specified network and address,
+// accepting incoming connections and handling them concurrently using
+// a pool of goroutines.
+//
+// # Parameters
+//
+//   - network: Network type ("tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "unix")
+//   - address: Listen address (e.g., ":8080", "127.0.0.1:8080")
+//   - clientPoolSize: Maximum concurrent connections to buffer
+//   - acceptSuccessFunc: Callback for each accepted connection
+//   - acceptFailureFunc: Callback for accept errors
+//
+// # Returns
+//
+//   - error: Error if server start fails, nil on success
+//
+// # Behavior
+//
+// The server:
+//   - Stops any existing server instance
+//   - Creates a listener on the specified address
+//   - Accepts connections in a background goroutine
+//   - Spawns a goroutine for each connection (up to clientPoolSize buffered)
+//   - Calls acceptSuccessFunc for each connection
+//   - Calls acceptFailureFunc for accept errors (if not nil)
+//
+// # Examples
+//
+// Basic TCP echo server:
+//
+//	server := &socket.Server{}
+//	err := server.Start("tcp", ":8080", 100,
+//	    func(client socket.Client) {
+//	        data, _ := client.Read(1024)
+//	        client.Write("Echo: " + data)
+//	    },
+//	    func(err error) {
+//	        log.Printf("Error: %v", err)
+//	    },
+//	)
+func (s *Server) Start(network, address string, clientPoolSize int, acceptSuccessFunc func(client Client), acceptFailureFunc func(err error)) error {
+	s.Stop()
 
 	if len(network) == 0 {
 		return errors.New("invalid network")
@@ -35,56 +99,76 @@ func (this *Server) Start(network, address string, clientPoolSize int, acceptSuc
 		return errors.New("invalid address")
 	}
 
-	this.channel = make(chan Client, clientPoolSize)
-	this.acceptSuccessFunc = acceptSuccessFunc
-	this.acceptFailureFunc = acceptFailureFunc
+	s.channel = make(chan Client, clientPoolSize)
+	s.acceptSuccessFunc = acceptSuccessFunc
+	s.acceptFailureFunc = acceptFailureFunc
 
 	listener, err := net.Listen(network, address)
 	if err != nil {
 		return err
 	}
-	this.listener = listener
+	s.listener = listener
 
 	go func() {
-		this.condition.Store(true)
-		for this.condition.Load() {
-			client, err := this.accept()
+		s.condition.Store(true)
+		for s.condition.Load() {
+			client, err := s.accept()
 			if err != nil {
-				if this.condition.Load() && this.acceptFailureFunc != nil {
-					this.acceptFailureFunc(err)
+				if s.condition.Load() && s.acceptFailureFunc != nil {
+					s.acceptFailureFunc(err)
 				}
 
 				continue
 			}
 
-			this.channel <- client
+			s.channel <- client
 
-			this.jobWaitGroup.Add(1)
-			go this.job()
+			s.jobWaitGroup.Add(1)
+			go s.job()
 		}
 	}()
 
 	return nil
 }
 
-// Stop is stop the server.
+// Stop gracefully shuts down the socket server.
 //
-// ex) err := server.Stop()
-func (this *Server) Stop() error {
-	this.condition.Store(false)
+// This method stops accepting new connections, waits for all active
+// client handlers to complete, and closes the listener.
+//
+// # Returns
+//
+//   - error: Error if shutdown fails, nil on successful shutdown
+//
+// # Behavior
+//
+// The shutdown process:
+//  1. Sets condition to false (stops accepting)
+//  2. Waits for all job goroutines to complete
+//  3. Waits for channel to drain
+//  4. Closes the listener
+//
+// # Examples
+//
+//	err := server.Stop()
+//	if err != nil {
+//	    log.Printf("Stop error: %v", err)
+//	}
+func (s *Server) Stop() error {
+	s.condition.Store(false)
 
-	this.jobWaitGroup.Wait()
+	s.jobWaitGroup.Wait()
 
-	if this.channel != nil {
-		for len(this.channel) != 0 {
+	if s.channel != nil {
+		for len(s.channel) != 0 {
 			time.Sleep(time.Millisecond)
 		}
-		this.channel = nil
+		s.channel = nil
 	}
 
-	if this.listener != nil {
-		err := this.listener.Close()
-		this.listener = nil
+	if s.listener != nil {
+		err := s.listener.Close()
+		s.listener = nil
 		if err != nil {
 			return err
 		}
@@ -93,25 +177,33 @@ func (this *Server) Stop() error {
 	return nil
 }
 
-// GetCondition is get the condition
+// GetCondition returns the server running state.
 //
-// ex) condition := server.GetCondition()
-func (this *Server) GetCondition() bool {
-	return this.condition.Load()
+// # Returns
+//
+//   - bool: true if server is running, false if stopped
+//
+// # Examples
+//
+//	if server.GetCondition() {
+//	    fmt.Println("Server is running")
+//	}
+func (s *Server) GetCondition() bool {
+	return s.condition.Load()
 }
 
-func (this *Server) accept() (Client, error) {
-	connnetion, err := this.listener.Accept()
+func (s *Server) accept() (Client, error) {
+	connnetion, err := s.listener.Accept()
 	return Client{connnetion}, err
 }
 
-func (this *Server) job() {
-	defer this.jobWaitGroup.Done()
+func (s *Server) job() {
+	defer s.jobWaitGroup.Done()
 
-	client := <-this.channel
+	client := <-s.channel
 	defer client.Close()
 
-	if this.acceptSuccessFunc != nil {
-		this.acceptSuccessFunc(client)
+	if s.acceptSuccessFunc != nil {
+		s.acceptSuccessFunc(client)
 	}
 }

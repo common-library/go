@@ -1,19 +1,38 @@
-// Package gzip provides gzip implementations.
+// Package gzip provides utilities for creating and extracting gzip compressed files.
+//
+// This package wraps the compress/gzip standard library to provide convenient
+// functions for compressing and decompressing single files.
+//
+// Features:
+//   - Compress single files to gzip format
+//   - Decompress gzip files to original format
+//   - Automatic directory creation
+//   - File permission preservation
+//
+// Example usage:
+//
+//	err := gzip.Compress("output.gz", "input.txt")
+//	err := gzip.Decompress("archive.gz", "extracted.txt")
 package gzip
 
 import (
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/common-library/go/file"
 )
 
-// Compress is compression.
+// Compress compresses a single file into gzip format.
 //
-// ex) err := gzip.Compress("test.gz", "test.txt")
+// Parameters:
+//   - name: output gzip file path (e.g., "test.gz")
+//   - path: input file path to compress
+//
+// Example:
+//
+//	err := gzip.Compress("test.gz", "test.txt")
 func Compress(name string, path string) error {
 	if err := file.CreateDirectoryAll(filepath.Dir(name), os.ModePerm); err != nil {
 		return err
@@ -38,9 +57,16 @@ func Compress(name string, path string) error {
 	}
 }
 
-// Decompress is decompression.
+// Decompress decompresses a gzip file.
 //
-// ex) err := gzip.Compress("test.gz", "test.txt", "./output")
+// Parameters:
+//   - gzipName: input gzip file path (e.g., "test.gz")
+//   - fileName: output file name (e.g., "test.txt")
+//   - outputPath: output directory path
+//
+// Example:
+//
+//	err := gzip.Decompress("test.gz", "test.txt", "./output")
 func Decompress(gzipName, fileName, outputPath string) error {
 	gzipFile, err := os.Open(gzipName)
 	if err != nil {
@@ -54,7 +80,7 @@ func Decompress(gzipName, fileName, outputPath string) error {
 	}
 	defer gzipReader.Close()
 
-	if data, err := ioutil.ReadAll(gzipReader); err != nil {
+	if data, err := io.ReadAll(gzipReader); err != nil {
 		return err
 	} else if err := file.CreateDirectoryAll(outputPath, os.ModePerm); err != nil {
 		return err
