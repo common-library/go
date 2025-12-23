@@ -43,8 +43,8 @@ jobs:
           go-version: ${{ matrix.go }}
           cache: false
 
-      - name: Cache Go modules and tools
-        uses: actions/cache@v4
+      - name: Restore Go cache
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/go/pkg/mod
@@ -166,6 +166,16 @@ jobs:
             echo "$RESPONSE" | jq .
             exit 1
           fi
+
+      - name: Save Go cache
+        if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/go/bin
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ matrix.go }}-${{ hashFiles('go.sum') }}
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v6
