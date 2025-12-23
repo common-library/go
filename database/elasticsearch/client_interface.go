@@ -1,3 +1,23 @@
+// Package elasticsearch provides a unified interface for Elasticsearch clients across multiple versions.
+//
+// This package supports Elasticsearch versions 7, 8, and 9 through a common interface,
+// allowing applications to switch between versions without changing their code.
+//
+// Features:
+//   - Multi-version support (v7, v8, v9)
+//   - Document operations (index, exists, delete)
+//   - Index management (create, delete, exists)
+//   - Template management
+//   - Search operations
+//   - Force merge support
+//
+// Example:
+//
+//	import v7 "github.com/common-library/go/database/elasticsearch/v7"
+//
+//	client := &v7.Client{}
+//	client.Initialize([]string{"localhost:9200"}, 10*time.Second, "", "", "", "", "", nil)
+//	client.Index("myindex", "doc1", `{"field":"value"}`)
 package elasticsearch
 
 import "time"

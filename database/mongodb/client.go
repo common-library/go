@@ -1,4 +1,23 @@
-// Package mongodb provides MongoDB client implementations.
+// Package mongodb provides a MongoDB client wrapper with simplified operations and automatic reconnection.
+//
+// This package offers a convenient wrapper around the official MongoDB Go driver,
+// providing simplified method signatures for common operations and automatic connection management.
+//
+// Features:
+//   - Automatic connection and reconnection handling
+//   - CRUD operations with type-safe results
+//   - Aggregation pipeline support
+//   - Bulk write operations
+//   - Index management
+//   - Context-based timeout control
+//
+// Example:
+//
+//	var client mongodb.Client
+//	client.Initialize("localhost:27017", 10*time.Second)
+//	defer client.Finalize()
+//	client.InsertOne("mydb", "users", bson.M{"name": "Alice", "age": 30})
+//	result, _ := client.FindOne("mydb", "users", bson.M{"name": "Alice"}, User{})
 package mongodb
 
 import (
@@ -23,9 +42,14 @@ type Client struct {
 	client *mongo.Client
 }
 
-// connect is connect.
+// connect establishes a connection to the MongoDB server or reuses an existing connection.
 //
-// ex) err := client.connect()
+// This method implements automatic reconnection by checking if an existing connection
+// is alive via ping. If the connection is dead or doesn't exist, it creates a new one.
+//
+// Returns error if connection or ping fails.
+//
+// The method is called automatically by all database operations.
 func (c *Client) connect() error {
 	if c.client != nil && c.client.Ping(c.ctx, readpref.Primary()) == nil {
 		return nil
@@ -47,9 +71,12 @@ func (c *Client) connect() error {
 	return c.client.Ping(c.ctx, readpref.Primary())
 }
 
-// disconnect is disconnect.
+// disConnect closes the MongoDB connection and cancels the context.
 //
-// ex) err := client.disconnect()
+// Returns error if disconnection fails.
+//
+// This method is called by Finalize and during reconnection attempts.
+// It safely handles nil clients and cleans up context cancellation functions.
 func (c *Client) disConnect() error {
 	if c.client == nil {
 		return nil
@@ -66,9 +93,22 @@ func (c *Client) disConnect() error {
 	return err
 }
 
-// Initialize is initialize.
+// Initialize initializes the MongoDB client with connection settings.
 //
-// ex) err := client.Initialize("localhost:27017", 10)
+// Parameters:
+//   - address: MongoDB server address in format "host:port" (e.g., "localhost:27017")
+//   - timeout: Operation timeout duration for database operations
+//
+// Returns error if initial connection fails.
+//
+// The client automatically reconnects on subsequent operations if the connection is lost.
+// Call Finalize() to properly close the connection when done.
+//
+// Example:
+//
+//	var client mongodb.Client
+//	err := client.Initialize("localhost:27017", 10*time.Second)
+//	defer client.Finalize()
 func (c *Client) Initialize(address string, timeout time.Duration) error {
 	c.address = address
 	c.timeout = timeout
@@ -76,20 +116,42 @@ func (c *Client) Initialize(address string, timeout time.Duration) error {
 	return c.connect()
 }
 
-// Finalize is finalize.
+// Finalize closes the MongoDB connection and releases resources.
 //
-// ex) err := client.Finalize()
+// Returns error if disconnection fails.
+//
+// This method should be called when the client is no longer needed,
+// typically using defer after Initialize.
+//
+// Example:
+//
+//	var client mongodb.Client
+//	client.Initialize("localhost:27017", 10*time.Second)
+//	defer client.Finalize()
 func (c *Client) Finalize() error {
 	return c.disConnect()
 }
 
-// "FindOne" is returns one result value corresponding to the filter argument as an "dataForm" argument type interface.
+// FindOne finds a single document matching the filter and returns it as the specified type.
 //
-//	ex)
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - filter: BSON filter document (e.g., bson.M{"name": "Alice"})
+//   - dataForm: Template for the result type (e.g., User{})
 //
-//	 result_interface, err := client.FindOne("test_database", "test_collection", bson.M{"value1": 1}, TestStruct{})
+// Returns the found document as an interface that must be type-asserted to the dataForm type.
+// Returns error if client is not initialized, connection fails, or no document is found.
 //
-//	 result, ok := result_interface.(TestStruct)
+// The method uses reflection to create a properly typed result from the dataForm template.
+//
+// Example:
+//
+//	result, err := client.FindOne("mydb", "users", bson.M{"name": "Alice"}, User{})
+//	if err != nil {
+//		return err
+//	}
+//	user, ok := result.(User)
 func (c *Client) FindOne(databaseName, collectionName string, filter any, dataForm any) (any, error) {
 	if c.client == nil {
 		return nil, errors.New("please call Initialize first")
@@ -110,13 +172,27 @@ func (c *Client) FindOne(databaseName, collectionName string, filter any, dataFo
 	return document.Elem().Interface(), nil
 }
 
-// "Find" is returns results value corresponding to the filter argument as an "dataForm" argument array type interface.
+// Find finds all documents matching the filter and returns them as a slice of the specified type.
 //
-// ex)
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - filter: BSON filter document (e.g., bson.M{"age": bson.M{"$gte": 25}})
+//   - dataForm: Template for the result element type (e.g., User{})
 //
-//	results_interface, err := client.Find("test_database", "test_collection", bson.M{}, TestStruct{})
+// Returns a slice of documents as an interface that must be type-asserted to []dataForm type.
+// Returns error if client is not initialized, connection fails, or query fails.
 //
-//	results, ok := results_interface.([]TestStruct)
+// Use an empty filter bson.M{} to retrieve all documents in the collection.
+// The method uses reflection to create a properly typed slice from the dataForm template.
+//
+// Example:
+//
+//	results, err := client.Find("mydb", "users", bson.M{"age": bson.M{"$gte": 25}}, User{})
+//	if err != nil {
+//		return err
+//	}
+//	users, ok := results.([]User)
 func (c *Client) Find(databaseName, collectionName string, filter, dataForm any) (any, error) {
 	if c.client == nil {
 		return nil, errors.New("please call Initialize first")
@@ -149,9 +225,23 @@ func (c *Client) Find(databaseName, collectionName string, filter, dataForm any)
 	return results.Elem().Interface(), nil
 }
 
-// InsertOne is insert a one document.
+// InsertOne inserts a single document into the collection.
 //
-// ex) err := client.InsertOne("test_database", "test_collection", TestStruct{})
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - document: Document to insert (struct, bson.M, or bson.D)
+//
+// Returns error if client is not initialized, connection fails, or insertion fails.
+//
+// The document can be a struct with bson tags or a bson.M/bson.D map.
+//
+// Example:
+//
+//	err := client.InsertOne("mydb", "users", User{ID: 1, Name: "Alice", Age: 30})
+//
+//	// Or with bson.M
+//	err = client.InsertOne("mydb", "users", bson.M{"_id": 1, "name": "Alice", "age": 30})
 func (c *Client) InsertOne(databaseName, collectionName string, document any) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -169,15 +259,25 @@ func (c *Client) InsertOne(databaseName, collectionName string, document any) er
 	return nil
 }
 
-// InsertMany is insert a array type documents.
+// InsertMany inserts multiple documents into the collection in a single operation.
 //
-// ex)
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - documents: Slice of documents to insert ([]any containing structs, bson.M, or bson.D)
 //
-//	insertData := make([]any, 0)
+// Returns error if client is not initialized, connection fails, or insertion fails.
 //
-//	insertData = append(insertData, TestStruct{Value1: 1, Value2: "abc"}, TestStruct{Value1: 2, Value2: "def"})
+// All documents are inserted in a single batch operation for efficiency.
 //
-//	err := client.InsertMany("test_database", "test_collection", insertData)
+// Example:
+//
+//	docs := []any{
+//		User{ID: 1, Name: "Alice", Age: 30},
+//		User{ID: 2, Name: "Bob", Age: 25},
+//		bson.M{"_id": 3, "name": "Charlie", "age": 35},
+//	}
+//	err := client.InsertMany("mydb", "users", docs)
 func (c *Client) InsertMany(databaseName, collectionName string, documents []any) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -195,9 +295,26 @@ func (c *Client) InsertMany(databaseName, collectionName string, documents []any
 	return nil
 }
 
-// UpdateOne is update the one value corresponding to the filter argument with the value of the "update" argument.
+// UpdateOne updates a single document matching the filter.
 //
-// ex) err := client.UpdateOne("test_database", "test_collection", bson.M{"value1": 1}, bson.D{{"$set", bson.D{{"value2", "update_value"}}}})
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - filter: BSON filter to match the document (e.g., bson.M{"_id": 1})
+//   - update: Update operations using MongoDB update operators (e.g., bson.D{{"$set", bson.D{{"age", 31}}}})
+//
+// Returns error if client is not initialized, connection fails, or update fails.
+//
+// Only the first matching document is updated.
+// Use update operators like $set, $inc, $push, etc.
+//
+// Example:
+//
+//	err := client.UpdateOne(
+//		"mydb", "users",
+//		bson.M{"name": "Alice"},
+//		bson.D{{"$set", bson.D{{"age", 31}}}},
+//	)
 func (c *Client) UpdateOne(databaseName, collectionName string, filter, update any) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -215,9 +332,26 @@ func (c *Client) UpdateOne(databaseName, collectionName string, filter, update a
 	return nil
 }
 
-// UpdateMany is update the value corresponding to the filter argument with the values of the "update" argument.
+// UpdateMany updates all documents matching the filter.
 //
-// ex) err := client.UpdateMany("test_database", "test_collection", bson.M{"value1": 1}, bson.D{{"$set", bson.D{{"value2", "update_value"}}}})
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - filter: BSON filter to match documents (e.g., bson.M{"age": bson.M{"$lt": 30}})
+//   - update: Update operations using MongoDB update operators (e.g., bson.D{{"$inc", bson.D{{"age", 1}}}})
+//
+// Returns error if client is not initialized, connection fails, or update fails.
+//
+// All matching documents are updated in a single operation.
+// Use update operators like $set, $inc, $push, etc.
+//
+// Example:
+//
+//	err := client.UpdateMany(
+//		"mydb", "users",
+//		bson.M{"age": bson.M{"$lt": 30}},
+//		bson.D{{"$inc", bson.D{{"age", 1}}}},
+//	)
 func (c *Client) UpdateMany(databaseName, collectionName string, filter, update any) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -235,9 +369,20 @@ func (c *Client) UpdateMany(databaseName, collectionName string, filter, update 
 	return nil
 }
 
-// DeleteOne is delete one value corresponding to the filter argument.
+// DeleteOne deletes a single document matching the filter.
 //
-// ex) err := client.DeleteOne("test_database", "test_collection", bson.M{"value1": 1})
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - filter: BSON filter to match the document (e.g., bson.M{"_id": 1})
+//
+// Returns error if client is not initialized, connection fails, or deletion fails.
+//
+// Only the first matching document is deleted.
+//
+// Example:
+//
+//	err := client.DeleteOne("mydb", "users", bson.M{"name": "Alice"})
 func (c *Client) DeleteOne(databaseName, collectionName string, filter any) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -255,9 +400,24 @@ func (c *Client) DeleteOne(databaseName, collectionName string, filter any) erro
 	return nil
 }
 
-// DeleteMany is delete the values corresponding to the filter argument.
+// DeleteMany deletes all documents matching the filter.
 //
-// ex) err := client.DeleteMany("test_database", "test_collection", bson.M{})
+// Parameters:
+//   - databaseName: Name of the database
+//   - collectionName: Name of the collection
+//   - filter: BSON filter to match documents (e.g., bson.M{"age": bson.M{"$lt": 25}})
+//
+// Returns error if client is not initialized, connection fails, or deletion fails.
+//
+// All matching documents are deleted in a single operation.
+// Use an empty filter bson.M{} to delete all documents in the collection.
+//
+// Example:
+//
+//	err := client.DeleteMany("mydb", "users", bson.M{"age": bson.M{"$lt": 25}})
+//
+//	// Delete all documents
+//	err = client.DeleteMany("mydb", "users", bson.M{})
 func (c *Client) DeleteMany(databaseName, collectionName string, filter any) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")

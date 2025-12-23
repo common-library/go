@@ -1,3 +1,17 @@
+// Package testutil provides test utilities for Elasticsearch client testing.
+//
+// This package simplifies testing by providing helper functions to create
+// Elasticsearch test containers and initialize clients across different versions.
+//
+// Features:
+//   - Multi-version client creation (v7, v8, v9)
+//   - Testcontainers integration
+//   - Simplified client initialization for tests
+//
+// Example:
+//
+//	client := testutil.GetTestClient(t, "v8", []string{"http://localhost:9200"})
+//	client.Index("testindex", "1", `{"test":"data"}`)
 package testutil
 
 import (

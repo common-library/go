@@ -1,4 +1,22 @@
-// Package elasticsearch provides Elasticsearch client implementations.
+// Package v8 provides Elasticsearch version 8 client implementation.
+//
+// This package wraps the official Elasticsearch 8.x Go client, providing a simplified
+// interface for common operations while maintaining compatibility with the ClientInterface.
+//
+// Features:
+//   - Full Elasticsearch 8.x API support
+//   - Document operations (index, exists, delete, delete by query)
+//   - Index management (create, delete, exists, force merge)
+//   - Template management (put, delete, exists)
+//   - Search operations with JSON responses
+//   - Certificate fingerprint authentication
+//   - Cloud ID support
+//
+// Example:
+//
+//	client := &v8.Client{}
+//	err := client.Initialize([]string{"https://localhost:9200"}, 30*time.Second, "", "", "elastic", "password", "", nil)
+//	err = client.Index("products", "1", `{"name":"Product 1","price":29.99}`)
 package v8
 
 import (
@@ -25,9 +43,30 @@ type Client struct {
 	client *elasticsearch.Client
 }
 
-// Initialize is initialize.
+// Initialize initializes the Elasticsearch v8 client with connection configuration.
 //
-// ex) err := client.Initialize([]string{"127.0.0.1:9200"}, 60, "", "", "", "", "", []byte(""))
+// Parameters:
+//   - addresses: Elasticsearch node URLs (e.g., []string{"http://localhost:9200"})
+//   - timeout: HTTP response timeout in seconds
+//   - cloudID: Elastic Cloud deployment ID (optional, empty string if not used)
+//   - apiKey: Base64-encoded API key for authentication (optional)
+//   - username: Username for basic authentication (optional)
+//   - password: Password for basic authentication (optional)
+//   - certificateFingerprint: Server certificate fingerprint for HTTPS (optional)
+//   - caCert: CA certificate bytes for HTTPS verification (optional)
+//
+// Returns error if client creation fails.
+//
+// The client is protected by a mutex during initialization to prevent data races
+// in the underlying elastictransport library.
+//
+// Example:
+//
+//	err := client.Initialize(
+//		[]string{"https://localhost:9200"},
+//		30*time.Second,
+//		"", "", "elastic", "password", "a1:b2:c3:...", nil,
+//	)
 func (c *Client) Initialize(addresses []string, timeout time.Duration, cloudID, apiKey, username, password, certificateFingerprint string, caCert []byte) error {
 	eslock.InitMu.Lock()
 	defer eslock.InitMu.Unlock()
@@ -59,9 +98,23 @@ func (c *Client) Initialize(addresses []string, timeout time.Duration, cloudID, 
 	return nil
 }
 
-// Exists is checks if a document exists in the index.
+// Exists checks if a document exists in the specified index.
 //
-// ex) exist, err := client.Exists("index", "document_id")
+// Parameters:
+//   - index: The name of the index
+//   - documentID: The document identifier
+//
+// Returns true if the document exists, false if not found.
+// Returns error if client is not initialized or request fails.
+//
+// The request uses refresh=true to ensure real-time visibility.
+//
+// Example:
+//
+//	exists, err := client.Exists("products", "product-123")
+//	if exists {
+//		fmt.Println("Document found")
+//	}
 func (c *Client) Exists(index, documentID string) (bool, error) {
 	if c.client == nil {
 		return false, errors.New("please call Initialize first")
@@ -91,9 +144,23 @@ func (c *Client) Exists(index, documentID string) (bool, error) {
 	return true, nil
 }
 
-// Index is stores document.
+// Index indexes a document in the specified index.
 //
-// ex) err := client.Index("index", "document_id", "{...}")
+// Parameters:
+//   - index: The name of the index
+//   - documentID: The document identifier (use empty string for auto-generated ID)
+//   - body: JSON document body as a string
+//
+// Returns error if client is not initialized or indexing fails.
+//
+// The document is immediately available for search (refresh=true).
+//
+// Example:
+//
+//	err := client.Index("products", "1", `{
+//		"name": "Laptop",
+//		"price": 999.99
+//	}`)
 func (c *Client) Index(index, documentID, body string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -125,9 +192,19 @@ func (c *Client) Index(index, documentID, body string) error {
 	return nil
 }
 
-// Delete is deletes document.
+// Delete deletes a document from the specified index.
 //
-// ex) err := client.Delete("index", "document_id")
+// Parameters:
+//   - index: The name of the index
+//   - documentID: The document identifier to delete
+//
+// Returns error if client is not initialized or deletion fails.
+//
+// The deletion is immediately visible (refresh=true).
+//
+// Example:
+//
+//	err := client.Delete("products", "product-123")
 func (c *Client) Delete(index, documentID string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -153,9 +230,22 @@ func (c *Client) Delete(index, documentID string) error {
 	return nil
 }
 
-// DeleteByQuery is perform a delete query on index.
+// DeleteByQuery deletes all documents matching a query.
 //
-// ex) err := client.DeleteByQuery([]string{"index"},"{...}")
+// Parameters:
+//   - indices: List of index names to search
+//   - body: JSON query body as a string
+//
+// Returns error if client is not initialized or deletion fails.
+//
+// The deletions are immediately visible (refresh=true).
+//
+// Example:
+//
+//	err := client.DeleteByQuery(
+//		[]string{"products"},
+//		`{"query": {"range": {"price": {"lt": 10}}}}`
+//	)
 func (c *Client) DeleteByQuery(indices []string, body string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -188,9 +278,20 @@ func (c *Client) DeleteByQuery(indices []string, body string) error {
 	return nil
 }
 
-// IndicesExists is checks if an index exists within indices.
+// IndicesExists checks if one or more indices exist.
 //
-// ex) exist, err := client.IndicesExists([]string{"index"})
+// Parameters:
+//   - indices: List of index names to check
+//
+// Returns true if all specified indices exist, false otherwise.
+// Returns error if client is not initialized or request fails.
+//
+// Example:
+//
+//	exists, err := client.IndicesExists([]string{"products", "orders"})
+//	if !exists {
+//		// Create indices
+//	}
 func (c *Client) IndicesExists(indices []string) (bool, error) {
 	if c.client == nil {
 		return false, errors.New("please call Initialize first")
@@ -216,9 +317,25 @@ func (c *Client) IndicesExists(indices []string) (bool, error) {
 	return true, nil
 }
 
-// IndicesCreate is create an index.
+// IndicesCreate creates an index with optional settings and mappings.
 //
-// ex) err := client.IndicesCreate("index", "{...}")
+// Parameters:
+//   - index: The name of the index to create
+//   - body: JSON configuration with settings and mappings
+//
+// Returns error if client is not initialized, index already exists, or creation fails.
+//
+// Example:
+//
+//	err := client.IndicesCreate("products", `{
+//		"settings": {"number_of_shards": 1},
+//		"mappings": {
+//			"properties": {
+//				"name": {"type": "text"},
+//				"price": {"type": "float"}
+//			}
+//		}
+//	}`)
 func (c *Client) IndicesCreate(index, body string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -248,9 +365,18 @@ func (c *Client) IndicesCreate(index, body string) error {
 	return nil
 }
 
-// IndicesDelete is delete an index.
+// IndicesDelete deletes one or more indices.
 //
-// ex) err := client.IndicesDelete([]string{"Index"})
+// Parameters:
+//   - indices: List of index names to delete
+//
+// Returns error if client is not initialized or deletion fails.
+//
+// Warning: This permanently deletes all data in the specified indices.
+//
+// Example:
+//
+//	err := client.IndicesDelete([]string{"old-logs-2023", "old-logs-2022"})
 func (c *Client) IndicesDelete(indices []string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -274,9 +400,20 @@ func (c *Client) IndicesDelete(indices []string) error {
 	return nil
 }
 
-// IndicesExistsTemplate is checks if a template exists.
+// IndicesExistsTemplate checks if one or more index templates exist.
 //
-// ex) exist, err := client.IndicesExistsTemplate([]string{"template"})
+// Parameters:
+//   - name: List of template names to check
+//
+// Returns true if all specified templates exist, false otherwise.
+// Returns error if client is not initialized or request fails.
+//
+// Example:
+//
+//	exists, err := client.IndicesExistsTemplate([]string{"logs_template"})
+//	if !exists {
+//		// Create template
+//	}
 func (c *Client) IndicesExistsTemplate(name []string) (bool, error) {
 	if c.client == nil {
 		return false, errors.New("please call Initialize first")
@@ -302,9 +439,27 @@ func (c *Client) IndicesExistsTemplate(name []string) (bool, error) {
 	return true, nil
 }
 
-// IndicesPutTemplate is stores templates.
+// IndicesPutTemplate creates or updates an index template.
 //
-// ex) err := client.IndicesPutTemplate("template", "{...}")
+// Parameters:
+//   - name: The template name
+//   - body: JSON template configuration with index patterns, settings, and mappings
+//
+// Returns error if client is not initialized or operation fails.
+//
+// Templates automatically apply settings and mappings to matching indices.
+//
+// Example:
+//
+//	err := client.IndicesPutTemplate("logs_template", `{
+//		"index_patterns": ["logs-*"],
+//		"settings": {"number_of_shards": 1},
+//		"mappings": {
+//			"properties": {
+//				"timestamp": {"type": "date"}
+//			}
+//		}
+//	}`)
 func (c *Client) IndicesPutTemplate(name, body string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -334,9 +489,18 @@ func (c *Client) IndicesPutTemplate(name, body string) error {
 	return nil
 }
 
-// IndicesDeleteTemplate is delete an template.
+// IndicesDeleteTemplate deletes an index template.
 //
-// ex) err := client.IndicesDeleteTemplate("template")
+// Parameters:
+//   - name: The template name to delete
+//
+// Returns error if client is not initialized or deletion fails.
+//
+// Note: Deleting a template does not affect existing indices created from it.
+//
+// Example:
+//
+//	err := client.IndicesDeleteTemplate("old_logs_template")
 func (c *Client) IndicesDeleteTemplate(name string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -360,9 +524,20 @@ func (c *Client) IndicesDeleteTemplate(name string) error {
 	return nil
 }
 
-// IndicesForcemerge is perform a force merge on index.
+// IndicesForcemerge performs a force merge operation on indices.
 //
-// ex) err := client.IndicesForcemerge([]string{"index"})
+// Parameters:
+//   - indices: List of index names to force merge
+//
+// Returns error if client is not initialized or operation fails.
+//
+// Force merge optimizes index storage by merging segments and removing deleted documents.
+// This operation is I/O intensive and should be used carefully on production systems.
+//
+// Example:
+//
+//	// Optimize old read-only indices
+//	err := client.IndicesForcemerge([]string{"logs-2023-12"})
 func (c *Client) IndicesForcemerge(indices []string) error {
 	if c.client == nil {
 		return errors.New("please call Initialize first")
@@ -389,9 +564,26 @@ func (c *Client) IndicesForcemerge(indices []string) error {
 	return nil
 }
 
-// Search is search
+// Search executes a search query and returns the raw JSON response.
 //
-// ex) result, err := client.Search("index", "{...}")
+// Parameters:
+//   - index: The index name to search
+//   - body: JSON search query body
+//
+// Returns the search results as a JSON string.
+// Returns error if client is not initialized or search fails.
+//
+// The response includes hits, aggregations, and metadata.
+// Parse the JSON string to extract specific results.
+//
+// Example:
+//
+//	result, err := client.Search("products", `{
+//		"query": {
+//			"match": {"category": "electronics"}
+//		},
+//		"size": 10
+//	}`)
 func (c *Client) Search(index, body string) (string, error) {
 	if c.client == nil {
 		return "", errors.New("please call Initialize first")

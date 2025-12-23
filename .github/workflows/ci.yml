@@ -5,16 +5,26 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main", "v*.*.*"]
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/ci.yml'
   pull_request:
-    branches: [ "**" ]
+    branches: [ "main", "v*.*.*"]
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/ci.yml'
 
 jobs:
   build:
     strategy:
       matrix:
         runner: [ 'ubuntu-24.04' ]
-        go: [ '1.25.5' ]  # 1.25.3은 보안 취약점(GO-2025-4175, GO-2025-4155)으로 제외
+        go: [ '1.25.5' ]  # Excluded 1.25.3 due to security vulnerabilities (GO-2025-4175, GO-2025-4155)
       fail-fast: false
 
     permissions:
@@ -31,6 +41,19 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
+          cache: false
+
+      - name: Cache Go modules and tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/go/bin
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ matrix.go }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go }}-
+            ${{ runner.os }}-go-
 
       - name: Install Tools
         run: |
@@ -45,7 +68,6 @@ jobs:
 
       - name: Go Vulnerability Check
         run: govulncheck ./...
-        continue-on-error: true
 
       - name: Test
         run: go test -race -timeout=300s -parallel=4 -coverprofile=coverage.out -cover -v ./...
