@@ -105,7 +105,7 @@ Performs an HTTP request and returns the complete response.
 - `method` - HTTP method (http.MethodGet, http.MethodPost, etc.)
 - `header` - HTTP headers as map[string][]string
 - `body` - Request body as string
-- `timeout` - Request timeout in seconds
+- `timeout` - Request timeout duration (e.g., 10*time.Second)
 - `username` - Username for Basic Auth (empty for no auth)
 - `password` - Password for Basic Auth (empty for no auth)
 - `transport` - Custom HTTP transport (nil for default)
@@ -134,7 +134,7 @@ resp, err := http.Request(
     http.MethodGet,
     nil,
     "",
-    10,
+    10*time.Second,
     "", "",
     nil,
 )
@@ -163,7 +163,7 @@ resp, err := http.Request(
     http.MethodPost,
     headers,
     body,
-    30,
+    30*time.Second,
     "", "",
     nil,
 )
@@ -183,7 +183,7 @@ resp, err := http.Request(
     http.MethodGet,
     nil,
     "",
-    10,
+    10*time.Second,
     "admin",      // username
     "password123", // password
     nil,
@@ -214,7 +214,7 @@ resp, err := http.Request(
     http.MethodGet,
     headers,
     "",
-    15,
+    15*time.Second,
     "", "",
     nil,
 )
@@ -235,7 +235,7 @@ resp, err := http.Request(
     http.MethodGet,
     nil,
     "",
-    10,
+    10*time.Second,
     "", "",
     transport,
 )
@@ -354,7 +354,7 @@ server.RegisterPathPrefixHandlerFunc("/api/", func(w http.ResponseWriter, r *htt
 #### Start
 
 ```go
-func (s *Server) Start(address string, listenAndServeFailureFunc func(err error), middlewareFunc ...mux.MiddlewareFunc) error
+func (s *Server) Start(address string, listenAndServeFailureFunc func(err error)) error
 ```
 
 Starts the HTTP server.
@@ -368,8 +368,21 @@ var server http.Server
 err := server.Start(":8080", func(err error) {
     log.Fatal(err)
 })
+```
 
-// With middleware
+#### Use
+
+```go
+func (s *Server) Use(middleware ...mux.MiddlewareFunc)
+```
+
+Registers global middleware.
+
+**Example:**
+
+```go
+var server http.Server
+
 loggingMiddleware := func(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         log.Printf("%s %s", r.Method, r.URL.Path)
@@ -377,7 +390,8 @@ loggingMiddleware := func(next http.Handler) http.Handler {
     })
 }
 
-err = server.Start(":8080", nil, loggingMiddleware)
+server.Use(loggingMiddleware)
+server.Start(":8080", nil)
 ```
 
 #### Stop
@@ -392,10 +406,42 @@ Gracefully shuts down the server.
 
 ```go
 // Shutdown with 30 second timeout
-err := server.Stop(30)
+err := server.Stop(30 * time.Second)
 if err != nil {
     log.Printf("Shutdown error: %v", err)
 }
+```
+
+#### IsRunning
+
+```go
+func (s *Server) IsRunning() bool
+```
+
+Returns whether the server is currently running.
+
+**Example:**
+
+```go
+if server.IsRunning() {
+    log.Println("Server is running")
+}
+```
+
+#### GetRouter
+
+```go
+func (s *Server) GetRouter() *mux.Router
+```
+
+Returns the gorilla/mux router instance for advanced configuration.
+
+**Example:**
+
+```go
+router := server.GetRouter()
+router.StrictSlash(true)
+router.HandleFunc("/", homeHandler)
 ```
 
 #### SetRouter
@@ -547,7 +593,9 @@ func main() {
         w.Write([]byte("Authenticated data"))
     })
     
-    server.Start(":8080", nil, loggingMiddleware, authMiddleware)
+    server.Use(loggingMiddleware)
+    server.Use(authMiddleware)
+    server.Start(":8080", nil)
     
     select {}
 }
@@ -587,7 +635,7 @@ func main() {
     <-sigChan
     
     log.Println("Shutting down server...")
-    if err := server.Stop(30); err != nil {
+    if err := server.Stop(30 * time.Second); err != nil {
         log.Printf("Shutdown error: %v", err)
     }
     
@@ -632,7 +680,7 @@ func (c *APIClient) GetUsers() ([]User, error) {
         http.MethodGet,
         headers,
         "",
-        10,
+        30*time.Second,
         "", "",
         nil,
     )
@@ -665,7 +713,7 @@ func (c *APIClient) CreateUser(user User) error {
         http.MethodPost,
         headers,
         string(body),
-        10,
+        30*time.Second,
         "", "",
         nil,
     )
@@ -700,7 +748,7 @@ func main() {
 
 ```go
 // Good: Set reasonable timeout
-resp, err := http.Request(url, http.MethodGet, nil, "", 30, "", "", nil)
+resp, err := http.Request(url, http.MethodGet, nil, "", 30*time.Second, "", "", nil)
 
 // Avoid: Very long or no timeout
 // May hang indefinitely
@@ -751,7 +799,7 @@ headers := map[string][]string{
     "Content-Type": {"application/json"},
 }
 
-resp, _ := http.Request(url, http.MethodPost, headers, jsonBody, 10, "", "", nil)
+resp, _ := http.Request(url, http.MethodPost, headers, jsonBody, 10*time.Second, "", "", nil)
 
 // Avoid: Missing Content-Type
 // Server may not parse body correctly
@@ -775,7 +823,10 @@ server.Stop(30) // Wait for active connections
 
 ```go
 // Good: Centralize logging, auth, CORS in middleware
-server.Start(":8080", nil, loggingMiddleware, authMiddleware, corsMiddleware)
+server.Use(loggingMiddleware)
+server.Use(authMiddleware)
+server.Use(corsMiddleware)
+server.Start(":8080", nil)
 
 // Avoid: Repeating logic in every handler
 // Each handler implements its own logging

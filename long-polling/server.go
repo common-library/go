@@ -24,11 +24,10 @@
 package long_polling
 
 import (
-	net_http "net/http"
+	"net/http"
 	"time"
 
-	"github.com/common-library/go/http"
-	"github.com/gorilla/mux"
+	"github.com/common-library/go/http/mux"
 	"github.com/jcuga/golongpoll"
 )
 
@@ -38,10 +37,10 @@ type ServerInfo struct {
 	TimeoutSeconds int
 
 	SubscriptionURI                string
-	HandlerToRunBeforeSubscription func(w net_http.ResponseWriter, r *net_http.Request) bool
+	HandlerToRunBeforeSubscription func(w http.ResponseWriter, r *http.Request) bool
 
 	PublishURI                string
-	HandlerToRunBeforePublish func(w net_http.ResponseWriter, r *net_http.Request) bool
+	HandlerToRunBeforePublish func(w http.ResponseWriter, r *http.Request) bool
 }
 
 // FilePersistorInfo is file persistor information.
@@ -54,7 +53,7 @@ type FilePersistorInfo struct {
 
 // Server is a struct that provides server related methods.
 type Server struct {
-	server http.Server
+	server mux.Server
 
 	longpollManager *golongpoll.LongpollManager
 }
@@ -120,16 +119,17 @@ func (s *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInf
 	}
 	s.longpollManager = longpollManager
 
-	router := mux.NewRouter()
+	// Get router and configure handlers
+	router := s.server.GetRouter()
 
-	router.Use(func(nextHandler net_http.Handler) net_http.Handler {
-		return net_http.HandlerFunc(func(responseWriter net_http.ResponseWriter, request *net_http.Request) {
+	router.Use(func(nextHandler http.Handler) http.Handler {
+		return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
 			nextHandler.ServeHTTP(responseWriter, request)
 		})
 	})
 
-	subscriptionHandler := func() func(net_http.ResponseWriter, *net_http.Request) {
-		return func(w net_http.ResponseWriter, r *net_http.Request) {
+	subscriptionHandler := func() func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			if serverInfo.HandlerToRunBeforeSubscription != nil &&
 				!serverInfo.HandlerToRunBeforeSubscription(w, r) {
 				return
@@ -138,10 +138,10 @@ func (s *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInf
 			s.longpollManager.SubscriptionHandler(w, r)
 		}
 	}
-	router.HandleFunc(serverInfo.SubscriptionURI, subscriptionHandler()).Methods(net_http.MethodGet)
+	router.HandleFunc(serverInfo.SubscriptionURI, subscriptionHandler()).Methods(http.MethodGet)
 
-	publishHandler := func() func(net_http.ResponseWriter, *net_http.Request) {
-		return func(w net_http.ResponseWriter, r *net_http.Request) {
+	publishHandler := func() func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			if serverInfo.HandlerToRunBeforePublish != nil &&
 				!serverInfo.HandlerToRunBeforePublish(w, r) {
 				return
@@ -150,9 +150,7 @@ func (s *Server) Start(serverInfo ServerInfo, filePersistorInfo FilePersistorInf
 			s.longpollManager.PublishHandler(w, r)
 		}
 	}
-	router.HandleFunc(serverInfo.PublishURI, publishHandler()).Methods(net_http.MethodPost)
-
-	s.server.SetRouter(router)
+	router.HandleFunc(serverInfo.PublishURI, publishHandler()).Methods(http.MethodPost)
 
 	return s.server.Start(serverInfo.Address, listenAndServeFailureFunc)
 }

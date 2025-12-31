@@ -42,17 +42,17 @@ func TestMain(m *testing.M) {
 		Started:          true,
 	})
 	if err != nil {
-		log.Fatalf("MinIO 컨테이너 시작 실패: %v", err)
+		log.Fatalf("Failed to start MinIO container: %v", err)
 	}
 
 	host, err := minioContainer.Host(ctx)
 	if err != nil {
-		log.Fatalf("MinIO 컨테이너 호스트 얻기 실패: %v", err)
+		log.Fatalf("Failed to get MinIO container host: %v", err)
 	}
 
 	port, err := minioContainer.MappedPort(ctx, "9000")
 	if err != nil {
-		log.Fatalf("MinIO 컨테이너 포트 얻기 실패: %v", err)
+		log.Fatalf("Failed to get MinIO container port: %v", err)
 	}
 
 	minioEndpoint = fmt.Sprintf("%s:%s", host, port.Port())
@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	if err := minioContainer.Terminate(ctx); err != nil {
-		log.Printf("MinIO 컨테이너 종료 실패: %v", err)
+		log.Printf("Failed to terminate MinIO container: %v", err)
 	}
 
 	os.Exit(code)
@@ -69,7 +69,7 @@ func TestMain(m *testing.M) {
 func setupClient(t *testing.T) *minio.Client {
 	client := &minio.Client{}
 	err := client.CreateClient(minioEndpoint, accessKey, secretKey, false)
-	require.NoError(t, err, "MinIO 클라이언트 생성 실패")
+	require.NoError(t, err, "Failed to create MinIO client")
 	return client
 }
 
@@ -129,7 +129,7 @@ func TestClient_ListBuckets(t *testing.T) {
 			break
 		}
 	}
-	assert.True(t, found, "생성한 버킷이 목록에 없습니다")
+	assert.True(t, found, "Created bucket not found in the list")
 
 	defer cleanupBucket(client, bucketName)
 }
@@ -198,7 +198,7 @@ func TestClient_ListObjects(t *testing.T) {
 	}
 
 	for _, expectedObject := range objects {
-		assert.True(t, foundObjects[expectedObject], "객체 %s를 찾을 수 없습니다", expectedObject)
+		assert.True(t, foundObjects[expectedObject], "Object %s not found", expectedObject)
 	}
 
 	defer cleanupBucket(client, bucketName)
