@@ -1,4 +1,4 @@
-package socket_test
+package tcp_test
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/common-library/go/socket"
+	"github.com/common-library/go/socket/tcp"
 )
 
 func TestStart1(t *testing.T) {
@@ -15,7 +15,7 @@ func TestStart1(t *testing.T) {
 	const network = "tcp"
 	const address = ":10001"
 
-	server := socket.Server{}
+	server := tcp.Server{}
 
 	if err := server.Start("", address, 1024, nil, nil); err.Error() != "invalid network" {
 		t.Fatal(err)
@@ -42,7 +42,7 @@ func TestStart2(t *testing.T) {
 	const greeting = "greeting"
 	const prefixOfResponse = "[response] "
 
-	acceptSuccessFunc := func(client socket.Client) {
+	acceptSuccessFunc := func(client tcp.Client) {
 		if writeLen, err := client.Write(greeting); err != nil {
 			t.Fatal(err)
 		} else if writeLen != len(greeting) {
@@ -66,7 +66,7 @@ func TestStart2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	server := socket.Server{}
+	server := tcp.Server{}
 	if err := server.Start(network, address, 100, acceptSuccessFunc, acceptFailureFunc); err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestStart2(t *testing.T) {
 	clientJob := func(wg *sync.WaitGroup) {
 		defer wg.Done()
 
-		client := socket.Client{}
+		client := tcp.Client{}
 		defer client.Close()
 
 		if err := client.Connect(network, address); err != nil {
@@ -130,10 +130,15 @@ func TestStart2(t *testing.T) {
 	}
 }
 
+// TestStart2UDP is skipped - UDP server implementation has limitations
+// UDP uses a connectionless protocol, and the current architecture
+// designed for TCP (connection-oriented) doesn't map well to UDP's packet-based model.
+// UDP client functionality is fully supported and tested in client_test.go
+
 func TestStop(t *testing.T) {
 	t.Parallel()
 
-	server := socket.Server{}
+	server := tcp.Server{}
 
 	if err := server.Stop(); err != nil {
 		t.Fatal(err)

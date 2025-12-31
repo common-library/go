@@ -1,4 +1,4 @@
-// Package socket provides TCP/UDP socket client and server implementations.
+// Package tcp provides TCP socket client and server implementations.
 //
 // This package simplifies network programming with high-level abstractions
 // for socket servers and clients, supporting concurrent connection handling
@@ -6,7 +6,7 @@
 //
 // # Features
 //
-//   - TCP and UDP socket server
+//   - TCP socket server
 //   - Concurrent client connection handling
 //   - Client connection pooling
 //   - Automatic resource cleanup
@@ -14,9 +14,9 @@
 //
 // # Basic Server Example
 //
-//	server := &socket.Server{}
+//	server := &tcp.Server{}
 //	err := server.Start("tcp", ":8080", 100,
-//	    func(client socket.Client) {
+//	    func(client tcp.Client) {
 //	        data, _ := client.Read(1024)
 //	        client.Write("Response: " + data)
 //	    },
@@ -24,26 +24,27 @@
 //	        log.Printf("Accept error: %v", err)
 //	    },
 //	)
-package socket
+package tcp
 
 import (
 	"errors"
 	"net"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 // Server is a struct that provides server related methods.
 type Server struct {
 	condition atomic.Bool
 
-	listener          net.Listener
-	channel           chan Client
+	listener net.Listener
+	channel  chan Client
+
 	acceptSuccessFunc func(client Client)
 	acceptFailureFunc func(err error)
 
-	jobWaitGroup sync.WaitGroup
+	acceptWaitGroup sync.WaitGroup
+	jobWaitGroup    sync.WaitGroup
 }
 
 // Start initializes and starts the socket server.
@@ -54,11 +55,13 @@ type Server struct {
 //
 // # Parameters
 //
-//   - network: Network type ("tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "unix")
+//   - network: Network type ("tcp", "tcp4", "tcp6", "unix")
 //   - address: Listen address (e.g., ":8080", "127.0.0.1:8080")
-//   - clientPoolSize: Maximum concurrent connections to buffer
+//   - clientPoolSize: Channel buffer size for pending connections. This limits
+//     how many accepted connections can be queued before blocking the accept loop.
+//     Does not limit total concurrent connections.
 //   - acceptSuccessFunc: Callback for each accepted connection
-//   - acceptFailureFunc: Callback for accept errors
+//   - acceptFailureFunc: Callback for accept errors (can be nil)
 //
 // # Returns
 //
@@ -99,17 +102,19 @@ func (s *Server) Start(network, address string, clientPoolSize int, acceptSucces
 		return errors.New("invalid address")
 	}
 
-	s.channel = make(chan Client, clientPoolSize)
-	s.acceptSuccessFunc = acceptSuccessFunc
-	s.acceptFailureFunc = acceptFailureFunc
-
 	listener, err := net.Listen(network, address)
 	if err != nil {
 		return err
 	}
-	s.listener = listener
 
+	s.listener = listener
+	s.channel = make(chan Client, clientPoolSize)
+	s.acceptSuccessFunc = acceptSuccessFunc
+	s.acceptFailureFunc = acceptFailureFunc
+
+	s.acceptWaitGroup.Add(1)
 	go func() {
+		defer s.acceptWaitGroup.Done()
 		s.condition.Store(true)
 		for s.condition.Load() {
 			client, err := s.accept()
@@ -117,7 +122,6 @@ func (s *Server) Start(network, address string, clientPoolSize int, acceptSucces
 				if s.condition.Load() && s.acceptFailureFunc != nil {
 					s.acceptFailureFunc(err)
 				}
-
 				continue
 			}
 
@@ -126,6 +130,7 @@ func (s *Server) Start(network, address string, clientPoolSize int, acceptSucces
 			s.jobWaitGroup.Add(1)
 			go s.job()
 		}
+		close(s.channel)
 	}()
 
 	return nil
@@ -157,15 +162,6 @@ func (s *Server) Start(network, address string, clientPoolSize int, acceptSucces
 func (s *Server) Stop() error {
 	s.condition.Store(false)
 
-	s.jobWaitGroup.Wait()
-
-	if s.channel != nil {
-		for len(s.channel) != 0 {
-			time.Sleep(time.Millisecond)
-		}
-		s.channel = nil
-	}
-
 	if s.listener != nil {
 		err := s.listener.Close()
 		s.listener = nil
@@ -173,6 +169,9 @@ func (s *Server) Stop() error {
 			return err
 		}
 	}
+
+	s.acceptWaitGroup.Wait()
+	s.jobWaitGroup.Wait()
 
 	return nil
 }
@@ -193,8 +192,8 @@ func (s *Server) GetCondition() bool {
 }
 
 func (s *Server) accept() (Client, error) {
-	connnetion, err := s.listener.Accept()
-	return Client{connnetion}, err
+	connection, err := s.listener.Accept()
+	return Client{connection: connection}, err
 }
 
 func (s *Server) job() {

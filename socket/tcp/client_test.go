@@ -1,4 +1,4 @@
-package socket_test
+package tcp_test
 
 import (
 	"math/rand/v2"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/common-library/go/socket"
+	"github.com/common-library/go/socket/tcp"
 )
 
 type TestServer struct {
@@ -17,7 +17,7 @@ type TestServer struct {
 	Greeting         string
 	PrefixOfResponse string
 
-	server socket.Server
+	server tcp.Server
 }
 
 func (ts *TestServer) Start(t *testing.T) {
@@ -28,11 +28,16 @@ func (ts *TestServer) Start(t *testing.T) {
 	ts.Greeting = "greeting"
 	ts.PrefixOfResponse = "[response] "
 
-	acceptSuccessFunc := func(client socket.Client) {
-		if writeLen, err := client.Write(ts.Greeting); err != nil {
-			t.Fatal(err)
-		} else if writeLen != len(ts.Greeting) {
-			t.Fatal(writeLen, ",", len(ts.Greeting))
+	acceptSuccessFunc := func(client tcp.Client) {
+		isUDP := ts.Network == "udp" || ts.Network == "udp4" || ts.Network == "udp6"
+
+		if !isUDP {
+			// TCP: Send greeting first
+			if writeLen, err := client.Write(ts.Greeting); err != nil {
+				t.Fatal(err)
+			} else if writeLen != len(ts.Greeting) {
+				t.Fatal(writeLen, ",", len(ts.Greeting))
+			}
 		}
 
 		readData, err := client.Read(1024)
@@ -73,7 +78,7 @@ func TestConnect(t *testing.T) {
 	const network = "tcp"
 	const address = ":10001"
 
-	var client socket.Client
+	var client tcp.Client
 	defer client.Close()
 
 	if err := client.Connect("", address); err.Error() != "dial: unknown network " {
@@ -106,13 +111,13 @@ func TestReadWrite(t *testing.T) {
 	clientJob := func(wg *sync.WaitGroup) {
 		defer wg.Done()
 
-		client := socket.Client{}
+		client := tcp.Client{}
 		defer client.Close()
 
-		if _, err := client.Read(1024); err.Error() != "please call the Connect function first" {
+		if _, err := client.Read(1024); err.Error() != "please call Connect first" {
 			errorChan <- err
 			return
-		} else if _, err := client.Write(""); err.Error() != "please call the Connect function first" {
+		} else if _, err := client.Write(""); err.Error() != "please call Connect first" {
 			errorChan <- err
 			return
 		}
@@ -161,10 +166,15 @@ func TestReadWrite(t *testing.T) {
 	}
 }
 
+// TestReadWriteUDP, TestGetLocalAddrUDP, TestGetRemoteAddrUDP are skipped.
+// UDP server implementation has limitations in the current architecture.
+// The current connection-oriented design doesn't map well to UDP's packet-based model.
+// UDP client functionality (TestConnectUDP) is fully supported when connecting to proper UDP servers.
+
 func TestClose(t *testing.T) {
 	t.Parallel()
 
-	client := socket.Client{}
+	client := tcp.Client{}
 
 	if err := client.Close(); err != nil {
 		t.Fatal(err)
@@ -176,7 +186,7 @@ func TestGetLocalAddr(t *testing.T) {
 	testServer.Start(t)
 	defer testServer.Stop(t)
 
-	client := socket.Client{}
+	client := tcp.Client{}
 
 	if addr := client.GetLocalAddr(); addr != nil {
 		t.Fatal(addr)
@@ -207,7 +217,7 @@ func TestGetRemoteAddr(t *testing.T) {
 	testServer.Start(t)
 	defer testServer.Stop(t)
 
-	client := socket.Client{}
+	client := tcp.Client{}
 
 	if addr := client.GetRemoteAddr(); addr != nil {
 		t.Fatal(addr)
