@@ -1,4 +1,4 @@
-// Package socket provides TCP/UDP socket client and server implementations.
+// Package tcp provides TCP socket client and server implementations.
 //
 // This package simplifies network programming with high-level abstractions
 // for socket servers and clients, supporting concurrent connection handling
@@ -6,7 +6,7 @@
 //
 // # Features
 //
-//   - TCP and UDP socket client
+//   - TCP socket client
 //   - Simple connect, read, write operations
 //   - Automatic connection management
 //   - Local and remote address access
@@ -14,12 +14,12 @@
 //
 // # Basic Client Example
 //
-//	client := &socket.Client{}
+//	client := &tcp.Client{}
 //	err := client.Connect("tcp", "localhost:8080")
 //	client.Write("Hello")
 //	data, _ := client.Read(1024)
 //	client.Close()
-package socket
+package tcp
 
 import (
 	"errors"
@@ -28,14 +28,14 @@ import (
 
 // Client is a struct that provides client related methods.
 type Client struct {
-	connnetion net.Conn
+	connection net.Conn
 }
 
 // Connect establishes a connection to the remote address.
 //
 // # Parameters
 //
-//   - network: Network type ("tcp", "tcp4", "tcp6", "udp", "udp4", "udp6", "unix")
+//   - network: Network type ("tcp", "tcp4", "tcp6", "unix")
 //   - address: Remote address (e.g., "localhost:8080", "192.168.1.1:9000")
 //
 // # Returns
@@ -47,11 +47,11 @@ type Client struct {
 //	client := &socket.Client{}
 //	err := client.Connect("tcp", "localhost:8080")
 func (c *Client) Connect(network, address string) error {
-	connnetion, err := net.Dial(network, address)
+	connection, err := net.Dial(network, address)
 	if err != nil {
 		return err
 	}
-	c.connnetion = connnetion
+	c.connection = connection
 
 	return nil
 }
@@ -75,13 +75,12 @@ func (c *Client) Connect(network, address string) error {
 //	}
 //	fmt.Println(data)
 func (c *Client) Read(recvSize int) (string, error) {
-	if c.connnetion == nil {
-		return "", errors.New("please call the Connect function first")
+	if c.connection == nil {
+		return "", errors.New("please call Connect first")
 	}
 
 	buffer := make([]byte, recvSize)
-
-	recvLen, err := c.connnetion.Read(buffer)
+	recvLen, err := c.connection.Read(buffer)
 	if err != nil {
 		return "", err
 	}
@@ -108,11 +107,11 @@ func (c *Client) Read(recvSize int) (string, error) {
 //	}
 //	fmt.Printf("Wrote %d bytes\n", n)
 func (c *Client) Write(data string) (int, error) {
-	if c.connnetion == nil {
-		return -1, errors.New("please call the Connect function first")
+	if c.connection == nil {
+		return -1, errors.New("please call Connect first")
 	}
 
-	return c.connnetion.Write([]byte(data))
+	return c.connection.Write([]byte(data))
 }
 
 // Close closes the connection.
@@ -125,14 +124,13 @@ func (c *Client) Write(data string) (int, error) {
 //
 //	err := client.Close()
 func (c *Client) Close() error {
-	if c.connnetion == nil {
-		return nil
+	if c.connection != nil {
+		err := c.connection.Close()
+		c.connection = nil
+		return err
 	}
 
-	err := c.connnetion.Close()
-	c.connnetion = nil
-
-	return err
+	return nil
 }
 
 // GetLocalAddr returns the local network address.
@@ -148,11 +146,11 @@ func (c *Client) Close() error {
 //	    fmt.Println(addr.String())
 //	}
 func (c *Client) GetLocalAddr() net.Addr {
-	if c.connnetion == nil {
+	if c.connection == nil {
 		return nil
 	}
 
-	return c.connnetion.LocalAddr()
+	return c.connection.LocalAddr()
 }
 
 // GetRemoteAddr returns the remote network address.
@@ -168,9 +166,9 @@ func (c *Client) GetLocalAddr() net.Addr {
 //	    fmt.Println(addr.String())
 //	}
 func (c *Client) GetRemoteAddr() net.Addr {
-	if c.connnetion == nil {
+	if c.connection == nil {
 		return nil
 	}
 
-	return c.connnetion.RemoteAddr()
+	return c.connection.RemoteAddr()
 }

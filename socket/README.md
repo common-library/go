@@ -1,33 +1,42 @@
 # Socket
 
-TCP/UDP socket client and server implementations.
+Network socket implementations for TCP and UDP protocols.
 
 ## Overview
 
-The socket package provides simplified network programming with high-level abstractions for socket servers and clients. It handles connection management, concurrent client handling, and resource cleanup automatically.
+The socket package provides simplified network programming with protocol-specific subpackages:
 
-## Features
+- **[socket/tcp](tcp/)** - TCP socket client and server
+- **[socket/udp](udp/)** - UDP socket client and server
 
-- **TCP/UDP Server** - Accept and handle concurrent connections
-- **TCP/UDP Client** - Connect, read, and write operations
-- **Connection Pooling** - Configurable client pool size
-- **Concurrent Handling** - Automatic goroutine management
-- **Resource Cleanup** - Graceful shutdown and connection closing
+## Choosing a Protocol
+
+| Feature | TCP (socket/tcp) | UDP (socket/udp) |
+|---------|------------------|------------------|
+| **Connection** | Connection-oriented | Connectionless |
+| **Reliability** | Guaranteed delivery | Best effort |
+| **Ordering** | In-order delivery | No ordering guarantee |
+| **Server** | ✅ Implemented | ✅ Implemented |
+| **Client** | ✅ Implemented | ✅ Implemented |
+| **Use Cases** | Web servers, databases, file transfer | DNS, gaming, metrics, streaming |
 
 ## Installation
 
 ```bash
-go get -u github.com/common-library/go/socket
+go get -u github.com/common-library/go/socket/tcp
+go get -u github.com/common-library/go/socket/udp
 ```
 
 ## Quick Start
 
-### Server
+### TCP Server
 
 ```go
-server := &socket.Server{}
+import "github.com/common-library/go/socket/tcp"
+
+server := &tcp.Server{}
 err := server.Start("tcp", ":8080", 100,
-    func(client socket.Client) {
+    func(client tcp.Client) {
         data, _ := client.Read(1024)
         client.Write("Echo: " + data)
     },
@@ -37,322 +46,108 @@ err := server.Start("tcp", ":8080", 100,
 )
 ```
 
-### Client
+### TCP Client
 
 ```go
-client := &socket.Client{}
+import "github.com/common-library/go/socket/tcp"
+
+client := &tcp.Client{}
 client.Connect("tcp", "localhost:8080")
 client.Write("Hello")
 data, _ := client.Read(1024)
 client.Close()
 ```
 
-## API Reference
-
-### Server Type
+### UDP Client
 
 ```go
-type Server struct {
-    // Internal fields
-}
-```
-
-### Server Methods
-
-#### Start
-
-```go
-func (s *Server) Start(network, address string, clientPoolSize int,
-    acceptSuccessFunc func(client Client), 
-    acceptFailureFunc func(err error)) error
-```
-
-Starts the socket server.
-
-#### Stop
-
-```go
-func (s *Server) Stop() error
-```
-
-Gracefully stops the server.
-
-#### GetCondition
-
-```go
-func (s *Server) GetCondition() bool
-```
-
-Returns server running state.
-
-### Client Type
-
-```go
-type Client struct {
-    // Internal fields
-}
-```
-
-### Client Methods
-
-#### Connect
-
-```go
-func (c *Client) Connect(network, address string) error
-```
-
-Connects to a remote address.
-
-#### Read
-
-```go
-func (c *Client) Read(recvSize int) (string, error)
-```
-
-Reads data from the connection.
-
-#### Write
-
-```go
-func (c *Client) Write(data string) (int, error)
-```
-
-Writes data to the connection.
-
-#### Close
-
-```go
-func (c *Client) Close() error
-```
-
-Closes the connection.
-
-#### GetLocalAddr
-
-```go
-func (c *Client) GetLocalAddr() net.Addr
-```
-
-Returns the local address.
-
-#### GetRemoteAddr
-
-```go
-func (c *Client) GetRemoteAddr() net.Addr
-```
-
-Returns the remote address.
-
-## Complete Examples
-
-### TCP Echo Server
-
-```go
-package main
-
 import (
-    "log"
-    "os"
-    "os/signal"
-    "syscall"
-    "github.com/common-library/go/socket"
+    "time"
+    "github.com/common-library/go/socket/udp"
 )
 
-func main() {
-    server := &socket.Server{}
-    
-    err := server.Start("tcp", ":8080", 100,
-        func(client socket.Client) {
-            log.Printf("Client connected: %v", client.GetRemoteAddr())
-            
-            for {
-                data, err := client.Read(1024)
-                if err != nil {
-                    log.Printf("Read error: %v", err)
-                    break
-                }
-                
-                log.Printf("Received: %s", data)
-                client.Write("Echo: " + data)
-            }
-        },
-        func(err error) {
-            log.Printf("Accept error: %v", err)
-        },
-    )
-    
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    log.Println("Server started on :8080")
-    
-    // Wait for interrupt
-    sigChan := make(chan os.Signal, 1)
-    signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-    <-sigChan
-    
-    log.Println("Shutting down...")
-    server.Stop()
-}
+client := &udp.Client{}
+client.Connect("udp4", "localhost:8080")
+client.Send([]byte("Hello"))
+data, addr, _ := client.Receive(1024, 5*time.Second)
+client.Close()
 ```
 
-### TCP Client
+### UDP Server
 
 ```go
-package main
-
 import (
-    "fmt"
-    "log"
-    "github.com/common-library/go/socket"
+    "net"
+    "github.com/common-library/go/socket/udp"
 )
 
-func main() {
-    client := &socket.Client{}
-    
-    err := client.Connect("tcp", "localhost:8080")
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer client.Close()
-    
-    fmt.Printf("Connected to %v\n", client.GetRemoteAddr())
-    
-    // Send message
-    _, err = client.Write("Hello, Server!")
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    // Receive response
-    data, err := client.Read(1024)
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    fmt.Printf("Server response: %s\n", data)
-}
-```
-
-### Chat Server
-
-```go
-package main
-
-import (
-    "fmt"
-    "log"
-    "sync"
-    "github.com/common-library/go/socket"
+server := &udp.Server{}
+err := server.Start("udp4", ":8080", 1024,
+    func(data []byte, addr net.Addr, conn net.PacketConn) {
+        conn.WriteTo(data, addr)  // Echo back
+    },
+    true,  // Async handler
+    func(err error) {
+        log.Printf("Error: %v", err)
+    },
 )
-
-var (
-    clients   = make(map[string]socket.Client)
-    clientsMu sync.Mutex
-)
-
-func broadcast(message string, sender socket.Client) {
-    clientsMu.Lock()
-    defer clientsMu.Unlock()
-    
-    for _, client := range clients {
-        if client.GetRemoteAddr() != sender.GetRemoteAddr() {
-            client.Write(message)
-        }
-    }
-}
-
-func main() {
-    server := &socket.Server{}
-    
-    server.Start("tcp", ":8080", 100,
-        func(client socket.Client) {
-            addr := client.GetRemoteAddr().String()
-            
-            clientsMu.Lock()
-            clients[addr] = client
-            clientsMu.Unlock()
-            
-            log.Printf("Client joined: %s", addr)
-            broadcast(fmt.Sprintf("%s joined the chat", addr), client)
-            
-            defer func() {
-                clientsMu.Lock()
-                delete(clients, addr)
-                clientsMu.Unlock()
-                
-                broadcast(fmt.Sprintf("%s left the chat", addr), client)
-                log.Printf("Client left: %s", addr)
-            }()
-            
-            for {
-                data, err := client.Read(1024)
-                if err != nil {
-                    break
-                }
-                
-                message := fmt.Sprintf("%s: %s", addr, data)
-                log.Println(message)
-                broadcast(message, client)
-            }
-        },
-        nil,
-    )
-    
-    log.Println("Chat server started on :8080")
-    select {}
-}
+defer server.Stop()
 ```
 
-## Best Practices
+## Features
 
-### 1. Set Appropriate Pool Size
+### TCP (socket/tcp)
+- Connection-oriented reliable communication
+- Concurrent client handling with goroutine pools
+- Automatic resource management
+- Graceful shutdown support
+- Local and remote address access
+
+### UDP (socket/udp)
+- Connectionless packet-based communication
+- Packet send/receive with timeout support
+- Async/sync packet handler options
+- Optional error handling callbacks
+- Read/write buffer configuration
+- Graceful shutdown with handler completion wait
+
+## Migration from v1.x
+
+Previous versions used a single `socket` package for TCP. For backward compatibility, type aliases are provided:
 
 ```go
-// Good: Based on expected load
-server.Start("tcp", ":8080", 100, ...) // 100 concurrent connections
+// Old code (still works with deprecation warnings)
+import "github.com/common-library/go/socket"
 
-// Avoid: Too small
-server.Start("tcp", ":8080", 5, ...)   // May block under load
+server := &socket.Server{}  // Deprecated: use tcp.Server
+client := &socket.Client{}  // Deprecated: use tcp.Client
 ```
 
-### 2. Handle Read/Write Errors
+**Recommended migration:**
 
 ```go
-// Good: Check errors
-data, err := client.Read(1024)
-if err != nil {
-    log.Printf("Read error: %v", err)
-    return
-}
+// New code
+import "github.com/common-library/go/socket/tcp"
 
-// Avoid: Ignore errors
-data, _ := client.Read(1024)
+server := &tcp.Server{}
+client := &tcp.Client{}
 ```
 
-### 3. Always Close Connections
+## Testing
 
-```go
-// Good: Defer close
-client := &socket.Client{}
-err := client.Connect("tcp", "localhost:8080")
-if err == nil {
-    defer client.Close()
-}
+Run all tests:
 
-// Avoid: Forget to close
-client.Connect("tcp", "localhost:8080")
-// No close - connection leak
+```bash
+go test -v ./...
 ```
 
-## Dependencies
+Run protocol-specific tests:
 
-- `net` - Go standard library
-- `sync` - Go standard library
-- `sync/atomic` - Go standard library
+```bash
+go test -v ./tcp
+go test -v ./udp
+```
 
-## Further Reading
+## License
 
-- [Go net Package](https://pkg.go.dev/net)
-- [Network Programming with Go](https://tumregels.github.io/Network-Programming-with-Go/)
+This package is part of the common-library project and follows the same license.
