@@ -24,14 +24,14 @@ package http
 
 import (
 	"io"
-	"net/http"
+	net_http "net/http"
 	"strings"
 	"time"
 )
 
 // Response is response information.
 type Response struct {
-	Header     http.Header
+	Header     net_http.Header
 	Body       string
 	StatusCode int
 }
@@ -43,7 +43,7 @@ type Response struct {
 //   - method: HTTP method (http.MethodGet, http.MethodPost, etc.)
 //   - header: HTTP headers as a map of header names to value slices
 //   - body: Request body as a string
-//   - timeout: Request timeout in seconds
+//   - timeout: Request timeout duration (e.g., 10*time.Second)
 //   - username: Username for HTTP Basic Authentication (empty string for no auth)
 //   - password: Password for HTTP Basic Authentication (empty string for no auth)
 //   - transport: Custom HTTP transport configuration (nil for default)
@@ -62,12 +62,12 @@ type Response struct {
 //	resp, err := http.Request(
 //	    "https://api.example.com/users",
 //	    http.MethodGet,
-//	    nil,  // no headers
-//	    "",   // no body
-//	    10,   // 10 second timeout
-//	    "",   // no username
-//	    "",   // no password
-//	    nil,  // default transport
+//	    nil,              // no headers
+//	    "",               // no body
+//	    10*time.Second,   // 10 second timeout
+//	    "",               // no username
+//	    "",               // no password
+//	    nil,              // default transport
 //	)
 //	if err != nil {
 //	    log.Fatal(err)
@@ -86,12 +86,12 @@ type Response struct {
 //	    http.MethodPost,
 //	    headers,
 //	    body,
-//	    30,
+//	    30*time.Second,
 //	    "admin",
 //	    "password123",
 //	    nil,
 //	)
-func Request(url, method string, header map[string][]string, body string, timeout time.Duration, username, password string, transport *http.Transport) (Response, error) {
+func Request(url, method string, header map[string][]string, body string, timeout time.Duration, username, password string, transport *net_http.Transport) (Response, error) {
 	if request, err := getRequest(url, method, header, body, username, password); err != nil {
 		return Response{}, err
 	} else {
@@ -99,11 +99,13 @@ func Request(url, method string, header map[string][]string, body string, timeou
 	}
 }
 
-func getRequest(url, method string, header map[string][]string, body string, username, password string) (*http.Request, error) {
-	if request, err := http.NewRequest(method, url, strings.NewReader(body)); err != nil {
+func getRequest(url, method string, header map[string][]string, body string, username, password string) (*net_http.Request, error) {
+	if request, err := net_http.NewRequest(method, url, strings.NewReader(body)); err != nil {
 		return nil, err
 	} else {
-		request.SetBasicAuth(username, password)
+		if username != "" && password != "" {
+			request.SetBasicAuth(username, password)
+		}
 
 		for key, array := range header {
 			for _, value := range array {
@@ -115,12 +117,15 @@ func getRequest(url, method string, header map[string][]string, body string, use
 	}
 }
 
-func getResponse(request *http.Request, timeout time.Duration, transport *http.Transport) (Response, error) {
+func getResponse(request *net_http.Request, timeout time.Duration, transport *net_http.Transport) (Response, error) {
 	if transport == nil {
-		transport = &http.Transport{}
+		transport = &net_http.Transport{}
 	}
 
-	client := http.Client{Transport: transport, Timeout: timeout * time.Second}
+	client := net_http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+	}
 
 	if response, err := client.Do(request); err != nil {
 		return Response{}, err

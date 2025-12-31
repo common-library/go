@@ -28,7 +28,7 @@ package long_polling
 import (
 	"fmt"
 	net_http "net/http"
-	net_url "net/url"
+	"net/url"
 	"time"
 
 	"github.com/common-library/go/http"
@@ -70,7 +70,7 @@ type PublishRequest struct {
 //
 // # Parameters
 //
-//   - url: Server subscription endpoint URL (e.g., "http://localhost:8080/events")
+//   - rawURL: Server subscription endpoint URL (e.g., "http://localhost:8080/events")
 //   - header: Optional HTTP headers (e.g., custom headers or authorization)
 //   - request: Subscription parameters (category, timeout, since_time, last_id)
 //   - username: Optional HTTP basic authentication username
@@ -108,8 +108,8 @@ type PublishRequest struct {
 //	    },
 //	    "", "", nil,
 //	)
-func Subscription(url string, header map[string][]string, request SubscriptionRequest, username, password string, transport *net_http.Transport) (SubscriptionResponse, error) {
-	u, err := net_url.Parse(url)
+func Subscription(rawURL string, header map[string][]string, request SubscriptionRequest, username, password string, transport *net_http.Transport) (SubscriptionResponse, error) {
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		return SubscriptionResponse{}, err
 	}
@@ -145,7 +145,7 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 //
 // # Parameters
 //
-//   - url: Server publish endpoint URL (e.g., "http://localhost:8080/publish")
+//   - rawURL: Server publish endpoint URL (e.g., "http://localhost:8080/publish")
 //   - timeout: Maximum duration to wait for publish operation
 //   - header: Optional HTTP headers (e.g., custom headers or authorization)
 //   - publishRequest: Event data (category and data payload)
@@ -180,8 +180,8 @@ func Subscription(url string, header map[string][]string, request SubscriptionRe
 //	    },
 //	    "", "", nil,
 //	)
-func Publish(url string, timeout time.Duration, header map[string][]string, publishRequest PublishRequest, username, password string, transport *net_http.Transport) (http.Response, error) {
-	u, err := net_url.Parse(url)
+func Publish(rawURL string, timeout time.Duration, header map[string][]string, publishRequest PublishRequest, username, password string, transport *net_http.Transport) (http.Response, error) {
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		return http.Response{}, err
 	}

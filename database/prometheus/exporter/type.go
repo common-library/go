@@ -3,11 +3,11 @@
 package exporter
 
 import (
-	"github.com/common-library/go/http"
+	"github.com/common-library/go/http/mux"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var server http.Server
+var server mux.Server
 
 // Metric is an interface that must be implemented by custom metrics to be collected
 // by a Prometheus collector.

@@ -87,7 +87,7 @@ func (grpcSrv *Server) Start(address string, server implementServer) error {
 		return err
 	}
 
-	// Serve는 blocking 함수이므로 뮤텍스 해제 후 호출
+	// Serve is a blocking function, so call it after releasing the mutex
 	return grpcSrv.grpcServer.Serve(grpcSrv.listener)
 }
 

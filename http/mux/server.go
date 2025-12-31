@@ -20,11 +20,14 @@
 //	var server http.Server
 //	server.RegisterHandlerFunc("/api", handler)
 //	server.Start(":8080", nil)
-package http
+package mux
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -32,6 +35,9 @@ import (
 
 // Server is a struct that provides server related methods.
 type Server struct {
+	mutex   sync.Mutex
+	running atomic.Bool
+
 	server *http.Server
 	router *mux.Router
 }
@@ -153,56 +159,61 @@ func (s *Server) RegisterPathPrefixHandlerFunc(prefix string, handlerFunc http.H
 	}
 }
 
+// Use registers global middleware.
+//
+// Parameters:
+//   - middleware: Middleware functions to apply globally
+//
+// Example:
+//
+//	server.Use(loggingMiddleware)
+//	server.Use(authMiddleware)
+func (s *Server) Use(middleware ...mux.MiddlewareFunc) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.getRouter().Use(middleware...)
+}
+
 // Start starts the HTTP server on the specified address.
 //
 // Parameters:
 //   - address: Address to bind the server to (e.g., ":8080", "localhost:8080")
 //   - listenAndServeFailureFunc: Optional callback function called if server fails to start
-//   - middlewareFunc: Optional middleware functions to apply to all requests
 //
 // Returns:
-//   - error: Always returns nil (errors are reported via listenAndServeFailureFunc)
+//   - error: Error if server is already started, nil otherwise
 //
-// The server starts in a background goroutine, so this method returns immediately. If no
-// middleware is provided, a pass-through middleware is added. Multiple middleware functions
-// are executed in the order provided.
+// The server starts in a background goroutine, so this method returns immediately.
+// Use the Use() method to register middleware before calling Start().
 //
 // Example:
 //
-//	var server http.Server
+//	server := &mux.Server{}
+//	server.Use(loggingMiddleware)
 //	server.RegisterHandlerFunc("/api", apiHandler)
-//
-//	// Start without middleware
 //	err := server.Start(":8080", func(err error) {
 //	    log.Fatal(err)
 //	})
-//
-//	// Start with logging middleware
-//	loggingMiddleware := func(next http.Handler) http.Handler {
-//	    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//	        log.Printf("%s %s", r.Method, r.URL.Path)
-//	        next.ServeHTTP(w, r)
-//	    })
-//	}
-//	err = server.Start(":8080", nil, loggingMiddleware)
-func (s *Server) Start(address string, listenAndServeFailureFunc func(err error), middlewareFunc ...mux.MiddlewareFunc) error {
-	if middlewareFunc != nil {
-		s.getRouter().Use(middlewareFunc...)
-	} else {
-		s.getRouter().Use(func(nextHandler http.Handler) http.Handler {
-			return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
-				nextHandler.ServeHTTP(responseWriter, request)
-			})
-		})
+func (s *Server) Start(address string, listenAndServeFailureFunc func(err error)) error {
+	if !s.running.CompareAndSwap(false, true) {
+		return errors.New("server already started")
 	}
 
+	s.mutex.Lock()
 	s.server = &http.Server{
 		Addr:    address,
-		Handler: s.getRouter()}
+		Handler: s.getRouter(),
+	}
+	server := s.server
+	s.mutex.Unlock()
 
 	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed && listenAndServeFailureFunc != nil {
-			listenAndServeFailureFunc(err)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.running.Store(false)
+			if listenAndServeFailureFunc != nil {
+				listenAndServeFailureFunc(err)
+			}
 		}
 	}()
 
@@ -212,63 +223,75 @@ func (s *Server) Start(address string, listenAndServeFailureFunc func(err error)
 // Stop gracefully shuts down the HTTP server.
 //
 // Parameters:
-//   - shutdownTimeout: Maximum duration in seconds to wait for active connections to complete
+//   - shutdownTimeout: Maximum duration to wait for active connections to complete
 //
 // Returns:
 //   - error: Error if shutdown fails or times out, nil on successful shutdown
 //
 // The server stops accepting new connections immediately and waits for active connections
 // to complete within the timeout period. After the timeout, remaining connections are
-// forcefully closed. The router is reset to nil after shutdown.
+// forcefully closed.
 //
 // Example:
 //
-//	var server http.Server
+//	server := &mux.Server{}
 //	server.Start(":8080", nil)
 //
-//	// Later, graceful shutdown with 30 second timeout
-//	err := server.Stop(30)
+//	// Later, graceful shutdown with 10 second timeout
+//	err := server.Stop(10 * time.Second)
 //	if err != nil {
 //	    log.Printf("Shutdown error: %v", err)
 //	}
-//	log.Println("Server stopped gracefully")
 func (s *Server) Stop(shutdownTimeout time.Duration) error {
-	s.SetRouter(nil)
+	s.mutex.Lock()
+	server := s.server
+	s.server = nil
+	s.mutex.Unlock()
 
-	if s.server == nil {
+	if server == nil {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout*time.Second)
+	defer s.running.Store(false)
+
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	return s.server.Shutdown(ctx)
+	return server.Shutdown(ctx)
 }
 
-// SetRouter sets a custom router for the server.
+// IsRunning returns whether the server is currently running.
 //
-// Parameters:
-//   - router: gorilla/mux router instance, or nil to reset
-//
-// This method allows using a pre-configured router instead of the default one. Setting
-// the router to nil will reset it, and a new router will be created on the next operation.
-// This is useful for advanced routing configurations or testing.
+// Returns:
+//   - bool: true if server is running, false otherwise
 //
 // Example:
 //
-//	// Use custom router
-//	router := mux.NewRouter()
+//	if server.IsRunning() {
+//	    log.Println("Server is running")
+//	}
+func (s *Server) IsRunning() bool {
+	return s.running.Load()
+}
+
+// GetRouter returns the gorilla/mux router instance.
+//
+// Returns:
+//   - *mux.Router: The router instance
+//
+// This method provides direct access to the underlying router for advanced configurations.
+//
+// Example:
+//
+//	server := &mux.Server{}
+//	router := server.GetRouter()
 //	router.StrictSlash(true)
 //	router.HandleFunc("/", homeHandler)
-//
-//	var server http.Server
-//	server.SetRouter(router)
-//	server.Start(":8080", nil)
-//
-//	// Reset router
-//	server.SetRouter(nil)
-func (s *Server) SetRouter(router *mux.Router) {
-	s.router = router
+func (s *Server) GetRouter() *mux.Router {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	return s.getRouter()
 }
 
 func (s *Server) getRouter() *mux.Router {

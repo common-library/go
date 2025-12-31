@@ -25,12 +25,12 @@ import (
 
 	cloudeventssdk "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/protocol"
-	"github.com/common-library/go/http"
+	"github.com/common-library/go/http/mux"
 )
 
 // Server is a struct that provides server related methods.
 type Server struct {
-	server http.Server
+	server mux.Server
 }
 
 // Start starts the CloudEvents HTTP server on the specified address.
