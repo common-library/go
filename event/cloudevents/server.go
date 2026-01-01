@@ -83,7 +83,7 @@ func (s *Server) Start(address string, handler func(Event) (*Event, Result), lis
 
 		return err
 	} else {
-		s.server.RegisterPathPrefixHandler("/", eventReceiver)
+		s.server.RegisterPathPrefixHandlerAny("/", eventReceiver)
 
 		return s.server.Start(address, listenAndServeFailureFunc)
 	}

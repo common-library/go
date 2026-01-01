@@ -56,6 +56,79 @@ func (s *Server) RegisterHandler(method string, path string, handler echo.Handle
 	s.getEcho().Add(method, path, handler, middleware...)
 }
 
+// RegisterHandlerAny registers an HTTP handler for all methods (GET, POST, PUT, DELETE, etc.) with optional middleware.
+//
+// Parameters:
+//   - path: URL path pattern
+//   - handler: Echo handler function
+//   - middleware: Optional middleware functions
+//
+// Example:
+//
+//	server.RegisterHandlerAny("/users/:id", getUserHandler)
+func (s *Server) RegisterHandlerAny(path string, handler echo.HandlerFunc, middleware ...echo.MiddlewareFunc) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.getEcho().Any(path, handler, middleware...)
+}
+
+// WrapHandler wraps a standard http.Handler into an Echo handler function.
+//
+// This function allows you to use standard Go http.Handler implementations
+// (such as http.FileServer, third-party handlers, or http.HandlerFunc)
+// within the Echo framework.
+//
+// Parameters:
+//   - handler: Standard http.Handler to wrap
+//
+// Returns:
+//   - echo.HandlerFunc: Echo-compatible handler function
+//
+// Example:
+//
+//	// Wrap http.FileServer
+//	fs := http.FileServer(http.Dir("./static"))
+//	server.RegisterHandler(echo.GET, "/static/*", WrapHandler(fs))
+//
+//	// Wrap http.HandlerFunc
+//	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//	    w.Write([]byte("Hello from standard handler"))
+//	})
+//	server.RegisterHandler(echo.GET, "/std", WrapHandler(stdHandler))
+func WrapHandler(handler http.Handler) echo.HandlerFunc {
+	return echo.WrapHandler(handler)
+}
+
+// WrapHandlerFunc wraps a standard http.HandlerFunc into an Echo handler function.
+//
+// This is a convenience function that wraps http.HandlerFunc (a function type)
+// into an Echo-compatible handler. It's functionally equivalent to WrapHandler
+// but provides better type clarity when working with HandlerFunc types.
+//
+// Parameters:
+//   - handlerFunc: Standard http.HandlerFunc to wrap
+//
+// Returns:
+//   - echo.HandlerFunc: Echo-compatible handler function
+//
+// Example:
+//
+//	// Wrap a HandlerFunc directly
+//	handler := func(w http.ResponseWriter, r *http.Request) {
+//	    w.WriteHeader(http.StatusOK)
+//	    w.Write([]byte("Hello World"))
+//	}
+//	server.RegisterHandler(echo.GET, "/hello", WrapHandlerFunc(handler))
+//
+//	// Or use with http.HandlerFunc type conversion
+//	server.RegisterHandler(echo.POST, "/api", WrapHandlerFunc(
+//	    http.HandlerFunc(myStandardHandler),
+//	))
+func WrapHandlerFunc(handlerFunc http.HandlerFunc) echo.HandlerFunc {
+	return echo.WrapHandler(handlerFunc)
+}
+
 // Use registers global middleware.
 //
 // Parameters:

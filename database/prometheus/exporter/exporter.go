@@ -166,7 +166,7 @@ func UnRegisterCollector(collectors ...prometheus.Collector) bool {
 //	// Wait for server to be ready
 //	time.Sleep(100 * time.Millisecond)
 func Start(address, urlPath string, listenAndServeFailureFunc func(error)) error {
-	server.RegisterHandler(urlPath, promhttp.Handler(), net_http.MethodGet)
+	server.RegisterHandler(net_http.MethodGet, urlPath, promhttp.Handler())
 
 	return server.Start(address, listenAndServeFailureFunc)
 }

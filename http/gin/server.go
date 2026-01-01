@@ -72,6 +72,62 @@ func (s *Server) RegisterHandlerAny(relativePath string, handlers ...gin.Handler
 	s.getEngine().Any(relativePath, handlers...)
 }
 
+// WrapHandler wraps a standard http.Handler into a Gin handler function.
+//
+// This function allows you to use standard Go http.Handler implementations
+// (such as http.FileServer, third-party handlers, or http.HandlerFunc)
+// within the Gin framework.
+//
+// Parameters:
+//   - handler: Standard http.Handler to wrap
+//
+// Returns:
+//   - gin.HandlerFunc: Gin-compatible handler function
+//
+// Example:
+//
+//	// Wrap http.FileServer
+//	fs := http.FileServer(http.Dir("./static"))
+//	server.RegisterHandler(http.MethodGet, "/static/*filepath", WrapHandler(fs))
+//
+//	// Wrap http.HandlerFunc
+//	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//	    w.Write([]byte("Hello from standard handler"))
+//	})
+//	server.RegisterHandler(http.MethodGet, "/std", WrapHandler(stdHandler))
+func WrapHandler(handler http.Handler) gin.HandlerFunc {
+	return gin.WrapH(handler)
+}
+
+// WrapHandlerFunc wraps a standard http.HandlerFunc into a Gin handler function.
+//
+// This is a convenience function that wraps http.HandlerFunc (a function type)
+// into a Gin-compatible handler. It uses Gin's WrapF function which is optimized
+// for HandlerFunc types.
+//
+// Parameters:
+//   - handlerFunc: Standard http.HandlerFunc to wrap
+//
+// Returns:
+//   - gin.HandlerFunc: Gin-compatible handler function
+//
+// Example:
+//
+//	// Wrap a HandlerFunc directly
+//	handler := func(w http.ResponseWriter, r *http.Request) {
+//	    w.WriteHeader(http.StatusOK)
+//	    w.Write([]byte("Hello World"))
+//	}
+//	server.RegisterHandler(http.MethodGet, "/hello", WrapHandlerFunc(handler))
+//
+//	// Or use with http.HandlerFunc type conversion
+//	server.RegisterHandler(http.MethodPost, "/api", WrapHandlerFunc(
+//	    http.HandlerFunc(myStandardHandler),
+//	))
+func WrapHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc {
+	return gin.WrapF(handlerFunc)
+}
+
 // Use registers global middleware.
 //
 // Parameters:

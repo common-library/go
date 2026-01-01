@@ -79,14 +79,41 @@ server.RegisterHandler(http.MethodPut, "/users/:id", updateUserHandler)
 server.RegisterHandler(http.MethodDelete, "/users/:id", deleteUserHandler)
 server.RegisterHandler(http.MethodPatch, "/users/:id", patchUserHandler)
 
-// Register multiple methods at once
-server.RegisterHandlerMethods([]string{http.MethodGet, http.MethodPost}, "/multi", multiHandler)
-
 // Allow all methods
-server.RegisterHandlerAny("/any", anyHandler)
+server.RegisterHandlerAny("/webhook", webhookHandler)
 
 // Register with middleware
 server.RegisterHandler(http.MethodGet, "/admin", adminHandler, authMiddleware, logMiddleware)
+server.RegisterHandlerAny("/api/catch-all", catchAllHandler, authMiddleware)
+```
+
+### Wrapping Standard HTTP Handlers
+
+```go
+import (
+    "net/http"
+    "github.com/common-library/go/http/gin"
+)
+
+// Wrap http.Handler (e.g., http.FileServer)
+fs := http.FileServer(http.Dir("./static"))
+server.RegisterHandler(http.MethodGet, "/static/*filepath", gin.WrapHandler(fs))
+
+// Wrap http.HandlerFunc - Method 1: Using WrapHandler
+stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("Hello from standard handler"))
+})
+server.RegisterHandler(http.MethodGet, "/std1", gin.WrapHandler(stdHandler))
+
+// Wrap http.HandlerFunc - Method 2: Using WrapHandlerFunc (recommended)
+handler := func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Hello World"))
+}
+server.RegisterHandler(http.MethodGet, "/std2", gin.WrapHandlerFunc(handler))
+
+// Wrap third-party handlers
+server.RegisterHandler(http.MethodGet, "/prometheus", gin.WrapHandler(promhttp.Handler()))
 ```
 
 ### Group Routing
@@ -295,20 +322,28 @@ Registers an HTTP handler.
 - **handler**: Gin handler function
 - **middleware**: Optional middleware
 
-#### `RegisterHandlerMethods(methods []string, path string, handler gin.HandlerFunc, middleware ...gin.HandlerFunc)`
-Registers a handler for multiple HTTP methods.
-
-- **methods**: Array of HTTP methods
-- **path**: URL path pattern
-- **handler**: Gin handler function
-- **middleware**: Optional middleware
-
 #### `RegisterHandlerAny(path string, handler gin.HandlerFunc, middleware ...gin.HandlerFunc)`
 Registers a handler for all HTTP methods.
 
 - **path**: URL path pattern
 - **handler**: Gin handler function
 - **middleware**: Optional middleware
+
+#### `WrapHandler(handler http.Handler) gin.HandlerFunc`
+Wraps a standard `http.Handler` into a Gin handler function.
+
+- **handler**: Standard http.Handler to wrap
+- **return**: Gin-compatible handler function
+
+Use this for wrapping `http.FileServer`, third-party handlers, or any type implementing `http.Handler`.
+
+#### `WrapHandlerFunc(handlerFunc http.HandlerFunc) gin.HandlerFunc`
+Wraps a standard `http.HandlerFunc` into a Gin handler function.
+
+- **handlerFunc**: Standard http.HandlerFunc to wrap
+- **return**: Gin-compatible handler function
+
+This is a convenience function for wrapping function types directly. Uses Gin's `WrapF` which is optimized for HandlerFunc types.
 
 #### `Use(middleware ...gin.HandlerFunc)`
 Registers global middleware.

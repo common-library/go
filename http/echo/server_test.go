@@ -318,3 +318,433 @@ func TestRouteMiddleware(t *testing.T) {
 		t.Fatal("middleware header not set")
 	}
 }
+
+func TestWrapHandler(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Standard http.HandlerFunc
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Handler-Type", "standard")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hello from standard handler"))
+	})
+
+	server.RegisterHandler(echo_lib.GET, "/standard", echo.WrapHandler(stdHandler))
+
+	if err := server.Start(":18092", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:18092/standard")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "Hello from standard handler" {
+		t.Fatalf("expected 'Hello from standard handler', got '%s'", body)
+	}
+
+	if resp.Header.Get("X-Handler-Type") != "standard" {
+		t.Fatal("custom header not set")
+	}
+}
+
+func TestWrapHandlerWithPathParams(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Standard handler that reads path from request
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Path: " + r.URL.Path))
+	})
+
+	server.RegisterHandler(echo_lib.GET, "/users/:id/posts/:postId", echo.WrapHandler(stdHandler))
+
+	if err := server.Start(":18093", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:18093/users/123/posts/456")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "Path: /users/123/posts/456" {
+		t.Fatalf("expected 'Path: /users/123/posts/456', got '%s'", body)
+	}
+}
+
+func TestWrapHandlerFileServer(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Create a simple in-memory file server simulation
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate file serving
+		if strings.HasSuffix(r.URL.Path, ".txt") {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("This is a text file"))
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("File not found"))
+		}
+	})
+
+	server.RegisterHandlerAny("/static/*", echo.WrapHandler(stdHandler))
+
+	if err := server.Start(":18094", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	// Test existing file
+	resp, err := http.Get("http://localhost:18094/static/test.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "This is a text file" {
+		t.Fatalf("unexpected body: %s", body)
+	}
+	if resp.Header.Get("Content-Type") != "text/plain" {
+		t.Fatalf("expected Content-Type 'text/plain', got '%s'", resp.Header.Get("Content-Type"))
+	}
+
+	// Test non-existing file
+	resp, err = http.Get("http://localhost:18094/static/missing.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d", resp.StatusCode)
+	}
+}
+
+func TestWrapHandlerFunc(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Standard http.HandlerFunc
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Custom-Header", "test-value")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Response from HandlerFunc"))
+	}
+
+	server.RegisterHandler(echo_lib.GET, "/handlerfunc", echo.WrapHandlerFunc(handler))
+
+	if err := server.Start(":18095", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:18095/handlerfunc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "Response from HandlerFunc" {
+		t.Fatalf("expected 'Response from HandlerFunc', got '%s'", body)
+	}
+
+	if resp.Header.Get("X-Custom-Header") != "test-value" {
+		t.Fatal("custom header not set")
+	}
+}
+
+func TestWrapHandlerFuncVsWrapHandler(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("test"))
+	}
+
+	// Both should work identically for http.HandlerFunc
+	server.RegisterHandler(echo_lib.GET, "/wrap-handler", echo.WrapHandler(http.HandlerFunc(handlerFunc)))
+	server.RegisterHandler(echo_lib.GET, "/wrap-handlerfunc", echo.WrapHandlerFunc(handlerFunc))
+
+	if err := server.Start(":18096", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	// Test WrapHandler
+	resp1, err := http.Get("http://localhost:18096/wrap-handler")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body1, _ := io.ReadAll(resp1.Body)
+	resp1.Body.Close()
+
+	// Test WrapHandlerFunc
+	resp2, err := http.Get("http://localhost:18096/wrap-handlerfunc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body2, _ := io.ReadAll(resp2.Body)
+	resp2.Body.Close()
+
+	// Both should return the same result
+	if string(body1) != string(body2) {
+		t.Fatalf("WrapHandler and WrapHandlerFunc should produce same result")
+	}
+	if string(body1) != "test" {
+		t.Fatalf("unexpected response: %s", body1)
+	}
+}
+
+func TestWrapHandlerFuncWithQueryParams(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		age := r.URL.Query().Get("age")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("name=" + name + "&age=" + age))
+	}
+
+	server.RegisterHandler(echo_lib.GET, "/query", echo.WrapHandlerFunc(handler))
+
+	if err := server.Start(":18097", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:18097/query?name=john&age=30")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "name=john&age=30" {
+		t.Fatalf("unexpected response: %s", body)
+	}
+}
+
+func TestRegisterHandlerAny(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Register handler that accepts any HTTP method
+	server.RegisterHandlerAny("/any", func(c echo_lib.Context) error {
+		return c.String(http.StatusOK, "method: "+c.Request().Method)
+	})
+
+	if err := server.Start(":18089", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	baseURL := "http://localhost:18089/any"
+
+	// Test GET
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET: expected 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "method: GET" {
+		t.Fatalf("GET: expected 'method: GET', got '%s'", body)
+	}
+
+	// Test POST
+	resp, err = http.Post(baseURL, "text/plain", strings.NewReader("data"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("POST: expected 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "method: POST" {
+		t.Fatalf("POST: expected 'method: POST', got '%s'", body)
+	}
+
+	// Test PUT
+	req, _ := http.NewRequest(http.MethodPut, baseURL, strings.NewReader("data"))
+	client := &http.Client{}
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("PUT: expected 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "method: PUT" {
+		t.Fatalf("PUT: expected 'method: PUT', got '%s'", body)
+	}
+
+	// Test DELETE
+	req, _ = http.NewRequest(http.MethodDelete, baseURL, nil)
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("DELETE: expected 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "method: DELETE" {
+		t.Fatalf("DELETE: expected 'method: DELETE', got '%s'", body)
+	}
+
+	// Test PATCH
+	req, _ = http.NewRequest(http.MethodPatch, baseURL, strings.NewReader("data"))
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("PATCH: expected 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "method: PATCH" {
+		t.Fatalf("PATCH: expected 'method: PATCH', got '%s'", body)
+	}
+}
+
+func TestRegisterHandlerAnyWithMiddleware(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Middleware that adds a custom header
+	addHeader := func(next echo_lib.HandlerFunc) echo_lib.HandlerFunc {
+		return func(c echo_lib.Context) error {
+			c.Response().Header().Set("X-Method", c.Request().Method)
+			return next(c)
+		}
+	}
+
+	// Register handler with middleware
+	server.RegisterHandlerAny("/any-with-middleware", func(c echo_lib.Context) error {
+		return c.String(http.StatusOK, "ok")
+	}, addHeader)
+
+	if err := server.Start(":18090", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	baseURL := "http://localhost:18090/any-with-middleware"
+
+	// Test GET with middleware
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+	if resp.Header.Get("X-Method") != "GET" {
+		t.Fatalf("expected header 'X-Method: GET', got '%s'", resp.Header.Get("X-Method"))
+	}
+
+	// Test POST with middleware
+	resp, err = http.Post(baseURL, "text/plain", strings.NewReader("data"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+	if resp.Header.Get("X-Method") != "POST" {
+		t.Fatalf("expected header 'X-Method: POST', got '%s'", resp.Header.Get("X-Method"))
+	}
+}
+
+func TestMultipleStops(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+
+	server.RegisterHandler(echo_lib.GET, "/test", func(c echo_lib.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
+	if err := server.Start(":18091", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	// First stop
+	if err := server.Stop(5 * time.Second); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	// Second stop should not error
+	if err := server.Stop(5 * time.Second); err != nil {
+		t.Fatalf("multiple stops should not error: %v", err)
+	}
+}
+
+func TestStopBeforeStart(t *testing.T) {
+	t.Parallel()
+
+	server := &echo.Server{}
+
+	// Stop before starting should not error
+	if err := server.Stop(5 * time.Second); err != nil {
+		t.Fatalf("stop before start should not error: %v", err)
+	}
+}

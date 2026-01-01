@@ -42,121 +42,153 @@ type Server struct {
 	router *mux.Router
 }
 
-// RegisterHandler registers an HTTP handler for the specified path.
+// RegisterHandler registers an HTTP handler for the specified path and method.
 //
 // Parameters:
+//   - method: HTTP method (http.MethodGet, http.MethodPost, etc.)
 //   - path: URL path pattern to match (e.g., "/api/users")
 //   - handler: HTTP handler to handle requests
-//   - methods: Optional HTTP methods to restrict (e.g., http.MethodGet, http.MethodPost)
-//
-// If no methods are specified, the handler accepts all HTTP methods. Multiple methods
-// can be provided to restrict the handler to specific request types.
 //
 // Example:
 //
-//	// Handle all methods
-//	server.RegisterHandler("/api/health", healthHandler)
+//	// Handle GET requests
+//	server.RegisterHandler(http.MethodGet, "/api/users", usersHandler)
 //
-//	// Handle only GET requests
-//	server.RegisterHandler("/api/users", usersHandler, http.MethodGet)
-//
-//	// Handle GET and POST requests
-//	server.RegisterHandler("/api/items", itemsHandler, http.MethodGet, http.MethodPost)
-func (s *Server) RegisterHandler(path string, handler http.Handler, methods ...string) {
-	if len(methods) == 0 {
-		s.getRouter().Handle(path, handler)
-	} else {
-		s.getRouter().Handle(path, handler).Methods(methods...)
-	}
+//	// Handle POST requests
+//	server.RegisterHandler(http.MethodPost, "/api/items", itemsHandler)
+func (s *Server) RegisterHandler(method, path string, handler http.Handler) {
+	s.getRouter().Handle(path, handler).Methods(method)
 }
 
-// RegisterHandlerFunc registers an HTTP handler function for the specified path.
+// RegisterHandlerAny registers an HTTP handler for all methods on the specified path.
 //
 // Parameters:
-//   - path: URL path pattern to match (e.g., "/api/users")
-//   - handlerFunc: HTTP handler function to handle requests
-//   - methods: Optional HTTP methods to restrict (e.g., http.MethodGet, http.MethodPost)
-//
-// This is a convenience method for registering handler functions directly without wrapping
-// them in a Handler type. If no methods are specified, accepts all HTTP methods.
+//   - path: URL path pattern to match (e.g., "/api/webhook")
+//   - handler: HTTP handler to handle requests
 //
 // Example:
 //
-//	// Handle all methods
-//	server.RegisterHandlerFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
+//	// Handle all HTTP methods
+//	server.RegisterHandlerAny("/api/webhook", webhookHandler)
+func (s *Server) RegisterHandlerAny(path string, handler http.Handler) {
+	s.getRouter().Handle(path, handler)
+}
+
+// RegisterHandlerFunc registers an HTTP handler function for the specified path and method.
+//
+// Parameters:
+//   - method: HTTP method (http.MethodGet, http.MethodPost, etc.)
+//   - path: URL path pattern to match (e.g., "/api/users")
+//   - handlerFunc: HTTP handler function to handle requests
+//
+// This is a convenience method for registering handler functions directly without wrapping
+// them in a Handler type.
+//
+// Example:
+//
+//	// Handle GET requests
+//	server.RegisterHandlerFunc(http.MethodGet, "/api/ping", func(w http.ResponseWriter, r *http.Request) {
 //	    w.Write([]byte("pong"))
 //	})
 //
-//	// Handle only GET requests
-//	server.RegisterHandlerFunc("/api/users", getUsersHandler, http.MethodGet)
-//
-//	// Handle GET and POST requests
-//	server.RegisterHandlerFunc("/api/data", dataHandler, http.MethodGet, http.MethodPost)
-func (s *Server) RegisterHandlerFunc(path string, handlerFunc http.HandlerFunc, methods ...string) {
-	if len(methods) == 0 {
-		s.getRouter().HandleFunc(path, handlerFunc)
-	} else {
-		s.getRouter().HandleFunc(path, handlerFunc).Methods(methods...)
-	}
+//	// Handle POST requests
+//	server.RegisterHandlerFunc(http.MethodPost, "/api/data", dataHandler)
+func (s *Server) RegisterHandlerFunc(method, path string, handlerFunc http.HandlerFunc) {
+	s.getRouter().HandleFunc(path, handlerFunc).Methods(method)
 }
 
-// RegisterPathPrefixHandler registers an HTTP handler for all paths matching the prefix.
+// RegisterHandlerFuncAny registers an HTTP handler function for all methods on the specified path.
 //
 // Parameters:
+//   - path: URL path pattern to match (e.g., "/api/catch-all")
+//   - handlerFunc: HTTP handler function to handle requests
+//
+// Example:
+//
+//	// Handle all HTTP methods
+//	server.RegisterHandlerFuncAny("/api/catch-all", func(w http.ResponseWriter, r *http.Request) {
+//	    w.Write([]byte("method: " + r.Method))
+//	})
+func (s *Server) RegisterHandlerFuncAny(path string, handlerFunc http.HandlerFunc) {
+	s.getRouter().HandleFunc(path, handlerFunc)
+}
+
+// RegisterPathPrefixHandler registers an HTTP handler for all paths matching the prefix and method.
+//
+// Parameters:
+//   - method: HTTP method (http.MethodGet, http.MethodPost, etc.)
 //   - prefix: URL path prefix to match (e.g., "/static/", "/api/v1/")
 //   - handler: HTTP handler to handle requests
-//   - methods: Optional HTTP methods to restrict (e.g., http.MethodGet, http.MethodPost)
 //
 // This method matches all paths that start with the specified prefix. Useful for serving
-// static files or grouping related endpoints. If no methods are specified, accepts all
-// HTTP methods.
+// static files or grouping related endpoints.
+//
+// Example:
+//
+//	// Serve static files with GET
+//	fileServer := http.FileServer(http.Dir("./static"))
+//	server.RegisterPathPrefixHandler(http.MethodGet, "/static/", fileServer)
+//
+//	// API v1 endpoints
+//	server.RegisterPathPrefixHandler(http.MethodGet, "/api/v1/", apiV1Handler)
+func (s *Server) RegisterPathPrefixHandler(method, prefix string, handler http.Handler) {
+	s.getRouter().PathPrefix(prefix).Handler(handler).Methods(method)
+}
+
+// RegisterPathPrefixHandlerAny registers an HTTP handler for all methods matching the prefix.
+//
+// Parameters:
+//   - prefix: URL path prefix to match (e.g., "/static/", "/api/")
+//   - handler: HTTP handler to handle requests
 //
 // Example:
 //
 //	// Serve static files (all methods)
 //	fileServer := http.FileServer(http.Dir("./static"))
-//	server.RegisterPathPrefixHandler("/static/", fileServer)
-//
-//	// API v1 endpoints (GET only)
-//	server.RegisterPathPrefixHandler("/api/v1/", apiV1Handler, http.MethodGet)
-//
-//	// Admin endpoints (GET and POST)
-//	server.RegisterPathPrefixHandler("/admin/", adminHandler, http.MethodGet, http.MethodPost)
-func (s *Server) RegisterPathPrefixHandler(prefix string, handler http.Handler, methods ...string) {
-	if len(methods) == 0 {
-		s.getRouter().PathPrefix(prefix).Handler(handler)
-	} else {
-		s.getRouter().PathPrefix(prefix).Handler(handler).Methods(methods...)
-	}
+//	server.RegisterPathPrefixHandlerAny("/static/", fileServer)
+func (s *Server) RegisterPathPrefixHandlerAny(prefix string, handler http.Handler) {
+	s.getRouter().PathPrefix(prefix).Handler(handler)
 }
 
-// RegisterPathPrefixHandlerFunc registers an HTTP handler function for paths matching the prefix.
+// RegisterPathPrefixHandlerFunc registers an HTTP handler function for paths matching the prefix and method.
 //
 // Parameters:
+//   - method: HTTP method (http.MethodGet, http.MethodPost, etc.)
 //   - prefix: URL path prefix to match (e.g., "/static/", "/api/v1/")
 //   - handlerFunc: HTTP handler function to handle requests
-//   - methods: Optional HTTP methods to restrict (e.g., http.MethodGet, http.MethodPost)
 //
 // This is a convenience method for registering handler functions for path prefixes without
-// wrapping them in a Handler type. Matches all paths starting with the prefix. If no methods
-// are specified, accepts all HTTP methods.
+// wrapping them in a Handler type. Matches all paths starting with the prefix.
 //
 // Example:
 //
-//	// Handle all /api/ requests
-//	server.RegisterPathPrefixHandlerFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+//	// Handle all /api/ GET requests
+//	server.RegisterPathPrefixHandlerFunc(http.MethodGet, "/api/", func(w http.ResponseWriter, r *http.Request) {
 //	    w.Header().Set("Content-Type", "application/json")
 //	    w.Write([]byte(`{"status": "ok"}`))
 //	})
 //
 //	// Handle /files/ with GET only
-//	server.RegisterPathPrefixHandlerFunc("/files/", filesHandler, http.MethodGet)
-func (s *Server) RegisterPathPrefixHandlerFunc(prefix string, handlerFunc http.HandlerFunc, methods ...string) {
-	if len(methods) == 0 {
-		s.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc)
-	} else {
-		s.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc).Methods(methods...)
-	}
+//	server.RegisterPathPrefixHandlerFunc(http.MethodGet, "/files/", filesHandler)
+func (s *Server) RegisterPathPrefixHandlerFunc(method, prefix string, handlerFunc http.HandlerFunc) {
+	s.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc).Methods(method)
+}
+
+// RegisterPathPrefixHandlerFuncAny registers an HTTP handler function for all methods matching the prefix.
+//
+// Parameters:
+//   - prefix: URL path prefix to match (e.g., "/api/", "/files/")
+//   - handlerFunc: HTTP handler function to handle requests
+//
+// Example:
+//
+//	// Handle all /api/ requests (all methods)
+//	server.RegisterPathPrefixHandlerFuncAny("/api/", func(w http.ResponseWriter, r *http.Request) {
+//	    w.Header().Set("Content-Type", "application/json")
+//	    w.Write([]byte(`{"status": "ok"}`))
+//	})
+func (s *Server) RegisterPathPrefixHandlerFuncAny(prefix string, handlerFunc http.HandlerFunc) {
+	s.getRouter().PathPrefix(prefix).HandlerFunc(handlerFunc)
 }
 
 // Use registers global middleware.
