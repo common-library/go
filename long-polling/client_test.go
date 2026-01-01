@@ -44,7 +44,7 @@ func subscription(t *testing.T, request long_polling.SubscriptionRequest, count 
 
 func publish(t *testing.T, category, data string) {
 	request := long_polling.PublishRequest{Category: category, Data: data}
-	if response, err := long_polling.Publish("http://"+address+"/publish", 10, nil, request, "", "", nil); err != nil {
+	if response, err := long_polling.Publish("http://"+address+"/publish", 10*time.Second, nil, request, "", "", nil); err != nil {
 		t.Fatal(err)
 	} else if response.StatusCode != http.StatusOK {
 		t.Fatal(response.StatusCode, http.StatusText(response.StatusCode))

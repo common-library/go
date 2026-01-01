@@ -19,6 +19,7 @@ on:
       - 'go.sum'
       - '.github/workflows/ci.yml'
 
+
 jobs:
   build:
     strategy:
@@ -132,7 +133,7 @@ jobs:
             
             echo "### Coverage by Package" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            go tool cover -func=coverage.out | head -20 >> $GITHUB_STEP_SUMMARY
+            go tool cover -func=coverage.out >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ No coverage data available" >> $GITHUB_STEP_SUMMARY
@@ -146,6 +147,11 @@ jobs:
         run: |
           if [ ! -f coverage.out ]; then
             echo "⚠️ No coverage data available, skipping badge update"
+            exit 0
+          fi
+          
+          if [ -z "$GIST_SECRET" ] || [ -z "$GIST_ID" ]; then
+            echo "⚠️ GIST_SECRET or GIST_ID not set, skipping badge update"
             exit 0
           fi
           

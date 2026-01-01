@@ -307,7 +307,7 @@ func TestDynamoDBClient_PreparedTransactions(t *testing.T) {
 	}
 	assert.Equal(t, 2, logCount)
 
-	assert.True(t, logCount > 0, "준비된 문장으로 데이터가 삽입되어야 합니다")
+	assert.True(t, logCount > 0, "Data should be inserted using prepared statement")
 }
 
 func TestDynamoDBClient_ErrorHandling(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 func RunWithElasticsearch(m *testing.M, image string, elasticsearchURL *string) {
 	ctx := context.Background()
 
-	// Elasticsearch 컨테이너 요청 구성
+	// Configure Elasticsearch container request
 	req := testcontainers.ContainerRequest{
 		Image:        image,
 		ExposedPorts: []string{"9200/tcp"},
@@ -32,11 +32,11 @@ func RunWithElasticsearch(m *testing.M, image string, elasticsearchURL *string) 
 			WithStatusCodeMatcher(func(status int) bool {
 				return status == 200
 			}).
-			WithStartupTimeout(60 * time.Second).     // 1분 → 60초로 단축
-			WithPollInterval(500 * time.Millisecond), // 2초 → 500ms로 단축
+			WithStartupTimeout(60 * time.Second).     // Reduced from 1 minute to 60 seconds
+			WithPollInterval(500 * time.Millisecond), // Reduced from 2 seconds to 500ms
 	}
 
-	// 컨테이너 시작
+	// Start container
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
@@ -46,7 +46,7 @@ func RunWithElasticsearch(m *testing.M, image string, elasticsearchURL *string) 
 		os.Exit(1)
 	}
 
-	// 컨테이너의 호스트와 포트 정보 가져오기
+	// Get container host and port information
 	host, err := container.Host(ctx)
 	if err != nil {
 		fmt.Printf("Failed to get container host: %v\n", err)
@@ -61,10 +61,10 @@ func RunWithElasticsearch(m *testing.M, image string, elasticsearchURL *string) 
 
 	*elasticsearchURL = fmt.Sprintf("http://%s:%s", host, natPort.Port())
 
-	// 테스트 실행
+	// Run tests
 	code := m.Run()
 
-	// 테스트 완료 후 컨테이너 정리
+	// Cleanup container after tests
 	if err := container.Terminate(ctx); err != nil {
 		fmt.Printf("Failed to terminate container: %v\n", err)
 	}

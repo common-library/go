@@ -32,16 +32,26 @@ package main
 
 import (
     "fmt"
+    "time"
+    "net/http"
     "github.com/common-library/go/http"
     "github.com/common-library/go/json"
 )
 
 func main() {
     // HTTP request made easy
-    response, _ := http.Get("https://api.example.com/data", nil, "", "", nil)
+    response, _ := http.Request(
+        "https://api.example.com/data",
+        http.MethodGet,
+        nil,              // headers
+        "",               // body
+        10*time.Second,   // timeout
+        "", "",           // auth
+        nil,              // transport
+    )
     
     // Type-safe JSON conversion
-    data, _ := json.ConvertFromString[map[string]interface{}](response)
+    data, _ := json.ConvertFromString[map[string]interface{}](response.Body)
     
     fmt.Println(data)
 }
@@ -52,30 +62,35 @@ func main() {
 ## 📚 Features
 
 ### 📁 Archive & Compression
-- **[gzip](archive/gzip)** - Gzip compression and decompression
-- **[tar](archive/tar)** - TAR archive creation and extraction
-- **[zip](archive/zip)** - ZIP archive operations
+- **[archive](archive/README.md)** - Archive and compression utilities
+  - **[gzip](archive/gzip)** - Gzip compression and decompression
+  - **[tar](archive/tar)** - TAR archive creation and extraction
+  - **[zip](archive/zip)** - ZIP archive operations
 
 ### ☁️ AWS Services
-- **[DynamoDB](aws/dynamodb)** - AWS DynamoDB client with simplified operations
-- **[S3](aws/s3)** - Amazon S3 object storage operations
+- **[AWS](aws/README.md)** - Amazon Web Services integrations
+  - **[DynamoDB](aws/dynamodb/README.md)** - AWS DynamoDB client with simplified operations
+  - **[S3](aws/s3/README.md)** - Amazon S3 object storage operations
 
 ### 💻 Command Line
-- **[arguments](command-line/arguments)** - Command-line argument parsing
-- **[flags](command-line/flags)** - Type-safe flag parsing with generics
+- **[command-line](command-line/README.md)** - Command-line utilities
+  - **[arguments](command-line/arguments/README.md)** - Command-line argument parsing
+  - **[flags](command-line/flags/README.md)** - Type-safe flag parsing with generics
 
 ### 🗂️ Data Structures
-- **[collection](collection)** - Generic data structures (Deque, Queue)
+- **[collection](collection/README.md)** - Generic data structures (Deque, Queue)
 
 ### 🗄️ Databases
 
+**[Database](database/README.md)** - Database clients and utilities
+
 #### NoSQL & Document Stores
-- **[Elasticsearch v7/v8](database/elasticsearch)** - Full-text search and analytics
-- **[MongoDB](database/mongodb)** - Document database operations
-- **[Redis](database/redis)** - In-memory data structure store
+- **[Elasticsearch v7/v8](database/elasticsearch/README.md)** - Full-text search and analytics
+- **[MongoDB](database/mongodb/README.md)** - Document database operations
+- **[Redis](database/redis/README.md)** - In-memory data structure store
 
 #### SQL Databases
-- **[sql](database/sql)** - Unified SQL client supporting:
+- **[sql](database/sql/README.md)** - Unified SQL client supporting:
   - Amazon DynamoDB
   - ClickHouse
   - Microsoft SQL Server
@@ -85,57 +100,69 @@ func main() {
   - SQLite
 
 #### ORM & Query Builders
-- **[beego ORM](database/orm/beego/README.md)** - Beego ORM wrapper
-- **[ent](database/orm/ent/README.md)** - Entity framework for Go
-- **[GORM](database/orm/gorm/README.md)** - Feature-rich ORM library
-- **[sqlc](database/orm/sqlc/README.md)** - Compile-time SQL query generator
-- **[sqlx](database/orm/sqlx/README.md)** - Extensions to database/sql
+- **[ORM](database/orm/README.md)** - Object-Relational Mapping libraries
+  - **[beego ORM](database/orm/beego/README.md)** - Beego ORM wrapper
+  - **[ent](database/orm/ent/README.md)** - Entity framework for Go
+  - **[GORM](database/orm/gorm/README.md)** - Feature-rich ORM library
+  - **[sqlc](database/orm/sqlc/README.md)** - Compile-time SQL query generator
+  - **[sqlx](database/orm/sqlx/README.md)** - Extensions to database/sql
 
 #### Database Tools
-- **[dbmate](database/dbmate)** - Database migration tool
-- **[Prometheus client](database/prometheus)** - Prometheus metrics querying
+- **[dbmate](database/dbmate/README.md)** - Database migration tool
+- **[Prometheus client](database/prometheus/README.md)** - Prometheus metrics querying
 
 ### 📡 Events & Messaging
-- **[CloudEvents](event/cloudevents)** - CloudEvents client and server
+- **[event](event/README.md)** - Event handling utilities
+  - **[CloudEvents](event/cloudevents/README.md)** - CloudEvents client and server
 
 ### 📄 File Operations
-- **[file](file)** - File and directory utilities
+- **[file](file/README.md)** - File and directory utilities
 
 ### 🌐 Network & Communication
-- **[gRPC](grpc)** - Simplified gRPC client and server ([Documentation](grpc/README.md))
-- **[HTTP](http)** - HTTP client with retry logic and utilities
-- **[Socket](socket)** - TCP/UDP socket server and client
-- **[Long Polling](long-polling)** - HTTP long polling implementation
+- **[gRPC](grpc/README.md)** - Simplified gRPC client and server
+- **[HTTP](http/README.md)** - HTTP client and server frameworks
+  - **[Client](http)** - HTTP client with timeout and authentication support
+  - **[Echo](http/echo/README.md)** - Echo v4 web framework wrapper
+  - **[Gin](http/gin/README.md)** - Gin web framework wrapper
+  - **[Mux](http/mux/README.md)** - Gorilla Mux router wrapper
+- **[Socket](socket/README.md)** - TCP/UDP socket communication
+  - **[TCP](socket/tcp/README.md)** - TCP client and server with connection pooling
+  - **[UDP](socket/udp/README.md)** - UDP server with async and sync handlers
+- **[Long Polling](long-polling/README.md)** - HTTP long polling implementation
 
 ### 📦 Data Formats
-- **[JSON](json)** - Type-safe JSON marshaling with generics
+- **[JSON](json/README.md)** - Type-safe JSON marshaling with generics
 
 ### ☸️ Kubernetes
-- **[resource/client](kubernetes/resource/client)** - Kubernetes resource management
-- **[Custom Resources](kubernetes/resource/custom-resource)** - CRD operations
-- **[CRD](kubernetes/resource/custom-resource-definition)** - Custom Resource Definitions
+- **[kubernetes](kubernetes/README.md)** - Kubernetes client utilities
+  - **[resource/client](kubernetes/resource/client/README.md)** - Kubernetes resource management
+  - **[Custom Resources](kubernetes/resource/custom-resource)** - CRD operations
+  - **[CRD](kubernetes/resource/custom-resource-definition)** - Custom Resource Definitions
 
 ### 🔒 Concurrency & Synchronization
-- **[lock](lock)** - Mutex utilities with key-based locking
+- **[lock](lock/README.md)** - Mutex utilities with key-based locking
 
 ### 📝 Logging
-- **[klog](log/klog)** - Kubernetes-style structured logging
-- **[slog](log/slog)** - Structured logging with context
+- **[log](log/README.md)** - Logging utilities
+  - **[klog](log/klog/README.md)** - Kubernetes-style structured logging
+  - **[slog](log/slog/README.md)** - Structured logging with context
 
 ### 🔐 Security
-- **[crypto/dsa](security/crypto/dsa)** - DSA signatures (deprecated, legacy support)
-- **[crypto/ecdsa](security/crypto/ecdsa)** - ECDSA elliptic curve signatures
-- **[crypto/ed25519](security/crypto/ed25519)** - Ed25519 signatures (recommended)
-- **[crypto/rsa](security/crypto/rsa)** - RSA encryption and signatures
+- **[security](security/README.md)** - Cryptography and security utilities
+  - **[crypto/dsa](security/crypto/dsa/README.md)** - DSA signatures (deprecated, legacy support)
+  - **[crypto/ecdsa](security/crypto/ecdsa/README.md)** - ECDSA elliptic curve signatures
+  - **[crypto/ed25519](security/crypto/ed25519/README.md)** - Ed25519 signatures (recommended)
+  - **[crypto/rsa](security/crypto/rsa/README.md)** - RSA encryption and signatures
 
 ### 💾 Storage
-- **[MinIO](storage/minio)** - S3-compatible object storage client
+- **[storage](storage/README.md)** - Object storage clients
+  - **[MinIO](storage/minio/README.md)** - S3-compatible object storage client
 
 ### 🛠️ Utilities
-- **[utility](utility)** - Runtime introspection, type info, and CIDR utilities
+- **[utility](utility/README.md)** - Runtime introspection, type info, and CIDR utilities
 
 ### 🧪 Testing
-- **[testutil](testutil)** - Testing utilities and container image constants
+- **[testutil](testutil/README.md)** - Testing utilities and container image constants
 
 
 
