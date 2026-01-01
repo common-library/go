@@ -23,7 +23,7 @@ func TestRegisterHandler(t *testing.T) {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	server.RegisterHandler("/test/{id}", handler)
+	server.RegisterHandlerAny("/test/{id}", handler)
 	server.Start(":20080", func(err error) {
 		t.Errorf("Server error: %v", err)
 	})
@@ -56,12 +56,12 @@ func TestRegisterHandlerFunc(t *testing.T) {
 
 	server := &mux.Server{}
 
-	server.RegisterHandlerFunc("/test/{id}", func(w net_http.ResponseWriter, r *net_http.Request) {
+	server.RegisterHandlerFunc(net_http.MethodGet, "/test/{id}", func(w net_http.ResponseWriter, r *net_http.Request) {
 		vars := gorilla_mux.Vars(r)
 		id := vars["id"]
 		w.WriteHeader(net_http.StatusOK)
 		fmt.Fprintf(w, `{"id":"%s"}`, id)
-	}, net_http.MethodGet)
+	})
 
 	server.Start(":20081", func(err error) {
 		t.Errorf("Server error: %v", err)
@@ -88,10 +88,17 @@ func TestRegisterHandlerFuncMethods(t *testing.T) {
 
 	server := &mux.Server{}
 
-	server.RegisterHandlerFunc("/data", func(w net_http.ResponseWriter, r *net_http.Request) {
+	// Register GET handler
+	server.RegisterHandlerFunc(net_http.MethodGet, "/data", func(w net_http.ResponseWriter, r *net_http.Request) {
 		w.WriteHeader(net_http.StatusOK)
 		w.Write([]byte(`{"method":"` + r.Method + `"}`))
-	}, net_http.MethodGet, net_http.MethodPost)
+	})
+
+	// Register POST handler
+	server.RegisterHandlerFunc(net_http.MethodPost, "/data", func(w net_http.ResponseWriter, r *net_http.Request) {
+		w.WriteHeader(net_http.StatusOK)
+		w.Write([]byte(`{"method":"` + r.Method + `"}`))
+	})
 
 	server.Start(":20082", func(err error) {
 		t.Errorf("Server error: %v", err)
@@ -135,7 +142,7 @@ func TestRegisterPathPrefixHandler(t *testing.T) {
 		w.Write([]byte(`{"prefix":"matched"}`))
 	})
 
-	server.RegisterPathPrefixHandler("/api/", handler, net_http.MethodGet)
+	server.RegisterPathPrefixHandler(net_http.MethodGet, "/api/", handler)
 	server.Start(":20083", func(err error) {
 		t.Errorf("Server error: %v", err)
 	})
@@ -167,7 +174,7 @@ func TestRegisterPathPrefixHandlerFunc(t *testing.T) {
 
 	server := &mux.Server{}
 
-	server.RegisterPathPrefixHandlerFunc("/static/", func(w net_http.ResponseWriter, r *net_http.Request) {
+	server.RegisterPathPrefixHandlerFuncAny("/static/", func(w net_http.ResponseWriter, r *net_http.Request) {
 		w.WriteHeader(net_http.StatusOK)
 		w.Write([]byte(`static content`))
 	})
@@ -206,7 +213,7 @@ func TestUseMiddleware(t *testing.T) {
 	}
 
 	server.Use(middleware)
-	server.RegisterHandlerFunc("/test", func(w net_http.ResponseWriter, r *net_http.Request) {
+	server.RegisterHandlerFuncAny("/test", func(w net_http.ResponseWriter, r *net_http.Request) {
 		w.WriteHeader(net_http.StatusOK)
 		w.Write([]byte("ok"))
 	})
@@ -238,7 +245,7 @@ func TestStartStop(t *testing.T) {
 
 	server := &mux.Server{}
 
-	server.RegisterHandlerFunc("/", func(w net_http.ResponseWriter, r *net_http.Request) {
+	server.RegisterHandlerFuncAny("/", func(w net_http.ResponseWriter, r *net_http.Request) {
 		w.WriteHeader(net_http.StatusOK)
 	})
 
@@ -270,7 +277,7 @@ func TestAlreadyStarted(t *testing.T) {
 
 	server := &mux.Server{}
 
-	server.RegisterHandlerFunc("/", func(w net_http.ResponseWriter, r *net_http.Request) {
+	server.RegisterHandlerFuncAny("/", func(w net_http.ResponseWriter, r *net_http.Request) {
 		w.WriteHeader(net_http.StatusOK)
 	})
 
@@ -337,7 +344,7 @@ func TestIsRunning(t *testing.T) {
 		t.Error("New server should not be running")
 	}
 
-	server.RegisterHandlerFunc("/", func(w net_http.ResponseWriter, r *net_http.Request) {
+	server.RegisterHandlerFuncAny("/", func(w net_http.ResponseWriter, r *net_http.Request) {
 		w.WriteHeader(net_http.StatusOK)
 	})
 

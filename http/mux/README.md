@@ -26,6 +26,32 @@ go get github.com/gorilla/mux
 - ✅ URL builder functionality needed
 - ✅ Standard net/http compatibility important
 
+## Mux-Specific Features
+
+### Path Prefix Routing
+
+Unlike Echo and Gin frameworks, this Gorilla Mux wrapper provides dedicated **PathPrefix** methods:
+
+- **Why PathPrefix?**: Gorilla Mux's `PathPrefix()` is optimized for serving static files, API versioning, and mounting sub-applications
+- **Echo/Gin Alternative**: These frameworks use `Group()` for similar purposes, but Mux's PathPrefix is more direct
+- **Performance**: PathPrefix matching is more efficient for prefix-based routing than pattern matching
+
+**Use Cases**:
+- **Static File Serving**: `/static/`, `/assets/`, `/public/`
+- **API Versioning**: `/api/v1/`, `/api/v2/`
+- **Swagger/Docs**: `/swagger/`, `/docs/`
+- **Sub-applications**: `/admin/`, `/dashboard/`
+
+**Example Comparison**:
+```go
+// Mux (Direct PathPrefix)
+server.RegisterPathPrefixHandlerAny("/static/", http.FileServer(http.Dir("./static")))
+
+// Echo/Gin (Using Group)
+// Echo: g := e.Group("/static"); g.Use(middleware.Static("./static"))
+// Gin:  r.Static("/static", "./static")
+```
+
 ## Usage Examples
 
 ### Basic Server
@@ -70,22 +96,21 @@ func main() {
 ```go
 server := &mux.Server{}
 
-// Handler registration
+// Handler registration with specific method (echo/gin style)
 handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("handler"))
 })
-server.RegisterHandler("/api", handler)
+server.RegisterHandler(http.MethodGet, "/api", handler)
 
-// HandlerFunc registration
-server.RegisterHandlerFunc("/users", getUsersHandler)
+// HandlerFunc registration with specific method
+server.RegisterHandlerFunc(http.MethodGet, "/users", getUsersHandler)
+server.RegisterHandlerFunc(http.MethodPost, "/users", createUserHandler)
+server.RegisterHandlerFunc(http.MethodPut, "/users/{id}", updateUserHandler)
+server.RegisterHandlerFunc(http.MethodDelete, "/users/{id}", deleteUserHandler)
 
-// HTTP method restriction
-server.RegisterHandlerFunc("/users", createUserHandler, http.MethodPost)
-server.RegisterHandlerFunc("/users/{id}", updateUserHandler, http.MethodPut)
-server.RegisterHandlerFunc("/users/{id}", deleteUserHandler, http.MethodDelete)
-
-// Allow multiple methods
-server.RegisterHandlerFunc("/data", dataHandler, http.MethodGet, http.MethodPost)
+// Register for all HTTP methods
+server.RegisterHandlerAny("/webhook", webhookHandler)
+server.RegisterHandlerFuncAny("/catch-all", catchAllHandler)
 ```
 
 ### Path Variables Usage
@@ -117,25 +142,39 @@ router.HandleFunc("/articles/{id:[0-9]+}", articleHandler)
 
 ### Path Prefix Routing
 
+Path prefix routing is a **Mux-specific feature** for efficiently handling requests based on URL path prefixes.
+
 ```go
 server := &mux.Server{}
 
-// Serve static files
+// Serve static files (all methods)
+// Common use case: CSS, JS, images, downloads
 fileServer := http.FileServer(http.Dir("./static"))
-server.RegisterPathPrefixHandler("/static/", http.StripPrefix("/static/", fileServer))
+server.RegisterPathPrefixHandlerAny("/static/", http.StripPrefix("/static/", fileServer))
 
-// API version routing
-server.RegisterPathPrefixHandlerFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) {
+// API version routing with specific method
+// Useful for API versioning without duplicating handlers
+server.RegisterPathPrefixHandlerFunc(http.MethodGet, "/api/v1/", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("API v1"))
-}, http.MethodGet)
+})
 
-server.RegisterPathPrefixHandlerFunc("/api/v2/", func(w http.ResponseWriter, r *http.Request) {
+server.RegisterPathPrefixHandlerFunc(http.MethodGet, "/api/v2/", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("API v2"))
-}, http.MethodGet)
+})
 
-// Admin pages
-server.RegisterPathPrefixHandler("/admin/", adminHandler, http.MethodGet, http.MethodPost)
+// Admin pages with GET method
+// All /admin/* routes handled by one handler
+server.RegisterPathPrefixHandler(http.MethodGet, "/admin/", adminHandler)
+
+// Swagger/Documentation (real-world example)
+server.RegisterPathPrefixHandlerAny("/swagger/", httpSwagger.WrapHandler)
 ```
+
+**Key Differences from Echo/Gin:**
+- Echo/Gin use `Group()` for path grouping and middleware scoping
+- Mux's PathPrefix is optimized for prefix matching, not grouping
+- PathPrefix matches **any** path starting with the prefix
+- Ideal for file servers, API versioning, and catch-all routes
 
 ### Middleware Usage
 
@@ -211,7 +250,7 @@ import (
 )
 
 server := &mux.Server{}
-server.RegisterHandlerFunc("/", homeHandler)
+server.RegisterHandlerFuncAny("/", homeHandler)
 
 // Start server
 server.Start(":8080", func(err error) {
@@ -248,7 +287,7 @@ if server.IsRunning() {
 }
 
 // Health check endpoint
-server.RegisterHandlerFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+server.RegisterHandlerFuncAny("/health", func(w http.ResponseWriter, r *http.Request) {
     status := "down"
     if server.IsRunning() {
         status = "up"
@@ -283,33 +322,72 @@ router.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 
 ### Server
 
-#### `RegisterHandler(path string, handler http.Handler, methods ...string)`
-Registers an HTTP handler.
+#### `RegisterHandler(method, path string, handler http.Handler)`
+Registers an HTTP handler for a specific method.
 
+- **method**: HTTP method (http.MethodGet, http.MethodPost, etc.)
 - **path**: URL path pattern (supports path variables: `/users/{id}`)
 - **handler**: HTTP Handler
-- **methods**: Optional HTTP method restrictions
 
-#### `RegisterHandlerFunc(path string, handlerFunc http.HandlerFunc, methods ...string)`
-Registers an HTTP handler function.
+#### `RegisterHandlerAny(path string, handler http.Handler)`
+Registers an HTTP handler for all methods.
+
+- **path**: URL path pattern
+- **handler**: HTTP Handler
+
+#### `RegisterHandlerFunc(method, path string, handlerFunc http.HandlerFunc)`
+Registers an HTTP handler function for a specific method.
+
+- **method**: HTTP method (http.MethodGet, http.MethodPost, etc.)
+- **path**: URL path pattern
+- **handlerFunc**: HTTP HandlerFunc
+
+#### `RegisterHandlerFuncAny(path string, handlerFunc http.HandlerFunc)`
+Registers an HTTP handler function for all methods.
 
 - **path**: URL path pattern
 - **handlerFunc**: HTTP HandlerFunc
-- **methods**: Optional HTTP method restrictions
 
-#### `RegisterPathPrefixHandler(prefix string, handler http.Handler, methods ...string)`
-Registers a handler for a path prefix.
+#### `RegisterPathPrefixHandler(method, prefix string, handler http.Handler)`
+**[Mux-Specific]** Registers a handler for a path prefix with specific method.
 
+This is a unique feature of Gorilla Mux not available in Echo/Gin wrappers. Use this for serving static files, API versioning, or mounting sub-applications.
+
+- **method**: HTTP method (http.MethodGet, http.MethodPost, etc.)
 - **prefix**: Path prefix (e.g., `/api/`, `/static/`)
 - **handler**: HTTP Handler
-- **methods**: Optional HTTP method restrictions
 
-#### `RegisterPathPrefixHandlerFunc(prefix string, handlerFunc http.HandlerFunc, methods ...string)`
-Registers a handler function for a path prefix.
+**Example**: `server.RegisterPathPrefixHandler(http.MethodGet, "/static/", fileServer)`
+
+#### `RegisterPathPrefixHandlerAny(prefix string, handler http.Handler)`
+**[Mux-Specific]** Registers a handler for a path prefix for all methods.
+
+- **prefix**: Path prefix
+- **handler**: HTTP Handler
+
+**Common Use Cases**:
+- Static file serving: `/static/`, `/assets/`
+- Swagger UI: `/swagger/`, `/docs/`
+- CloudEvents receiver: `/` (root)
+
+**Example**: `server.RegisterPathPrefixHandlerAny("/swagger/", httpSwagger.WrapHandler)`
+
+#### `RegisterPathPrefixHandlerFunc(method, prefix string, handlerFunc http.HandlerFunc)`
+**[Mux-Specific]** Registers a handler function for a path prefix with specific method.
+
+- **method**: HTTP method (http.MethodGet, http.MethodPost, etc.)
+- **prefix**: Path prefix
+- **handlerFunc**: HTTP HandlerFunc
+
+**Example**: `server.RegisterPathPrefixHandlerFunc(http.MethodGet, "/api/v1/", v1Handler)`
+
+#### `RegisterPathPrefixHandlerFuncAny(prefix string, handlerFunc http.HandlerFunc)`
+**[Mux-Specific]** Registers a handler function for a path prefix for all methods.
 
 - **prefix**: Path prefix
 - **handlerFunc**: HTTP HandlerFunc
-- **methods**: Optional HTTP method restrictions
+
+**Example**: `server.RegisterPathPrefixHandlerFuncAny("/api/", apiHandler)`
 
 #### `Use(middleware ...mux.MiddlewareFunc)`
 Registers global middleware.
@@ -346,6 +424,29 @@ Provides direct access to the Gorilla Mux router.
 | **Data Binding** | ❌ | ✅ | ✅ |
 | **Community** | Active | Very Active | Active |
 | **Regular Expressions** | ✅ | ❌ | ❌ |
+| **Path Prefix** | ✅ Dedicated | ❌ Use Group | ❌ Use Group |
+| **Subrouters** | ✅ | ✅ Group | ✅ Group |
+
+### When to Use Each Framework
+
+**Choose Gorilla Mux when:**
+- You need standard `net/http` compatibility
+- Complex URL patterns with regex are required
+- Path prefix routing is a key requirement
+- You prefer explicit over implicit
+- Building API gateways or reverse proxies
+
+**Choose Gin when:**
+- Maximum performance is critical
+- You need built-in data binding/validation
+- JSON-heavy API development
+- Middleware ecosystem is important
+
+**Choose Echo when:**
+- Balance between performance and features
+- Middleware-centric architecture
+- WebSocket support needed
+- Template rendering required
 
 ## Notes
 
@@ -353,7 +454,9 @@ Provides direct access to the Gorilla Mux router.
 - Access path variables with `mux.Vars(r)`
 - `http.ErrServerClosed` is considered normal shutdown and won't trigger the error callback
 - Cannot start multiple servers on the same port
-- Path prefix must end with a slash (/)
+- **Path prefix must end with a slash (/)** - This is critical for correct routing
+- PathPrefix methods are Mux-specific features not available in Echo/Gin wrappers
+- For route grouping with shared middleware, use `GetRouter().PathPrefix().Subrouter()`
 
 ## References
 

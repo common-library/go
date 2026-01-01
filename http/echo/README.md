@@ -79,8 +79,41 @@ server.RegisterHandler(echo_lib.PUT, "/users/:id", updateUserHandler)
 server.RegisterHandler(echo_lib.DELETE, "/users/:id", deleteUserHandler)
 server.RegisterHandler(echo_lib.PATCH, "/users/:id", patchUserHandler)
 
+// Register handler for all HTTP methods (GET, POST, PUT, DELETE, etc.)
+server.RegisterHandlerAny("/webhook", webhookHandler)
+
 // Register with middleware
 server.RegisterHandler(echo_lib.GET, "/admin", adminHandler, authMiddleware, logMiddleware)
+server.RegisterHandlerAny("/api/catch-all", catchAllHandler, authMiddleware)
+```
+
+### Wrapping Standard HTTP Handlers
+
+```go
+import (
+    "net/http"
+    "github.com/common-library/go/http/echo"
+)
+
+// Wrap http.Handler (e.g., http.FileServer)
+fs := http.FileServer(http.Dir("./static"))
+server.RegisterHandler(echo_lib.GET, "/static/*", echo.WrapHandler(fs))
+
+// Wrap http.HandlerFunc - Method 1: Using WrapHandler
+stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("Hello from standard handler"))
+})
+server.RegisterHandler(echo_lib.GET, "/std1", echo.WrapHandler(stdHandler))
+
+// Wrap http.HandlerFunc - Method 2: Using WrapHandlerFunc (recommended)
+handler := func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Hello World"))
+}
+server.RegisterHandler(echo_lib.GET, "/std2", echo.WrapHandlerFunc(handler))
+
+// Wrap third-party handlers
+server.RegisterHandler(echo_lib.GET, "/prometheus", echo.WrapHandler(promhttp.Handler()))
 ```
 
 ### Group Routing
@@ -94,6 +127,7 @@ api := server.Group("/api")
 // Routes within group
 api.GET("/users", func(c echo_lib.Context) error {
     return c.JSON(http.StatusOK, users)
+}
 })
 
 api.POST("/users", func(c echo_lib.Context) error {
@@ -232,12 +266,35 @@ e.POST("/upload", uploadHandler)
 ### Server
 
 #### `RegisterHandler(method, path string, handler echo.HandlerFunc, middleware ...echo.MiddlewareFunc)`
-Registers an HTTP handler.
+Registers an HTTP handler for a specific method.
 
 - **method**: HTTP method (echo.GET, echo.POST, etc.)
 - **path**: URL path pattern
 - **handler**: Echo handler function
 - **middleware**: Optional middleware
+
+#### `RegisterHandlerAny(path string, handler echo.HandlerFunc, middleware ...echo.MiddlewareFunc)`
+Registers an HTTP handler for all HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.).
+
+- **path**: URL path pattern
+- **handler**: Echo handler function
+- **middleware**: Optional middleware
+
+#### `WrapHandler(handler http.Handler) echo.HandlerFunc`
+Wraps a standard `http.Handler` into an Echo handler function.
+
+- **handler**: Standard http.Handler to wrap
+- **return**: Echo-compatible handler function
+
+Use this for wrapping `http.FileServer`, third-party handlers, or any type implementing `http.Handler`.
+
+#### `WrapHandlerFunc(handlerFunc http.HandlerFunc) echo.HandlerFunc`
+Wraps a standard `http.HandlerFunc` into an Echo handler function.
+
+- **handlerFunc**: Standard http.HandlerFunc to wrap
+- **return**: Echo-compatible handler function
+
+This is a convenience function for wrapping function types directly without type conversion.
 
 #### `Use(middleware ...echo.MiddlewareFunc)`
 Registers global middleware.

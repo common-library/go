@@ -351,3 +351,334 @@ func TestRouteMiddleware(t *testing.T) {
 		t.Fatal("middleware header not set")
 	}
 }
+
+func TestWrapHandler(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Standard http.HandlerFunc
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Handler-Type", "standard")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hello from standard handler"))
+	})
+
+	server.RegisterHandler(http.MethodGet, "/standard", gin.WrapHandler(stdHandler))
+
+	if err := server.Start(":19092", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:19092/standard")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "Hello from standard handler" {
+		t.Fatalf("expected 'Hello from standard handler', got '%s'", body)
+	}
+
+	if resp.Header.Get("X-Handler-Type") != "standard" {
+		t.Fatal("custom header not set")
+	}
+}
+
+func TestWrapHandlerWithPathParams(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Standard handler that reads path from request
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Path: " + r.URL.Path))
+	})
+
+	server.RegisterHandler(http.MethodGet, "/users/:id/posts/:postId", gin.WrapHandler(stdHandler))
+
+	if err := server.Start(":19093", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:19093/users/123/posts/456")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "Path: /users/123/posts/456" {
+		t.Fatalf("expected 'Path: /users/123/posts/456', got '%s'", body)
+	}
+}
+
+func TestWrapHandlerFileServer(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Create a simple in-memory file server simulation
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate file serving
+		if strings.HasSuffix(r.URL.Path, ".txt") {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("This is a text file"))
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("File not found"))
+		}
+	})
+
+	server.RegisterHandlerAny("/static/*filepath", gin.WrapHandler(stdHandler))
+
+	if err := server.Start(":19094", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	// Test existing file
+	resp, err := http.Get("http://localhost:19094/static/test.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+	if string(body) != "This is a text file" {
+		t.Fatalf("unexpected body: %s", body)
+	}
+	if resp.Header.Get("Content-Type") != "text/plain" {
+		t.Fatalf("expected Content-Type 'text/plain', got '%s'", resp.Header.Get("Content-Type"))
+	}
+
+	// Test non-existing file
+	resp, err = http.Get("http://localhost:19094/static/missing.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d", resp.StatusCode)
+	}
+}
+
+func TestWrapHandlerWithMiddleware(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Middleware that adds a header
+	addHeader := func(c *gin_lib.Context) {
+		c.Header("X-Middleware", "applied")
+		c.Next()
+	}
+
+	// Use global middleware for wrapped handlers
+	server.Use(addHeader)
+
+	// Standard http.HandlerFunc
+	stdHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("wrapped with middleware"))
+	})
+
+	server.RegisterHandler(http.MethodGet, "/wrapped", gin.WrapHandler(stdHandler))
+
+	if err := server.Start(":19095", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:19095/wrapped")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	if resp.Header.Get("X-Middleware") != "applied" {
+		t.Fatal("middleware not applied to wrapped handler")
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "wrapped with middleware" {
+		t.Fatalf("unexpected body: %s", body)
+	}
+}
+
+func TestWrapHandlerFunc(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Standard http.HandlerFunc
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Custom-Header", "test-value")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Response from HandlerFunc"))
+	}
+
+	server.RegisterHandler(http.MethodGet, "/handlerfunc", gin.WrapHandlerFunc(handler))
+
+	if err := server.Start(":19096", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:19096/handlerfunc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "Response from HandlerFunc" {
+		t.Fatalf("expected 'Response from HandlerFunc', got '%s'", body)
+	}
+
+	if resp.Header.Get("X-Custom-Header") != "test-value" {
+		t.Fatal("custom header not set")
+	}
+}
+
+func TestWrapHandlerFuncVsWrapHandler(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("test"))
+	}
+
+	// WrapHandler uses WrapH, WrapHandlerFunc uses WrapF
+	// Both should work for http.HandlerFunc
+	server.RegisterHandler(http.MethodGet, "/wrap-handler", gin.WrapHandler(http.HandlerFunc(handlerFunc)))
+	server.RegisterHandler(http.MethodGet, "/wrap-handlerfunc", gin.WrapHandlerFunc(handlerFunc))
+
+	if err := server.Start(":19097", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	// Test WrapHandler
+	resp1, err := http.Get("http://localhost:19097/wrap-handler")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body1, _ := io.ReadAll(resp1.Body)
+	resp1.Body.Close()
+
+	// Test WrapHandlerFunc
+	resp2, err := http.Get("http://localhost:19097/wrap-handlerfunc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body2, _ := io.ReadAll(resp2.Body)
+	resp2.Body.Close()
+
+	// Both should return the same result
+	if string(body1) != string(body2) {
+		t.Fatalf("WrapHandler and WrapHandlerFunc should produce same result")
+	}
+	if string(body1) != "test" {
+		t.Fatalf("unexpected response: %s", body1)
+	}
+}
+
+func TestWrapHandlerFuncWithQueryParams(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		age := r.URL.Query().Get("age")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("name=" + name + "&age=" + age))
+	}
+
+	server.RegisterHandler(http.MethodGet, "/query", gin.WrapHandlerFunc(handler))
+
+	if err := server.Start(":19098", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:19098/query?name=john&age=30")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "name=john&age=30" {
+		t.Fatalf("unexpected response: %s", body)
+	}
+}
+
+func TestWrapHandlerFuncWithGlobalMiddleware(t *testing.T) {
+	t.Parallel()
+
+	server := &gin.Server{}
+	defer server.Stop(5 * time.Second)
+
+	// Add global middleware
+	server.Use(func(c *gin_lib.Context) {
+		c.Header("X-Global", "middleware")
+		c.Next()
+	})
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}
+
+	server.RegisterHandler(http.MethodGet, "/test", gin.WrapHandlerFunc(handler))
+
+	if err := server.Start(":19099", nil); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(100 * time.Millisecond)
+
+	resp, err := http.Get("http://localhost:19099/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.Header.Get("X-Global") != "middleware" {
+		t.Fatal("global middleware not applied to WrapHandlerFunc")
+	}
+}
