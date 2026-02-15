@@ -32,7 +32,7 @@ func TestRequestGET(t *testing.T) {
 		vars := gorilla_mux.Vars(r)
 		id := vars["id"]
 		w.WriteHeader(net_http.StatusOK)
-		w.Write([]byte(fmt.Sprintf(`{"id":"%s","method":"GET"}`, id)))
+		w.Write(fmt.Appendf(nil, `{"id":"%s","method":"GET"}`, id))
 	})
 
 	if err := server.Start(":30080", func(err error) { t.Fatalf("Server error: %v", err) }); err != nil {
@@ -104,8 +104,8 @@ func TestRequestWithHeaders(t *testing.T) {
 		customHeader := r.Header.Get("X-Custom-Header")
 
 		w.WriteHeader(net_http.StatusOK)
-		w.Write([]byte(fmt.Sprintf(`{"content-type":"%s","api-key":"%s","custom":"%s"}`,
-			contentType, apiKey, customHeader)))
+		w.Write(fmt.Appendf(nil, `{"content-type":"%s","api-key":"%s","custom":"%s"}`,
+			contentType, apiKey, customHeader))
 	})
 
 	if err := server.Start(":30082", func(err error) { t.Fatalf("Server error: %v", err) }); err != nil {
@@ -140,8 +140,8 @@ func TestRequestWithMultipleHeaderValues(t *testing.T) {
 	server.RegisterHandlerFunc(net_http.MethodGet, "/multi-headers", func(w net_http.ResponseWriter, r *net_http.Request) {
 		values := r.Header["X-Multi"]
 		w.WriteHeader(net_http.StatusOK)
-		w.Write([]byte(fmt.Sprintf(`{"count":%d,"values":["%s","%s"]}`,
-			len(values), values[0], values[1])))
+		w.Write(fmt.Appendf(nil, `{"count":%d,"values":["%s","%s"]}`,
+			len(values), values[0], values[1]))
 	})
 
 	if err := server.Start(":30083", func(err error) { t.Fatalf("Server error: %v", err) }); err != nil {
@@ -179,7 +179,7 @@ func TestRequestWithBasicAuth(t *testing.T) {
 			return
 		}
 		w.WriteHeader(net_http.StatusOK)
-		w.Write([]byte(fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password)))
+		w.Write(fmt.Appendf(nil, `{"username":"%s","password":"%s"}`, username, password))
 	})
 
 	if err := server.Start(":30084", func(err error) { t.Fatalf("Server error: %v", err) }); err != nil {
@@ -245,7 +245,7 @@ func TestRequestPUT(t *testing.T) {
 		vars := gorilla_mux.Vars(r)
 		id := vars["id"]
 		w.WriteHeader(net_http.StatusOK)
-		w.Write([]byte(fmt.Sprintf(`{"id":"%s","method":"PUT"}`, id)))
+		w.Write(fmt.Appendf(nil, `{"id":"%s","method":"PUT"}`, id))
 	})
 
 	if err := server.Start(":30086", func(err error) { t.Fatalf("Server error: %v", err) }); err != nil {
@@ -276,7 +276,7 @@ func TestRequestDELETE(t *testing.T) {
 		vars := gorilla_mux.Vars(r)
 		id := vars["id"]
 		w.WriteHeader(net_http.StatusNoContent)
-		w.Write([]byte(fmt.Sprintf(`{"id":"%s","deleted":true}`, id)))
+		w.Write(fmt.Appendf(nil, `{"id":"%s","deleted":true}`, id))
 	})
 
 	if err := server.Start(":30087", func(err error) { t.Fatalf("Server error: %v", err) }); err != nil {

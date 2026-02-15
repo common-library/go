@@ -972,7 +972,7 @@ func TestConnection(t *testing.T) {
 		err := db.Connection(func(tx *gorm.DB) error {
 			table01 := Table01ForGorm{}
 
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				if result := tx.First(&table01, "field02 = ?", t.Name()); result.Error != nil {
 					return result.Error
 				} else if table01.Field01 != "a" || table01.Field03 != 1 {

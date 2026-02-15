@@ -57,7 +57,7 @@ func (suite *MySQLTestSuite) SetupSuite() {
 	suite.client = &sqlclient.Client{}
 
 	maxRetries := 10
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		testClient := &sqlclient.Client{}
 		if err := testClient.Open(sqlclient.DriverMySQL, suite.dsn, 1); err == nil {
 			testClient.Close()
@@ -66,10 +66,7 @@ func (suite *MySQLTestSuite) SetupSuite() {
 		if i == maxRetries-1 {
 			suite.T().Fatalf("Failed to connect to MySQL after %d retries", maxRetries)
 		}
-		backoff := time.Duration(50<<uint(i)) * time.Millisecond
-		if backoff > time.Second {
-			backoff = time.Second
-		}
+		backoff := min(time.Duration(50<<uint(i))*time.Millisecond, time.Second)
 		time.Sleep(backoff)
 	}
 }

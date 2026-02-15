@@ -18,7 +18,7 @@ func TestSend(t *testing.T) {
 	if client, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
 		t.Fatal(err)
 	} else {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			if result := client.Send(getEvent(t)); result.IsUndelivered() {
 				t.Fatal(result.Error())
 			} else if statusCode, err := result.GetHttpStatusCode(); err != nil {
@@ -37,7 +37,7 @@ func TestRequest(t *testing.T) {
 	if client, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
 		t.Fatal(err)
 	} else {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			if event, result := client.Request(getEvent(t)); result.IsUndelivered() {
 				t.Fatal(result.Error())
 			} else if statusCode, err := result.GetHttpStatusCode(); err != nil {
@@ -66,7 +66,7 @@ func TestStartReceiver(t *testing.T) {
 		receiveClient.StartReceiver(handler, failureFunc)
 
 		address := "localhost:" + strconv.Itoa(port)
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			if sendCient, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
 				t.Fatal(err)
 			} else if result := sendCient.Send(getEvent(t)); result.IsUndelivered() {

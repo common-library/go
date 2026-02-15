@@ -379,7 +379,7 @@ func BenchmarkExporterCollector(b *testing.B) {
 	)
 
 	var values []exporter.Value
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		values = append(values, exporter.Value{
 			Value:       float64(i),
 			LabelValues: []string{fmt.Sprintf("label_%d", i), fmt.Sprintf("value_%d", i%10)},

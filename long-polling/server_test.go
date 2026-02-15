@@ -48,7 +48,7 @@ func TestStart(t *testing.T) {
 		start()
 		defer stop()
 
-		for i := 0; i < count; i++ {
+		for range count {
 			request := long_polling.PublishRequest{Category: category, Data: data}
 			if _, err := long_polling.Publish("http://"+address+"/publish", 10*time.Second, nil, request, "", "", nil); err != nil {
 				t.Fatal(err)

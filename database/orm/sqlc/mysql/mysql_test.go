@@ -70,7 +70,7 @@ func TestMain(m *testing.M) {
 		dsn = fmt.Sprintf("testuser:testpass@tcp(%s:%s)/testdb?charset=utf8&parseTime=True&loc=Local", host, port.Port())
 
 		maxRetries := 20
-		for i := 0; i < maxRetries; i++ {
+		for i := range maxRetries {
 			var queries *pkg.Queries
 			var cleanup func()
 			queries, cleanup, err = getQueries(nil)
