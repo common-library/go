@@ -79,7 +79,7 @@ func setupMongoDBContainer() error {
 			mongoAddress = fmt.Sprintf("testuser:testpass@%s:%s", host, port.Port())
 
 			maxRetries := 5
-			for i := 0; i < maxRetries; i++ {
+			for i := range maxRetries {
 				testClient := &mongodb.Client{}
 				if initErr := testClient.Initialize(mongoAddress, 30); initErr == nil {
 					testClient.Finalize()
@@ -390,7 +390,7 @@ func (suite *MongoDBTestSuite) TestConcurrentOperations() {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(routineID int) {
 			defer wg.Done()
@@ -403,7 +403,7 @@ func (suite *MongoDBTestSuite) TestConcurrentOperations() {
 			}
 			defer client.Finalize()
 
-			for j := 0; j < operationsPerGoroutine; j++ {
+			for j := range operationsPerGoroutine {
 				doc := TestStruct{
 					Name:  fmt.Sprintf("Concurrent User %d-%d", routineID, j),
 					Age:   20 + (routineID*operationsPerGoroutine + j),

@@ -303,7 +303,7 @@ func TestClient_DBsize(t *testing.T) {
 func TestClient_FlushDB(t *testing.T) {
 	setupTest(t)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		err := client.Set("key"+strconv.Itoa(i), "value"+strconv.Itoa(i))
 		assert.NoError(t, err)
 	}
@@ -321,7 +321,7 @@ func TestClient_FlushDB(t *testing.T) {
 }
 
 func TestClient_FlushAll(t *testing.T) {
-	for db := 0; db < 3; db++ {
+	for db := range 3 {
 		err := client.Select(db)
 		assert.NoError(t, err)
 
@@ -335,7 +335,7 @@ func TestClient_FlushAll(t *testing.T) {
 	err = client.FlushAll()
 	assert.NoError(t, err)
 
-	for db := 0; db < 3; db++ {
+	for db := range 3 {
 		err := client.Select(db)
 		assert.NoError(t, err)
 

@@ -170,9 +170,7 @@ func (c *client) Request(event Event) (*Event, Result) {
 //	receiver.StartReceiver(handler, failureFunc)
 //	defer receiver.StopReceiver()
 func (c *client) StartReceiver(handler func(context.Context, Event), failureFunc func(error)) {
-	c.wgForReceiver.Add(1)
-	go func() {
-		defer c.wgForReceiver.Done()
+	c.wgForReceiver.Go(func() {
 
 		ctx, cancel := context.WithCancel(c.getContext())
 		c.cancelFuncForReceiver = cancel
@@ -180,7 +178,7 @@ func (c *client) StartReceiver(handler func(context.Context, Event), failureFunc
 		if err := c.clientOfSdk.StartReceiver(ctx, handler); err != nil {
 			failureFunc(err)
 		}
-	}()
+	})
 }
 
 // StopReceiver gracefully stops the event receiver started by StartReceiver.

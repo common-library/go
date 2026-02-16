@@ -48,7 +48,7 @@ func TestFunc1(t *testing.T) {
 
 	client := sample.NewSampleClient(connection)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		data1 := int64(i)
 		data2 := "message " + strconv.Itoa(i)
 
@@ -90,7 +90,7 @@ func TestFunc2(t *testing.T) {
 		t.Fatalf("failed to send request: %v", err)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		reply, err := stream.Recv()
 		if err == io.EOF {
 			break
@@ -117,9 +117,7 @@ func TestFunc2(t *testing.T) {
 	}()
 
 	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 
 		for {
 			if reply, err := stream.Recv(); err == io.EOF {
@@ -132,6 +130,6 @@ func TestFunc2(t *testing.T) {
 				return
 			}
 		}
-	}()
+	})
 	wg.Wait()
 }

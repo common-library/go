@@ -23,12 +23,12 @@ func test(t *testing.T, level slog.Level) {
 		slog.LevelFatal: 1,
 	}
 	answer := map[string]map[string]any{
-		"TRACE": {"msg": "message-01", "key-01": "value-01", "key-02": float64(1), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(53)}},
-		"DEBUG": {"msg": "message-02", "key-01": "value-02", "key-02": float64(2), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(54)}},
-		"INFO":  {"msg": "message-03", "key-01": "value-03", "key-02": float64(3), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(55)}},
-		"WARN":  {"msg": "message-04", "key-01": "value-04", "key-02": float64(4), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(56)}},
-		"ERROR": {"msg": "message-05", "key-01": "value-05", "key-02": float64(5), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(57)}},
-		"FATAL": {"msg": "message-06", "key-01": "value-06", "key-02": float64(6), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(58)}},
+		"TRACE": {"msg": "message-01", "key-01": "value-01", "key-02": float64(1), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(51)}},
+		"DEBUG": {"msg": "message-02", "key-01": "value-02", "key-02": float64(2), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(52)}},
+		"INFO":  {"msg": "message-03", "key-01": "value-03", "key-02": float64(3), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(53)}},
+		"WARN":  {"msg": "message-04", "key-01": "value-04", "key-02": float64(4), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(54)}},
+		"ERROR": {"msg": "message-05", "key-01": "value-05", "key-02": float64(5), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(55)}},
+		"FATAL": {"msg": "message-06", "key-01": "value-06", "key-02": float64(6), "CallerInfo": map[string]any{"PackageName": "github.com/common-library/go/log/slog_test.test", "FileName": "slog_test.go", "FunctionName": "func1", "Line": float64(56)}},
 	}
 
 	fileName := t.Name()
@@ -45,10 +45,8 @@ func test(t *testing.T, level slog.Level) {
 	testLog.SetWithCallerInfo(true)
 
 	wg := new(sync.WaitGroup)
-	for i := 0; i < repeat; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range repeat {
+		wg.Go(func() {
 
 			testLog.Trace("message-01", "key-01", "value-01", "key-02", 1)
 			testLog.Debug("message-02", "key-01", "value-02", "key-02", 2)
@@ -56,7 +54,7 @@ func test(t *testing.T, level slog.Level) {
 			testLog.Warn("message-04", "key-01", "value-04", "key-02", 4)
 			testLog.Error("message-05", "key-01", "value-05", "key-02", 5)
 			testLog.Fatal("message-06", "key-01", "value-06", "key-02", 6)
-		}()
+		})
 	}
 	wg.Wait()
 	testLog.Flush()

@@ -14,7 +14,7 @@ func TestStart(t *testing.T) {
 	if client, err := cloudevents.NewHttp("http://"+address, nil, nil); err != nil {
 		t.Fatal(err)
 	} else {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			if result := client.Send(getEvent(t)); result.IsUndelivered() {
 				t.Fatal(result.Error())
 			} else if statusCode, err := result.GetHttpStatusCode(); err != nil {

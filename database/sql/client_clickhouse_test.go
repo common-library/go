@@ -429,7 +429,7 @@ func TestClickHouseClient_ClickHouseSpecific(t *testing.T) {
 		var wg sync.WaitGroup
 		insertQuery := fmt.Sprintf("INSERT INTO %s (id, name, created_at) VALUES (?, ?, ?)", tableName)
 
-		for i := 0; i < numGoroutines; i++ {
+		for i := range numGoroutines {
 			wg.Add(1)
 			go func(startID int) {
 				defer wg.Done()
@@ -437,7 +437,7 @@ func TestClickHouseClient_ClickHouseSpecific(t *testing.T) {
 				goroutineClient := getTestClient(t)
 				defer goroutineClient.Close()
 
-				for j := 0; j < insertsPerGoroutine; j++ {
+				for j := range insertsPerGoroutine {
 					id := startID*insertsPerGoroutine + j + 1
 					err := goroutineClient.Execute(insertQuery, id, fmt.Sprintf("user_%d", id), time.Now())
 					if err != nil {
