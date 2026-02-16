@@ -26,20 +26,20 @@ package testutil
 // Centralizing image versions here makes it easy to update and maintain consistency.
 const (
 	// Database images
-	ClickHouseImage = "clickhouse/clickhouse-server:25.12.1-alpine"
-	MySQLImage      = "mysql:9.5.0"
-	PostgresImage   = "postgres:18.1-alpine"
-	MongoImage      = "mongo:8.2.3"
-	RedisImage      = "redis:8.4.0-alpine3.22"
+	ClickHouseImage = "clickhouse/clickhouse-server:25.12.5-alpine"
+	MySQLImage      = "mysql:9.6.0"
+	PostgresImage   = "postgres:18.2-alpine"
+	MongoImage      = "mongo:8.2.5"
+	RedisImage      = "redis:8.4.1-alpine"
 
 	// Elasticsearch images (versioned)
 	ElasticsearchV7Image = "elasticsearch:7.17.28"
-	ElasticsearchV8Image = "elasticsearch:8.19.9"
-	ElasticsearchV9Image = "elasticsearch:9.2.3"
+	ElasticsearchV8Image = "elasticsearch:8.19.11"
+	ElasticsearchV9Image = "elasticsearch:9.3.0"
 
 	// AWS service images
-	LocalstackImage = "localstack/localstack:4.12.0"
+	LocalstackImage = "localstack/localstack:4.13.1"
 
 	// Monitoring images
-	PrometheusImage = "prom/prometheus:v3.8.1"
+	PrometheusImage = "prom/prometheus:v3.9.1"
 )

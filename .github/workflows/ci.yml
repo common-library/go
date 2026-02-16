@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         runner: [ 'ubuntu-24.04' ]
-        go: [ '1.25.5' ]  # Excluded 1.25.3 due to security vulnerabilities (GO-2025-4175, GO-2025-4155)
+        go: [ '1.25.7', '1.26.0' ]
       fail-fast: false
 
     permissions:
@@ -55,6 +55,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.go }}-
             ${{ runner.os }}-go-
+
+      - name: Restore Staticcheck cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/staticcheck
+          key: ${{ runner.os }}-staticcheck-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-staticcheck-
 
       - name: Install Tools
         run: |
@@ -206,6 +214,13 @@ jobs:
             ~/go/bin
             ~/.cache/go-build
           key: ${{ runner.os }}-go-${{ matrix.go }}-${{ hashFiles('go.sum') }}
+
+      - name: Save Staticcheck cache
+        if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/staticcheck
+          key: ${{ runner.os }}-staticcheck-${{ hashFiles('**/*.go') }}
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v6
