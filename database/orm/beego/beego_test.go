@@ -104,7 +104,7 @@ func TestMain(m *testing.M) {
 
 		for _, dataBaseInfo := range dataBaseInfos {
 			var err error
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				err = orm.RegisterDataBase(dataBaseInfo.aliasName, dataBaseInfo.driverName, dataBaseInfo.dataSource)
 				if err == nil {
 					err = orm.RunSyncdb(dataBaseInfo.aliasName, true, true)

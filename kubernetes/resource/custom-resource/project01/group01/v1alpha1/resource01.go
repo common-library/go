@@ -13,9 +13,9 @@ type Resource01Spec struct {
 type Resource01 struct {
 	metaV1.TypeMeta `json:",inline"`
 
-	metaV1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	metaV1.ObjectMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
 
-	Spec Resource01Spec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Spec Resource01Spec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
 }
 
 func (in *Resource01) DeepCopyObject() runtime.Object {
@@ -28,7 +28,7 @@ func (in *Resource01) DeepCopyObject() runtime.Object {
 type Resource01List struct {
 	metaV1.TypeMeta `json:",inline"`
 
-	metaV1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	metaV1.ListMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
 
 	Items []*Resource01 `json:"items" protobuf:"bytes,2,rep,name=items"`
 }

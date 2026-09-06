@@ -14,7 +14,7 @@ func TestInitMu_ConcurrentAccess(t *testing.T) {
 
 	sharedCounter := 0
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 
@@ -39,7 +39,7 @@ func TestInitMu_Exclusivity(t *testing.T) {
 	criticalSection := false
 	violations := 0
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 
@@ -52,7 +52,7 @@ func TestInitMu_Exclusivity(t *testing.T) {
 
 			criticalSection = true
 
-			for j := 0; j < 1000; j++ {
+			for j := range 1000 {
 				_ = j * j
 			}
 
@@ -69,7 +69,7 @@ func TestInitMu_Exclusivity(t *testing.T) {
 
 func TestInitMu_Sequential(t *testing.T) {
 	counter := 0
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		eslock.InitMu.Lock()
 		counter++
 		eslock.InitMu.Unlock()

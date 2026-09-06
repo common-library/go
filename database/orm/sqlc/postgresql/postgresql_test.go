@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 		dsn = fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", host, port.Port())
 
 		maxRetries := 10
-		for i := 0; i < maxRetries; i++ {
+		for i := range maxRetries {
 			var queries *pkg.Queries
 			queries, err = getQueries(nil)
 			if err == nil {
@@ -69,10 +69,7 @@ func TestMain(m *testing.M) {
 			}
 
 			if i < maxRetries-1 {
-				backoff := time.Duration(50<<uint(i)) * time.Millisecond
-				if backoff > time.Second {
-					backoff = time.Second
-				}
+				backoff := min(time.Duration(50<<uint(i))*time.Millisecond, time.Second)
 				time.Sleep(backoff)
 			}
 		}

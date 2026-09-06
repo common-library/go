@@ -112,9 +112,7 @@ func (s *Server) Start(network, address string, clientPoolSize int, acceptSucces
 	s.acceptSuccessFunc = acceptSuccessFunc
 	s.acceptFailureFunc = acceptFailureFunc
 
-	s.acceptWaitGroup.Add(1)
-	go func() {
-		defer s.acceptWaitGroup.Done()
+	s.acceptWaitGroup.Go(func() {
 		s.condition.Store(true)
 		for s.condition.Load() {
 			client, err := s.accept()
@@ -131,7 +129,7 @@ func (s *Server) Start(network, address string, clientPoolSize int, acceptSucces
 			go s.job()
 		}
 		close(s.channel)
-	}()
+	})
 
 	return nil
 }

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -28,7 +27,7 @@ func RunWithElasticsearch(m *testing.M, image string, elasticsearchURL *string) 
 			"xpack.watcher.enabled":                             "false",
 		},
 		WaitingFor: wait.ForHTTP("/_cluster/health?wait_for_status=yellow&timeout=1s").
-			WithPort(nat.Port("9200/tcp")).
+			WithPort("9200/tcp").
 			WithStatusCodeMatcher(func(status int) bool {
 				return status == 200
 			}).
@@ -53,7 +52,7 @@ func RunWithElasticsearch(m *testing.M, image string, elasticsearchURL *string) 
 		os.Exit(1)
 	}
 
-	natPort, err := container.MappedPort(ctx, nat.Port("9200"))
+	natPort, err := container.MappedPort(ctx, "9200")
 	if err != nil {
 		fmt.Printf("Failed to get container port: %v\n", err)
 		os.Exit(1)

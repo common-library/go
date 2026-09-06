@@ -330,7 +330,7 @@ func TestClient_Forcemerge(t *testing.T) {
 	err := client.IndicesCreate(indexName, indexMapping)
 	require.NoError(t, err, "Failed to create index for forcemerge test")
 
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		documentBody := fmt.Sprintf(`{
 			"id": %d,
 			"message": "Test document %d"

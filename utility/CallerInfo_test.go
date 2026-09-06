@@ -12,9 +12,7 @@ func TestGetCallerInfo(t *testing.T) {
 	goroutineID := 0
 	errorChan := make(chan error, 1)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 
 		if callerInfo, err := utility.GetCallerInfo(1); err != nil {
 			errorChan <- err
@@ -22,7 +20,7 @@ func TestGetCallerInfo(t *testing.T) {
 		} else {
 			goroutineID = callerInfo.GoroutineID
 		}
-	}()
+	})
 	wg.Wait()
 
 	select {
@@ -39,7 +37,7 @@ func TestGetCallerInfo(t *testing.T) {
 		t.Fatal(callerInfo.FileName)
 	} else if callerInfo.FunctionName != "TestGetCallerInfo" {
 		t.Fatal(callerInfo.FunctionName)
-	} else if callerInfo.Line != 34 {
+	} else if callerInfo.Line != 32 {
 		t.Fatal(callerInfo.Line)
 	} else if callerInfo.GoroutineID == goroutineID {
 		t.Fatal(callerInfo.GoroutineID, goroutineID)

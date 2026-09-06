@@ -533,7 +533,7 @@ func TestClient_Pagination(t *testing.T) {
 
 	tableName := createUniqueTable(t, client, "pagination_test")
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		testUser := TestUser{
 			ID:       fmt.Sprintf("user-%d", i),
 			Name:     fmt.Sprintf("User %d", i),

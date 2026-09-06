@@ -122,7 +122,7 @@ func TestServerMultipleClients(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(numClients)
 
-	for i := 0; i < numClients; i++ {
+	for i := range numClients {
 		go func(id int) {
 			defer wg.Done()
 
@@ -322,10 +322,10 @@ func TestServerIsRunningConcurrent(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				_ = server.IsRunning()
 				time.Sleep(time.Microsecond)
 			}
@@ -378,7 +378,7 @@ func TestServerAsyncHandler(t *testing.T) {
 	}
 
 	const numPackets = 5
-	for i := 0; i < numPackets; i++ {
+	for i := range numPackets {
 		client.Send([]byte{byte(i)})
 	}
 
@@ -425,7 +425,7 @@ func TestServerSyncHandler(t *testing.T) {
 	}
 
 	const numPackets = 5
-	for i := 0; i < numPackets; i++ {
+	for i := range numPackets {
 		client.Send([]byte{byte(i)})
 		time.Sleep(5 * time.Millisecond) // Small delay between sends
 	}

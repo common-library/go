@@ -78,16 +78,13 @@ func TestMain(m *testing.M) {
 
 		var db *sqlx.DB
 		maxRetries := 10
-		for i := 0; i < maxRetries; i++ {
+		for i := range maxRetries {
 			db, err = sqlx.Connect("mysql", mysqlDSN)
 			if err == nil {
 				break
 			}
 			if i < maxRetries-1 {
-				backoff := time.Duration(50<<uint(i)) * time.Millisecond
-				if backoff > time.Second {
-					backoff = time.Second
-				}
+				backoff := min(time.Duration(50<<uint(i))*time.Millisecond, time.Second)
 				time.Sleep(backoff)
 			}
 		}
@@ -119,16 +116,13 @@ func TestMain(m *testing.M) {
 
 		postgresDSN := fmt.Sprintf("host=%s user=testuser password=testpass dbname=testdb port=%s sslmode=disable TimeZone=Asia/Seoul", postgresHost, postgresPort.Port())
 
-		for i := 0; i < maxRetries; i++ {
+		for i := range maxRetries {
 			db, err = sqlx.Connect("postgres", postgresDSN)
 			if err == nil {
 				break
 			}
 			if i < maxRetries-1 {
-				backoff := time.Duration(50<<uint(i)) * time.Millisecond
-				if backoff > time.Second {
-					backoff = time.Second
-				}
+				backoff := min(time.Duration(50<<uint(i))*time.Millisecond, time.Second)
 				time.Sleep(backoff)
 			}
 		}
@@ -308,7 +302,7 @@ func TestNamedQuery(t *testing.T) {
 			}
 		}
 
-		if rows, err := db.NamedQuery("SELECT * FROM table01_for_sqlx WHERE field01=:f1", map[string]interface{}{"f1": t.Name()}); err != nil {
+		if rows, err := db.NamedQuery("SELECT * FROM table01_for_sqlx WHERE field01=:f1", map[string]any{"f1": t.Name()}); err != nil {
 			t.Fatal(err)
 		} else {
 			for rows.Next() {

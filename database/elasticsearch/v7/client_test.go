@@ -312,7 +312,7 @@ func TestClient_IndicesForcemerge(t *testing.T) {
 	err := client.IndicesCreate(indexName, mapping)
 	require.NoError(t, err)
 
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		document := fmt.Sprintf(`{"data": "test document %d"}`, i)
 		err = client.Index(indexName, fmt.Sprintf("doc%d", i), document)
 		require.NoError(t, err)

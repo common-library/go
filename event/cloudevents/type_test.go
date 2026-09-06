@@ -86,7 +86,7 @@ func startServer(t *testing.T) (*cloudevents.Server, string) {
 }
 
 func stopServer(t *testing.T, server *cloudevents.Server) {
-	if err := server.Stop(10); err != nil {
+	if err := server.Stop(10 * time.Second); err != nil {
 		t.Fatal(err)
 	}
 }
