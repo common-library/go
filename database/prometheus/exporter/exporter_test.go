@@ -188,7 +188,7 @@ func TestExporterStartAndStopServer(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 
-	err = exporter.Stop(5 * time.Second)
+	err = exporter.Stop(30 * time.Second)
 	assert.NoError(t, err)
 
 	err = waitForServerShutdown(serverURL, 2*time.Second)

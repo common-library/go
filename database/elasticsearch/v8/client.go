@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -71,25 +72,23 @@ func (c *Client) Initialize(addresses []string, timeout time.Duration, cloudID, 
 	eslock.InitMu.Lock()
 	defer eslock.InitMu.Unlock()
 
-	config := elasticsearch.Config{
-		CloudID:                cloudID,
-		APIKey:                 apiKey,
-		Username:               username,
-		Password:               password,
-		CertificateFingerprint: certificateFingerprint,
-
-		Addresses:         addresses,
-		EnableDebugLogger: true,
-		Logger:            &elastictransport.ColorLogger{Output: os.Stdout},
-		Transport: &http.Transport{
-			ResponseHeaderTimeout: timeout * time.Second,
-		},
+	opts := []elasticsearch.Option{
+		elasticsearch.WithAddresses(addresses...),
+		elasticsearch.WithCloudID(cloudID),
+		elasticsearch.WithAPIKey(apiKey),
+		elasticsearch.WithBasicAuth(username, password),
+		elasticsearch.WithCertificateFingerprint(certificateFingerprint),
+		elasticsearch.WithTransportOptions(
+			elastictransport.WithTransport(&http.Transport{ResponseHeaderTimeout: timeout * time.Second}),
+			elastictransport.WithLeveledLogger(&elastictransport.SlogLogger{Logger: slog.New(slog.NewTextHandler(os.Stdout, nil))}),
+			elastictransport.WithInterceptors(elastictransport.LoggingInterceptor(false, false)),
+		),
 	}
 	if len(caCert) != 0 {
-		config.CACert = caCert
+		opts = append(opts, elasticsearch.WithCACert(caCert))
 	}
 
-	if client, err := elasticsearch.NewClient(config); err != nil {
+	if client, err := elasticsearch.New(opts...); err != nil {
 		return err
 	} else {
 		c.client = client

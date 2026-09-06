@@ -5,27 +5,26 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "v*.*.*"]
+    branches: ["main", "v*.*.*"]
     paths:
-      - '**.go'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/ci.yml'
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/ci.yml"
   pull_request:
-    branches: [ "main", "v*.*.*"]
+    branches: ["main", "v*.*.*"]
     paths:
-      - '**.go'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/ci.yml'
-
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/ci.yml"
 
 jobs:
   build:
     strategy:
       matrix:
-        runner: [ 'ubuntu-24.04' ]
-        go: [ '1.25.7', '1.26.0' ]
+        runner: ["ubuntu-24.04"]
+        go: ["1.27.0"]
       fail-fast: false
 
     permissions:
@@ -134,7 +133,7 @@ jobs:
           echo "**Go Version:** ${{ matrix.go }}" >> $GITHUB_STEP_SUMMARY
           echo "**Runner:** ${{ matrix.runner }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f coverage.out ]; then
             COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
             echo "**Total Coverage:** $COVERAGE" >> $GITHUB_STEP_SUMMARY
@@ -158,16 +157,16 @@ jobs:
             echo "⚠️ No coverage data available, skipping badge update"
             exit 0
           fi
-          
+
           if [ -z "$GIST_SECRET" ] || [ -z "$GIST_ID" ]; then
             echo "⚠️ GIST_SECRET or GIST_ID not set, skipping badge update"
             exit 0
           fi
-          
+
           # Extract coverage percentage
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Coverage: ${COVERAGE}%"
-          
+
           # Determine badge color based on coverage
           COLOR=$(awk -v cov="$COVERAGE" 'BEGIN {
             if (cov >= 80) print "brightgreen"
@@ -176,7 +175,7 @@ jobs:
             else print "red"
           }')
           echo "Badge color: $COLOR"
-          
+
           # Create JSON for Gist update
           JSON=$(jq -n \
             --arg coverage "${COVERAGE}%" \
@@ -189,14 +188,14 @@ jobs:
                 }
               }
             }')
-          
+
           # Update Gist
           RESPONSE=$(curl -s -X PATCH \
             -H "Authorization: token ${GIST_SECRET}" \
             -H "Accept: application/vnd.github.v3+json" \
             -d "$JSON" \
             "https://api.github.com/gists/${GIST_ID}")
-          
+
           if echo "$RESPONSE" | jq -e '.id' > /dev/null; then
             echo "✅ Coverage badge updated successfully"
             echo "Coverage: ${COVERAGE}% (${COLOR})"

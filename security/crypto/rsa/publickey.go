@@ -43,6 +43,7 @@ type PublicKey struct {
 //	    log.Fatal(err)
 //	}
 func (pk *PublicKey) EncryptPKCS1v15(plaintext string) ([]byte, error) {
+	//lint:ignore SA1019 kept for legacy PKCS#1 v1.5 compatibility
 	return rsa.EncryptPKCS1v15(rand.Reader, &pk.publicKey, []byte(plaintext))
 }
 

@@ -41,6 +41,7 @@ type PrivateKey struct {
 //	    log.Fatal(err)
 //	}
 func (pk *PrivateKey) EncryptPKCS1v15(plaintext string) ([]byte, error) {
+	//lint:ignore SA1019 kept for legacy PKCS#1 v1.5 compatibility
 	return rsa.EncryptPKCS1v15(rand.Reader, &pk.privateKey.PublicKey, []byte(plaintext))
 }
 
@@ -70,6 +71,7 @@ func (pk *PrivateKey) EncryptPKCS1v15(plaintext string) ([]byte, error) {
 //	}
 //	fmt.Println("Decrypted:", plaintext)
 func (pk *PrivateKey) DecryptPKCS1v15(ciphertext []byte) (string, error) {
+	//lint:ignore SA1019 kept for legacy PKCS#1 v1.5 compatibility
 	if plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, pk.privateKey, ciphertext); err != nil {
 		return "", err
 	} else {
